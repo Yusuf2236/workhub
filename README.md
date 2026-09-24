@@ -1,38 +1,18 @@
 # WorkHub
 
-WorkHub — bu ish qidiruvchilar, ish beruvchilar va job platformasi tizimi uchun mo‘ljallangan monorepo loyihasi. Loyiha uchta asosiy qismdan iborat:
+WorkHub — bu ish qidiruvchilar, ish beruvchilar va platforma uchun mo‘ljallangan monorepo loyihasi. Loyiha bir nechta modullardan iborat bo‘lib, backend, Android, iOS, admin panel, desktop client, hujjatlar va dizayn dokumentatsiyasi ajratilgan.
 
-- Backend: Go API xizmati
-- Android: Kotlin + Jetpack Compose mobil ilova
-- iOS: Swift + SwiftUI mobil ilova
+## Asosiy maqsad
 
-## Loyiha maqsadi
+- ish vakansiyalarini ko‘rsatish va boshqarish
+- foydalanuvchilarni autentifikatsiya qilish
+- ariza topshirish va rezyume yuklash
+- real-time chat va push bildirishnomalar
+- admin panel orqali boshqaruv
+- mobil va desktop klientlar bilan integratsiya
+- monetizatsiya va business modelini qo‘llab-quvvatlash
 
-WorkHub platformasi quyidagi imkoniyatlarni ta’minlaydi:
-
-- foydalanuvchilarning ro‘yxatdan o‘tishi va tizimga kirishi
-- vakansiyalarni ko‘rish, qidirish va saralash
-- ish beruvchilarga vakansiya yaratish imkoniyati
-- ariza topshirish va ko‘rib chiqish
-- rezyume yaratish va yuklash
-- real-time chat va xabarlar
-- push bildirishnomalar
-- fayllarni saqlash (resume, avatar, logo va boshqalar)
-
-## Texnologiyalar
-
-- Backend: Go + Gin
-- Android: Kotlin + Jetpack Compose
-- iOS: Swift + SwiftUI
-- Ma’lumotlar bazasi: PostgreSQL
-- Cache / real-time: Redis
-- Chat: Gorilla WebSocket yoki Centrifugo
-- Fayllar: MinIO yoki Cloudflare R2
-- Autentifikatsiya: JWT + Firebase Auth yoki maxsus JWT tizimi
-- Bildirishnomalar: Firebase Cloud Messaging
-- Container: Docker + Docker Compose
-
-## Loyiha tuzilmasi
+## Monorepo tuzilmasi
 
 ```text
 workhub/
@@ -43,10 +23,10 @@ workhub/
 │   ├── internal/
 │   ├── pkg/
 │   ├── migrations/
-│   ├── .env.example
 │   ├── Dockerfile
 │   ├── docker-compose.yml
 │   ├── go.mod
+│   ├── .env.example
 │   └── README.md
 ├── android/
 │   ├── app/
@@ -62,121 +42,135 @@ workhub/
 │   ├── LoginView.swift
 │   ├── README.md
 │   └── WorkhubApp.swift
+├── admin/
+│   └── README.md
+├── docs/
+│   ├── README.md
+│   ├── integrations.md
+│   ├── monetization.md
+│   └── design-system.md
+├── mobile-android/
+│   └── README.md
+├── windows-desktop/
+│   └── README.md
 └── .github/
 ```
 
-## Backend
+## Modullar
 
-Backend qismi Go dasturida yozilgan bo‘lib, quyidagi funksiyalarni o‘z ichiga oladi:
+### 1. Backend
+- Go + Gin
+- PostgreSQL
+- Redis
+- JWT auth
+- WebSocket chat
+- MinIO / Cloudflare R2 storage
+- Docker Compose
 
-- health check endpoint
-- auth va JWT middleware
-- ro‘yxatdan o‘tish / kirish endpointlari
-- vakansiya yaratish va ro‘yxat olish
-- ariza berish endpointsi
-- resume endpointlari
-- chat websocket endpointi
-- PostgreSQL va Redis konfigurasiyasi
-- Docker Compose orqali lokallashtrish
+### 2. Android mobile
+- Kotlin + Jetpack Compose
+- Login, home, vacancies, applications, chat
+- REST API client, viewmodel, repository pattern
 
-## Android
+### 3. iOS mobile
+- Swift + SwiftUI
+- Native UX experience
+- Auth, dashboard, jobs, applications
 
-Android qismi Kotlin + Jetpack Compose orqali yaratilgan native ilova bo‘lib, quyidagilarni o‘z ichiga oladi:
+### 4. Admin panel
+- admin dashboard
+- employer management
+- vacancy moderation
+- user management
+- analytics and reports
 
-- login sahifasi
-- home/dashboard sahifasi
-- navigation graph
-- API bilan aloqa uchun skelet
-- Compose UI komponentlari
+### 5. Windows desktop
+- Windows desktop client (WPF / WinUI)
+- sync with backend API
+- notifications and job monitoring
 
-## iOS
+### 6. Docs
+- integrations docs
+- monetization docs
+- design system docs
+- onboarding and deployment notes
 
-iOS qismi SwiftUI bilan yaratilgan native ilova bo‘lib, quyidagilarni o‘z ichiga oladi:
+## Tech stack
 
-- login ekran
-- dashboard/home ekran
-- API konfiguratsiyasi
-- MVVM ya’ni modul yangilanish uchun tayyor skelet
+- Backend: Go
+- Android: Kotlin + Compose
+- iOS: Swift + SwiftUI
+- Desktop: .NET / WPF / WinUI (option)
+- DB: PostgreSQL
+- Cache: Redis
+- Storage: MinIO / Cloudflare R2
+- Auth: JWT
+- Messaging: Firebase / WebSocket / push alerts
+- Infra: Docker, Docker Compose
 
-## Loyiha ishga tushirish
+## Business model and monetization
 
-1. Backend uchun environment faylini yaratish:
+Loyiha uchun monetizatsiya modellari:
+
+- premium employer plans
+- candidat premium subscription
+- paid vacancy promotion
+-headhunting / talent search service
+- enterprise API access
+- CV boost / priority listing
+- custom branding for employers
+
+Batafsil ma’lumotlar: `docs/monetization.md`
+
+## Integratsiyalar
+
+- Firebase Cloud Messaging
+- Google / Apple sign-in (ixtiyoriy)
+- MinIO / Cloudflare R2
+- PostgreSQL and Redis
+- payment gateway (Stripe / Payme / Click)
+- analytics and crash tools
+
+Batafsil ma’lumotlar: `docs/integrations.md`
+
+## Design system
+
+- primary color palette
+- typography
+- card styles
+- buttons and forms
+- dashboard layout
+- mobile app components
+- desktop UI rules
+
+Batafsil ma’lumotlar: `docs/design-system.md`
+
+## Lokal ishlash
 
 ```bash
 cp backend/.env.example backend/.env
-```
-
-2. Docker yordamida PostgreSQL, Redis va MinIO ni ishga tushirish:
-
-```bash
 cd backend
 docker compose up -d
-```
-
-3. Backend API ni ishga tushirish:
-
-```bash
 go run ./cmd/api
 ```
 
-4. Android ilovasi uchun Android Studio orqali `android/` papkasi ochiladi.
-5. iOS ilovasi uchun Xcode orqali `ios/` papkasi ochiladi.
+## Key milestones
 
-## Ma’lumotlar bazasi
+- phase 1: auth + vacancies + applications
+- phase 2: resumes + uploads + chat
+- phase 3: admin panel + analytics
+- phase 4: desktop app + integrations
+- phase 5: monetization + premium features
 
-Loyiha uchun ma’lumotlar bazasi quyidagilarni o‘z ichiga oladi:
+## Ishga tushirish navbatma-navbat
 
-- users
-- profiles
-- vacancies
-- applications
-- resumes
-- chat_messages
-- refresh_tokens
-- notifications
-- file_uploads
+1. Database va Redis ochiladi
+2. Backend ishlaydi
+3. Mobil app test qilinadi
+4. Admin panel boshqariladi
+5. Desktop client integratsiya qilinadi
+6. Monetization va analytics ichki bo‘limlar qo‘shiladi
 
-## Redis va real-time
+## Xulosa
 
-Redis quyidagi maqsadlarda ishlatiladi:
-
-- auth token cache
-- user sessionlar
-- rate limiting
-- websocket room management
-- notification queue
-- tezkor ma’lumotlar cache
-
-## Fayllar va storage
-
-MinIO yoki Cloudflare R2 quyidagi fayllarni saqlash uchun ishlatiladi:
-
-- resume PDF
-- avatar va logo
-- company rasm
-- fayl uploadlar
-- public URL yaratish
-
-## Xavfsizlik
-
-Loyiha xavfsizlik jarayonini quyidagicha qurishi kerak:
-
-- JWT access token va refresh token
-- password hashing (bcrypt)
-- CORS konfiguratsiyasi
-- environment variable orqali secrets saqlash
-- `.env.example` orqali namuna konfiguratsiya
-
-## So‘nggi fikr
-
-Bu loyiha modern, tezkor va kengaytiriladigan job platformasi sifatida yaratilmoqda. U native Android va iOS ilovalar bilan birgalikda ishlaydi, backend esa PostgreSQL, Redis, MinIO va JWT asosida quriladi.
-
-Kelajakda loyiha quyidagilar bilan yanada rivojlantiriladi:
-
-- real DB repository layer
-- admin panel
-- employer dashboard
-- advanced search va filter
-- push notification tizimi
-- chat history va file sending
-- deployment uchun dockerized production setup
+WorkHub monorepo loyihasi katta va kengaytiriladigan product bo‘lib, unda backend, mobil clientlar, desktop client, admin panel, hujjatlar va monetization modelini bir vaqtning o‘zida rivojlantirish mumkin. Bu loyiha startup uchun ham, mahsulot uchun ham muhim bazani tashkil qiladi.
