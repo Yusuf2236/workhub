@@ -1,66 +1,64 @@
 # WorkHub backend
 
-WorkHub backend — bu job platformasi uchun yaratilgan Go API xizmati. Bu backend quyidagi tamoyillar asosida quriladi:
+Bu papka Go tili bilan yozilgan backend API xizmatini o‘z ichiga oladi. Loyiha job platformasi uchun yaratilgan bo‘lib, auth, vacancy, application, resume va chat bo‘limlarini o‘z ichiga oladi.
 
-- modular architecture
-- authentication and authorization via JWT
-- PostgreSQL for persistence
-- Redis for cache and real-time support
-- MinIO / Cloudflare R2 for file storage
-- WebSocket chat support
-- Dockerized local development
-
-## Backend features
+## Xususiyatlar
 
 - health check endpoint
-- auth: login / register / profile
-- vacancy creation and listing
-- application submission
-- resume management
-- file upload abstraction
-- WebSocket chat endpoint
-- structured logging and middleware
-- graceful shutdown
+- JWT-based authentication middleware
+- user register / login / me endpoints
+- vacancy listing and creation APIs
+- application and resume handlers
+- websocket chat endpoint
+- PostgreSQL, Redis va storage konfiguratsiyasi
+- Docker Compose bilan lokallashtrish
+- real database schema va migrationlar
 
-## Backend structure
+## Loyiha tuzilmasi
 
 ```text
 backend/
-├── cmd/
-│   └── api/
-│       └── main.go
+├── cmd/api/main.go
 ├── internal/
 │   ├── config/
+│   ├── database/
 │   ├── handlers/
 │   ├── middleware/
-│   └── models/
+│   ├── models/
+│   ├── services/
+│   └── storage/
 ├── pkg/
 │   ├── hash/
 │   ├── jwt/
 │   └── response/
 ├── migrations/
-│   └── 001_init.sql
+│   └── 001_init_schema.sql
 ├── .env.example
-├── Dockerfile
 ├── docker-compose.yml
+├── Dockerfile
 ├── go.mod
 ├── README.md
 └── .gitignore
 ```
 
-## Runtime stack
+## Ishga tushirish
 
-- Go 1.22+
-- Gin web framework
-- PostgreSQL 16
-- Redis 7
-- MinIO
+```bash
+cp .env.example .env
 
-## Environment configuration
+go mod download
+go run ./cmd/api
+```
 
-Barcha environment o‘zgaruvchilari `.env.example` faylida ko‘rsatilgan.
+## Docker
 
-### Example variables
+```bash
+docker compose up --build
+```
+
+## Environment variables
+
+`.env.example` faylida quyidagilar bo‘ladi:
 
 ```env
 PORT=8080
@@ -73,30 +71,28 @@ DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=workhub
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/workhub?sslmode=disable
 REDIS_HOST=localhost
 REDIS_PORT=6379
+REDIS_URL=redis://localhost:6379
 STORAGE_PROVIDER=minio
 STORAGE_ENDPOINT=localhost:9000
 STORAGE_BUCKET=workhub
+STORAGE_ACCESS_KEY=minioadmin
+STORAGE_SECRET_KEY=minioadmin
+STORAGE_PUBLIC_URL=http://localhost:9000/workhub
+FIREBASE_PROJECT_ID=your-project
+FIREBASE_CLIENT_EMAIL=your-service-account@example.com
+FIREBASE_WEB_API_KEY=your-firebase-web-key
 ```
 
-## Local development
+## Database strategy
 
-```bash
-cp .env.example .env
-cd backend
-docker compose up -d
-go mod download
-go run ./cmd/api
-```
+- PostgreSQL: transactional data
+- Redis: cache, rate limiting, real-time temp state
+- MinIO: file uploads and media objects
 
-## Docker
-
-```bash
-docker compose up --build
-```
-
-## Recommended API routes
+## API routes
 
 - GET `/health`
 - POST `/api/v1/auth/register`
@@ -110,33 +106,13 @@ docker compose up --build
 - POST `/api/v1/resumes`
 - GET `/api/v1/ws`
 
-## Database design
+## Real backend direction
 
-### Core tables
-- users
-- profiles
-- vacancies
-- applications
-- resumes
-- chat_messages
-- refresh_tokens
-- file_uploads
-- notifications
+Bu backend hali skelet holatda bo‘lsa-da, quyidagilarni qo‘shish mumkin:
 
-## Security checklist
-
-- JWT on protected routes
-- bcrypt password hashing
-- CORS enabled for app clients
-- secret values stored in env
-- role-based access planned for admin area
-
-## Roadmap
-
-- real PostgreSQL repository layer
-- Redis cache implementation
-- file upload service with signed URLs
-- Firebase push notification integration
-- admin authorization
-- WebSocket room-based chat persistence
-
+- PostgreSQL connection and repository layer
+- Redis client cache layer
+- MinIO upload service
+- FCM push notifications service
+- real admin authorization
+- production deployment pipeline

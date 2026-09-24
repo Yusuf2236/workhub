@@ -1,17 +1,17 @@
 # WorkHub iOS
 
-iOS qismi SwiftUI bilan yaratilgan native mobil application bo‘lib, JobHub platformasi uchun barcha asosiy ekranlar va API integratsiyasi uchun skelet beradi.
+Bu papka SwiftUI yordamida yaratilgan iOS ilovasini o‘z ichiga oladi.
 
 ## iOS features
 
 - login screen
-- home/dashboard screen
-- job list and application status
-- API config
-- lightweight MVVM structure
-- future push notification hook
+- dashboard/home screen
+- vacancy list and application tracking
+- API configuration
+- future push notifications hook
+- SwiftUI skeleton for real backend integration
 
-## Suggested project structure
+## Recommended structure
 
 ```text
 ios/
@@ -22,26 +22,28 @@ ios/
 ├── LoginView.swift
 ├── README.md
 ├── WorkhubApp.swift
-└── Assets.xcassets/
+├── Assets.xcassets/
+└── ...
 ```
 
-## Technologies used
+## Tech stack
 
 - Swift
 - SwiftUI
-- Foundation
 - URLSession
+- Foundation
+- MVVM pattern
 
 ## Local setup
 
 ```bash
 cd ios
-# Xcode orqali oching
-# simulator yoki real device tanlang
-# ilovani ishga tushiring
+# open in Xcode
+# choose simulator or device
+# run app
 ```
 
-## API configuration
+## API setup
 
 ```swift
 struct APIConfig {
@@ -51,7 +53,7 @@ struct APIConfig {
 }
 ```
 
-## Suggested screens
+## Future screens
 
 - LoginView
 - HomeView
@@ -63,5 +65,4 @@ struct APIConfig {
 
 ## Notes
 
-Ilova initial skeleton darajasida bo‘lib, keyinchalik real backend bilan to‘liq integratsiya qilinadi.
-
+iOS qismi native UI uchun tayyor, lekin production-ready backend va realtime stream bilan integratsiya keyingi bosqichda to‘liq yakunlanadi.

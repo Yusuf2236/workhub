@@ -1,18 +1,18 @@
 # WorkHub Android
 
-Android qismi Kotlin + Jetpack Compose bilan yaratilgan native mobil ilovadir. Build qilish uchun Android Studio va SDK kerak bo‘ladi.
+Bu papka Kotlin + Jetpack Compose bilan yaratilgan Android ilovasini o‘z ichiga oladi. Loyiha native, modern va mobile-first UX ga asoslangan.
 
 ## Android features
 
-- login and register flow
-- home/dashboard screen
-- vacancy list and detail screen
+- splash, login va register ekranlari
+- home/dashboard ekran
+- vacancy list va detail ekranlari
 - apply flow
-- profile and resume management
-- chat screen skeleton
-- navigation graph
+- resume upload va profile screen
+- chat screen skeleti
+- navigation graph va API integration
 
-## Recommended module structure
+## Recommended structure
 
 ```text
 android/
@@ -27,46 +27,44 @@ android/
 └── .gitignore
 ```
 
-## Technologies used
+## Tech stack
 
 - Kotlin
 - Jetpack Compose
 - Material3
 - Navigation Compose
-- Lifecycle
-- Coil for image loading
+- ViewModel
+- Repository pattern
+- Coil image loading
 
 ## Local setup
 
 ```bash
 cd android
-# Android Studio orqali oching
-# Gradle sync qiling
-# app konfiguratsiyasini ishga tushiring
+# Open in Android Studio
+# sync Gradle
+# run app
 ```
 
-## Default API config
-
-Lokal emulator uchun backend base URL:
+## Backend API URL
 
 ```text
 http://10.0.2.2:8080
 ```
 
-## Suggested screens
+## Screen roadmap
 
-- SplashScreen
-- LoginScreen
-- RegisterScreen
-- HomeScreen
-- SearchScreen
-- VacancyDetailScreen
-- ApplyScreen
-- ResumeScreen
-- ChatScreen
-- ProfileScreen
+- Splash
+- Login
+- Register
+- Home
+- Vacancy list
+- Vacancy detail
+- Apply screen
+- Resume upload
+- Chat
+- Profile
 
 ## Notes
 
-Bu qism hozircha skelet holatda bo‘lib, keyinchalik backend API bilan real data integratsiyasi qo‘shiladi.
-
+Bu qism real API bilan integratsiya qilish uchun tayyorlangan, lekin hali asosiy backend konfiguratsiyasi bilan birga ishlash bosqichidagi skelet sifatida qolmoqda.
