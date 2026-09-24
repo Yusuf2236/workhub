@@ -1,0 +1,36 @@
+# IDE / OS / Language / Tooling
+
+.DS_Store
+dist/
+*.log
+*.tmp
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Go
+backend/.env
+backend/bin/
+backend/*.out
+
+# Android
+android/.gradle/
+android/local.properties
+android/.idea/
+android/*.iml
+android/**/build/
+android/**/captures/
+android/**/*.iml
+
+# iOS
+ios/build/
+ios/*.xcworkspace/
+ios/*.xcodeproj/project.xcworkspace/
+ios/*.xcuserdata/
+ios/**/DerivedData/
+
+# Node / general
+node_modules/
+coverage/
