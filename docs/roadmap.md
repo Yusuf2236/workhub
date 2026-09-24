@@ -1,35 +1,25 @@
-# WorkHub roadmap
+# Roadmap
 
-## Phase 1 — Foundation
-- backend auth
-- profile CRUD
+## Phase 1
+- auth and profiles
 - vacancy listing
-- applications
-- resume support
-- dockerized local environment
-
-## Phase 2 — Core product experience
-- mobile app login flow
-- home screen and job feed
+- application flow
 - resume upload
-- application status tracking
-- chat integration
+- PostgreSQL + Redis setup
 
-## Phase 3 — Admin and data management
+## Phase 2
+- realtime chat
+- push notifications
+- mobile polish
 - admin dashboard
-- moderation tools
-- analytics reports
-- recruiter panel
 
-## Phase 4 — Growth and monetization
-- premium subscription
-- featured jobs
-- recruiter packs
-- enterprise plans
+## Phase 3
+- premium plans
+- analytics
+- enterprise features
+- desktop client expansion
 
-## Phase 5 — Scaling
-- desktop client
-- AI candidate matching
-- advanced analytics
-- workflow automation
-
+## Phase 4
+- AI matching
+- advanced search and recommendation
+- growth and scale planning

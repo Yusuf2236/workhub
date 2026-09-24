@@ -1,20 +1,19 @@
 # WorkHub backend
 
-Bu papka Go tili bilan yozilgan backend API xizmatini o‘z ichiga oladi. Loyiha job platformasi uchun yaratilgan bo‘lib, auth, vacancy, application, resume va chat bo‘limlarini o‘z ichiga oladi.
+The backend is the core service for the WorkHub platform. It exposes the main APIs for authentication, jobs, applications, resumes, and realtime chat.
 
-## Xususiyatlar
+## Stack
 
-- health check endpoint
-- JWT-based authentication middleware
-- user register / login / me endpoints
-- vacancy listing and creation APIs
-- application and resume handlers
-- websocket chat endpoint
-- PostgreSQL, Redis va storage konfiguratsiyasi
-- Docker Compose bilan lokallashtrish
-- real database schema va migrationlar
+- Go 1.22+
+- Gin Web Framework
+- PostgreSQL
+- Redis
+- MinIO / Cloudflare R2
+- JWT authentication
+- Gorilla WebSocket
+- Firebase push notification service ready
 
-## Loyiha tuzilmasi
+## Project structure
 
 ```text
 backend/
@@ -25,45 +24,51 @@ backend/
 │   ├── handlers/
 │   ├── middleware/
 │   ├── models/
+│   ├── repositories/
 │   ├── services/
-│   └── storage/
+│   ├── storage/
+│   ├── validators/
+│   └── websocket/
 ├── pkg/
 │   ├── hash/
 │   ├── jwt/
-│   └── response/
+│   ├── response/
+│   └── validator/
 ├── migrations/
-│   └── 001_init_schema.sql
+├── docs/
 ├── .env.example
 ├── docker-compose.yml
 ├── Dockerfile
 ├── go.mod
-├── README.md
-└── .gitignore
+└── README.md
 ```
 
-## Ishga tushirish
+## API domains
+
+- Auth
+- Vacancy
+- Application
+- Resume
+- Chat
+- Admin
+- Notification
+
+## Local setup
 
 ```bash
 cp .env.example .env
-
+cd backend
+docker compose up -d
 go mod download
 go run ./cmd/api
 ```
 
-## Docker
-
-```bash
-docker compose up --build
-```
-
-## Environment variables
-
-`.env.example` faylida quyidagilar bo‘ladi:
+## Example environment
 
 ```env
 PORT=8080
 APP_ENV=development
-JWT_SECRET=change-me
+JWT_SECRET=super-secret-key
 JWT_ACCESS_TTL=15m
 JWT_REFRESH_TTL=168h
 DB_HOST=localhost
@@ -71,48 +76,28 @@ DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=workhub
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/workhub?sslmode=disable
 REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_URL=redis://localhost:6379
 STORAGE_PROVIDER=minio
 STORAGE_ENDPOINT=localhost:9000
 STORAGE_BUCKET=workhub
 STORAGE_ACCESS_KEY=minioadmin
 STORAGE_SECRET_KEY=minioadmin
-STORAGE_PUBLIC_URL=http://localhost:9000/workhub
-FIREBASE_PROJECT_ID=your-project
-FIREBASE_CLIENT_EMAIL=your-service-account@example.com
-FIREBASE_WEB_API_KEY=your-firebase-web-key
+FIREBASE_PROJECT_ID=workhub-project
 ```
 
-## Database strategy
+## Main routes
 
-- PostgreSQL: transactional data
-- Redis: cache, rate limiting, real-time temp state
-- MinIO: file uploads and media objects
+- GET /health
+- POST /api/v1/auth/register
+- POST /api/v1/auth/login
+- GET /api/v1/auth/me
+- GET /api/v1/vacancies
+- POST /api/v1/vacancies
+- POST /api/v1/vacancies/:id/apply
+- POST /api/v1/resumes
+- GET /api/v1/ws
 
-## API routes
+## Notes
 
-- GET `/health`
-- POST `/api/v1/auth/register`
-- POST `/api/v1/auth/login`
-- GET `/api/v1/auth/me`
-- GET `/api/v1/vacancies`
-- POST `/api/v1/vacancies`
-- GET `/api/v1/vacancies/:id`
-- POST `/api/v1/vacancies/:id/apply`
-- GET `/api/v1/resumes`
-- POST `/api/v1/resumes`
-- GET `/api/v1/ws`
-
-## Real backend direction
-
-Bu backend hali skelet holatda bo‘lsa-da, quyidagilarni qo‘shish mumkin:
-
-- PostgreSQL connection and repository layer
-- Redis client cache layer
-- MinIO upload service
-- FCM push notifications service
-- real admin authorization
-- production deployment pipeline
+This backend is designed to be production-ready in structure and can be extended with real repository, cache, storage, notification, and admin logic without changing the public API contracts.

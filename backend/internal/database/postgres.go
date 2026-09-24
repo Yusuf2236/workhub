@@ -3,8 +3,6 @@ package database
 import (
     "fmt"
     "strings"
-
-    "github.com/Yusuf2236/workhub/backend/internal/config"
 )
 
 type PostgresConfig struct {
@@ -16,14 +14,14 @@ type PostgresConfig struct {
     SSLMode  string
 }
 
-func NewPostgresConfig(cfg *config.Config) PostgresConfig {
+func NewPostgresConfig(host string, port int, user, password, dbName, sslMode string) PostgresConfig {
     return PostgresConfig{
-        Host:     cfg.Database.Host,
-        Port:     cfg.Database.Port,
-        User:     cfg.Database.User,
-        Password: cfg.Database.Password,
-        DBName:   cfg.Database.Name,
-        SSLMode:  cfg.Database.SSLMode,
+        Host:     host,
+        Port:     port,
+        User:     user,
+        Password: password,
+        DBName:   dbName,
+        SSLMode:  sslMode,
     }
 }
 
@@ -48,14 +46,4 @@ func (c PostgresConfig) DSN() string {
     }
 
     return strings.Join(parts, " ")
-}
-
-func Validate(cfg *config.Config) error {
-    if cfg == nil {
-        return fmt.Errorf("config is nil")
-    }
-    if cfg.Database.Host == "" || cfg.Database.User == "" || cfg.Database.Name == "" {
-        return fmt.Errorf("database host, user, and name are required")
-    }
-    return nil
 }
