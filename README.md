@@ -1,18 +1,22 @@
 # WorkHub
 
-WorkHub — bu ish qidiruvchilar, ish beruvchilar va platforma uchun mo‘ljallangan monorepo loyihasi. Loyiha bir nechta modullardan iborat bo‘lib, backend, Android, iOS, admin panel, desktop client, hujjatlar va dizayn dokumentatsiyasi ajratilgan.
+WorkHub — bu ish qidiruvchilar, ish beruvchilar, recruiterlar va HR jamoalari uchun mo‘ljallangan zamonaviy job platformasi. Loyiha monorepo formatida yaratilgan bo‘lib, backend, Android, iOS, admin panel, desktop client va hujjatlar bo‘limlarini birlashtiradi.
 
 ## Asosiy maqsad
 
-- ish vakansiyalarini ko‘rsatish va boshqarish
-- foydalanuvchilarni autentifikatsiya qilish
-- ariza topshirish va rezyume yuklash
-- real-time chat va push bildirishnomalar
-- admin panel orqali boshqaruv
-- mobil va desktop klientlar bilan integratsiya
-- monetizatsiya va business modelini qo‘llab-quvvatlash
+WorkHub platformasi quyidagi muhim funksiyalarni ta’minlaydi:
 
-## Monorepo tuzilmasi
+- foydalanuvchilarni ro‘yxatdan o‘tkazish va autentifikatsiya qilish
+- vakansiyalarni ko‘rish, qidirish va filtratsiya qilish
+- ish beruvchilar uchun vakansiya yaratish va boshqarish
+- ariza topshirish va ko‘rib chiqish
+- rezyume yaratish, yuklash va boshqarish
+- real-time chat va muloqot
+- push bildirishnomalar
+- admin panel orqali monitoring va moderation
+- premium xizmatlar va monetizatsiya imkoniyatlari
+
+## Loyiha tuzilmasi
 
 ```text
 workhub/
@@ -23,10 +27,10 @@ workhub/
 │   ├── internal/
 │   ├── pkg/
 │   ├── migrations/
+│   ├── .env.example
 │   ├── Dockerfile
 │   ├── docker-compose.yml
 │   ├── go.mod
-│   ├── .env.example
 │   └── README.md
 ├── android/
 │   ├── app/
@@ -48,104 +52,132 @@ workhub/
 │   ├── README.md
 │   ├── integrations.md
 │   ├── monetization.md
-│   └── design-system.md
+│   ├── design-system.md
+│   └── roadmap.md
 ├── mobile-android/
 │   └── README.md
 ├── windows-desktop/
 │   └── README.md
-└── .github/
+├── .github/
+└── .vscode/
 ```
 
-## Modullar
+## Texnologiyalar
 
-### 1. Backend
-- Go + Gin
+### Backend
+- Go
+- Gin web framework
 - PostgreSQL
 - Redis
-- JWT auth
+- JWT authentication
 - WebSocket chat
-- MinIO / Cloudflare R2 storage
+- MinIO / Cloudflare R2
 - Docker Compose
 
-### 2. Android mobile
-- Kotlin + Jetpack Compose
-- Login, home, vacancies, applications, chat
-- REST API client, viewmodel, repository pattern
+### Android
+- Kotlin
+- Jetpack Compose
+- Material3
+- Navigation Compose
+- ViewModel + Repository pattern
 
-### 3. iOS mobile
-- Swift + SwiftUI
-- Native UX experience
-- Auth, dashboard, jobs, applications
+### iOS
+- Swift
+- SwiftUI
+- URLSession
+- MVVM pattern
 
-### 4. Admin panel
-- admin dashboard
-- employer management
-- vacancy moderation
-- user management
-- analytics and reports
+### Admin panel
+- React / Next.js yoki admin template
+- backend API bilan integratsiya
+- chart analytics va dashboards
 
-### 5. Windows desktop
-- Windows desktop client (WPF / WinUI)
-- sync with backend API
-- notifications and job monitoring
+### Desktop
+- .NET / WPF / WinUI 3
+- MVVM + REST API integration
 
-### 6. Docs
-- integrations docs
-- monetization docs
-- design system docs
-- onboarding and deployment notes
+## Arxitektura
 
-## Tech stack
+Loyiha modularga bo‘lingan va har bir qism alohida maydonda ishlaydi:
 
-- Backend: Go
-- Android: Kotlin + Compose
-- iOS: Swift + SwiftUI
-- Desktop: .NET / WPF / WinUI (option)
-- DB: PostgreSQL
-- Cache: Redis
-- Storage: MinIO / Cloudflare R2
-- Auth: JWT
-- Messaging: Firebase / WebSocket / push alerts
-- Infra: Docker, Docker Compose
+- backend — server, business logic, database, auth, storage, chat
+- mobile apps — native clientlar
+- admin — HR va menejerlar uchun boshqaruv paneli
+- desktop — desktop foydalanuvchilar uchun monitoring va management
+- docs — strategy, system design, integrations, monetization
 
-## Business model and monetization
+## Business model va monetizatsiya
 
-Loyiha uchun monetizatsiya modellari:
+WorkHub uchun monetizatsiya modeli quyidagicha ishlaydi:
 
-- premium employer plans
-- candidat premium subscription
-- paid vacancy promotion
--headhunting / talent search service
-- enterprise API access
-- CV boost / priority listing
-- custom branding for employers
+- employer premium planlari
+- featured vacancy listing
+- resume boost va premium profile
+- recruiter subscription
+- enterprise B2B API access
+- analytics va custom dashboard
 
-Batafsil ma’lumotlar: `docs/monetization.md`
+Batafsil ma’lumot: `docs/monetization.md`
 
 ## Integratsiyalar
 
-- Firebase Cloud Messaging
-- Google / Apple sign-in (ixtiyoriy)
-- MinIO / Cloudflare R2
-- PostgreSQL and Redis
-- payment gateway (Stripe / Payme / Click)
-- analytics and crash tools
+Loyiha bir nechta tashqi xizmatlar bilan integratsiyalanadi:
 
-Batafsil ma’lumotlar: `docs/integrations.md`
+- PostgreSQL va Redis
+- MinIO yoki Cloudflare R2
+- Firebase Cloud Messaging
+- Stripe / Payme / Click (to‘lovlar)
+- Sentry / PostHog / Mixpanel (analytics)
+- Google / Apple auth (ixtiyoriy)
+
+Batafsil ma’lumot: `docs/integrations.md`
 
 ## Design system
 
-- primary color palette
-- typography
-- card styles
-- buttons and forms
-- dashboard layout
-- mobile app components
-- desktop UI rules
+Loyiha uchun umumiy dizayn tizimi quyidagilarni o‘z ichiga oladi:
 
-Batafsil ma’lumotlar: `docs/design-system.md`
+- modern UI/UX
+- mobile-first layout
+- rasmli, professional va ishonchli ko‘rinish
+- consistent color palette and typography
+- cards, button, form, modal, table, badge componentlar
+
+Batafsil ma’lumot: `docs/design-system.md`
+
+## Loyiha boshqaruv va sprint reja
+
+### Phase 1 — Core product
+- auth
+- profile
+- jobs list
+- apply flow
+- resume upload
+
+### Phase 2 — Communication
+- chat
+- notifications
+- message history
+- employer replies
+
+### Phase 3 — Admin and reporting
+- admin dashboard
+- moderation
+- statistics
+- user analytics
+
+### Phase 4 — Monetization
+- premium plans
+- featured jobs
+- recruiter tools
+
+### Phase 5 — Expansion
+- desktop client
+- enterprise features
+- AI search and matching
 
 ## Lokal ishlash
+
+### 1. Backend
 
 ```bash
 cp backend/.env.example backend/.env
@@ -154,23 +186,40 @@ docker compose up -d
 go run ./cmd/api
 ```
 
-## Key milestones
+### 2. Android
 
-- phase 1: auth + vacancies + applications
-- phase 2: resumes + uploads + chat
-- phase 3: admin panel + analytics
-- phase 4: desktop app + integrations
-- phase 5: monetization + premium features
+1. `android/` papkasini Android Studio’da oching.
+2. Gradle sync qiling.
+3. `app` konfiguratsiyasini ishga tushiring.
 
-## Ishga tushirish navbatma-navbat
+### 3. iOS
 
-1. Database va Redis ochiladi
-2. Backend ishlaydi
-3. Mobil app test qilinadi
-4. Admin panel boshqariladi
-5. Desktop client integratsiya qilinadi
-6. Monetization va analytics ichki bo‘limlar qo‘shiladi
+1. `ios/` papkasini Xcode’da oching.
+2. simulator yoki haqiqiy qurilma tanlang.
+3. ilovani boshlang.
+
+## Xavfsizlik
+
+- JWT access + refresh token
+- password hashing (bcrypt)
+- CORS konfiguratsiyasi
+- secrets environment variables orqali saqlanadi
+- `.env.example` orqali demo config taqdim etiladi
 
 ## Xulosa
 
-WorkHub monorepo loyihasi katta va kengaytiriladigan product bo‘lib, unda backend, mobil clientlar, desktop client, admin panel, hujjatlar va monetization modelini bir vaqtning o‘zida rivojlantirish mumkin. Bu loyiha startup uchun ham, mahsulot uchun ham muhim bazani tashkil qiladi.
+WorkHub — bu katta va kengaytiriladigan product bo‘lib, unga backend, mobil ilovalar, desktop client, admin panel va docs tizimlari birga birlashtirilgan. Loyiha startup sifatida boshlash uchun qulay, keyinchalik enterprise va premium hisobga o‘tish uchun ham mos.
+
+## Hujjatlar katalogi
+
+- `backend/README.md` — backend dokumentatsiyasi
+- `android/README.md` — Android app dokumentatsiyasi
+- `ios/README.md` — iOS app dokumentatsiyasi
+- `admin/README.md` — admin panel bo‘limi
+- `docs/README.md` — hujjatlar katalogi
+- `docs/integrations.md` — xizmatlar bilan integratsiya
+- `docs/monetization.md` — biznes model va monetizatsiya
+- `docs/design-system.md` — dizayn systemasi
+- `mobile-android/README.md` — mobil app skeleti
+- `windows-desktop/README.md` — desktop client skeleti
+

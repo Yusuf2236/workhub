@@ -1,32 +1,72 @@
 # WorkHub Android
 
-Bu papka Kotlin + Jetpack Compose bilan yaratilgan Android ilovasi mavjud.
+Android qismi Kotlin + Jetpack Compose bilan yaratilgan native mobil ilovadir. Build qilish uchun Android Studio va SDK kerak bo‘ladi.
 
-## Loyiha haqida
+## Android features
 
-Android ilova native tarzda qurilgan va quyidagi imkoniyatlarni o‘z ichiga oladi:
+- login and register flow
+- home/dashboard screen
+- vacancy list and detail screen
+- apply flow
+- profile and resume management
+- chat screen skeleton
+- navigation graph
 
-- login / auth ekran
-- home/dashboard ekran
-- nav graph va routing
-- backend bilan API orqali aloqa
-- Compose UI komponentlari
+## Recommended module structure
 
-## Ishga tushirish
+```text
+android/
+├── app/
+│   ├── src/main/java/com/workhub/app/
+│   ├── src/main/res/
+│   └── AndroidManifest.xml
+├── build.gradle.kts
+├── settings.gradle.kts
+├── gradle.properties
+├── README.md
+└── .gitignore
+```
 
-1. `android/` papkasini Android Studio da oching.
-2. Android SDK ni o‘rnating.
-3. Gradle sync qiling.
-4. `app` konfiguratsiyasini ishga tushiring.
-
-## Default API konfiguratsiyasi
-
-Lokal emulator uchun backend URL `http://10.0.2.2:8080` sifatida ishlatiladi.
-
-## Texnologiyalar
+## Technologies used
 
 - Kotlin
 - Jetpack Compose
-- AndroidX
-- Navigation Compose
 - Material3
+- Navigation Compose
+- Lifecycle
+- Coil for image loading
+
+## Local setup
+
+```bash
+cd android
+# Android Studio orqali oching
+# Gradle sync qiling
+# app konfiguratsiyasini ishga tushiring
+```
+
+## Default API config
+
+Lokal emulator uchun backend base URL:
+
+```text
+http://10.0.2.2:8080
+```
+
+## Suggested screens
+
+- SplashScreen
+- LoginScreen
+- RegisterScreen
+- HomeScreen
+- SearchScreen
+- VacancyDetailScreen
+- ApplyScreen
+- ResumeScreen
+- ChatScreen
+- ProfileScreen
+
+## Notes
+
+Bu qism hozircha skelet holatda bo‘lib, keyinchalik backend API bilan real data integratsiyasi qo‘shiladi.
+

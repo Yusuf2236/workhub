@@ -1,60 +1,76 @@
 # Monetization
 
-## 1. Core business model
+WorkHub platformasi uchun monetizatsiya modeli mavjud bo‘lib, u platformaning uzun muddatli barqaror rivojlanishini ta’minlaydi.
 
-WorkHub platformasi quyidagi biznes modelga asoslanadi:
+## Monetization goals
 
-- free job seeker access
-- employer subscription plans
-- premium job promotion
-- recruiter and talent search access
-- enterprise solutions
+- employerlarni to‘lovchi mijozlarga aylantirish
+- premium tarafdorlarga xizmat ko‘rsatish
+- user retention ni oshirish
+- AI/automation imkoniyatlarini maqsadli ishlatish
 
-## 2. Revenue streams
+## Revenue streams
 
-### Employer plans
-- basic employer plan
-- premium employer plan
-- enterprise plan
+### 1. Employer plans
+- Basic plan
+- Premium employer plan
+- Enterprise plan
 
-### Job promotion
-- featured vacancy listing
-- highlighted job cards
-- priority search rankings
+### 2. Featured job listings
+- vacancy highlighted in top slots
+- premium placement on search pages
+- promoted job cards
 
-### Candidate access
-- premium profile boost
-- resume visibility improvement
-- candidate outreach tools
+### 3. Candidate premium tools
+- resume boost
+- profile upgrade
+- priority visibility
 
-### Enterprise API / B2B
+### 4. Recruiter access
+- recruiter dashboard subscription
+- lead generation tools
+- automatic matching
+
+### 5. B2B / enterprise API
 - custom API access
-- HR dashboards
-- reporting and automation
+- HR integration
+- analytics suite for companies
 
-## 3. Suggested pricing model
+## Suggested pricing model
 
-- free plan: limited vacancy creation / free viewing
-- premium plan: cost per month
-- featured job: fixed fee per listing
-- recruiter access: monthly subscription
+### Free tier
+- limited vacancy creation
+- basic profile access
+- job browsing
 
-## 4. Growth strategy
+### Pro tier
+- monthly or annual subscription
+- advanced search and filters
+- promoted vacancies
 
-- startup for a local region
-- expand to cities and multiple companies
-- build trust through verified employers
-- add AI resume match and recommendations
+### Enterprise tier
+- custom contracts
+- dashboard analytics
+- reduced costs for multiple teams
 
-## 5. Metrics to track
+## Growth strategy
+
+- regional startup launch
+- focus on local employers and job seekers
+- verified employer accounts
+- social proof and trust signals
+- AI-based matching and recommendation
+
+## KPI metrics
 
 - MRR / ARR
 - conversion from free to paid
-- number of active employer accounts
-- vacancy applications converted
-- churn rate
-- premium feature adoption rate
+- active employer accounts
+- vacancy application completion rate
+- customer churn
+- premium feature adoption
 
-## 6. Notes
+## Notes
 
-Monetization loyihaning dastlabki bosqichida muhim maqsad bo‘lib, product value, employer ROI va user retentionni optimallashtirishdir.
+Monetization model product value, user retention va employer ROI asosida qurilishi kerak. Profit bo‘lmasa ham product value ko‘paytirilishi kerak.
+

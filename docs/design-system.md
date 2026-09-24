@@ -1,73 +1,82 @@
 # Design system
 
-## 1. Design principles
+WorkHub dizayn tizimi professionallik, ishonchlilik va mobile-first user experience asosida qurilgan bo‘lishi kerak.
 
-- clean and modern user experience
-- trustworthy professional interface
-- accessible and readable layout
-- mobile-first design
-- clear action paths for job seekers and employers
+## Design principles
 
-## 2. Color palette
+- clarity and simplicity
+- readability and accessibility
+- consistent spacing and hierarchy
+- professional, trustworthy feel
+- mobile-first but desktop compatible
 
-- primary: #1D4ED8
-- accent: #10B981
-- warning: #F59E0B
-- danger: #EF4444
-- background: #F8FAFC
-- text: #0F172A
+## Color palette
 
-## 3. Typography
+```text
+Primary: #1D4ED8
+Secondary: #0EA5E9
+Accent: #10B981
+Warning: #F59E0B
+Danger: #EF4444
+Background: #F8FAFC
+Text: #0F172A
+Muted: #64748B
+```
 
-- headings: Inter / Poppins
-- body copy: Inter
-- UI labels: 12-14px size
-- section titles: 18-24px
+## Typography
 
-## 4. Components
+- heading font: Inter / Poppins
+- body font: Inter
+- H1: 32-40px
+- H2: 24-28px
+- H3: 18-22px
+- body: 14-16px
+- label: 12-14px
+
+## Layout rules
+
+- 8px spacing system
+- cards with soft borders and shadows
+- clear CTA buttons
+- strong contrast on text
+- mobile cards and desktop tables support
+
+## Component library
 
 - buttons
+- input fields
+- search bar
+- filter chips
 - cards
-- forms
-- tables
-- filters
 - badges
-- tabs
+- tables
 - modals
+- status pills
+- tabs
+- dialogs
 
-## 5. Screen types
+## Screen structure
 
-- login / register
-- home dashboard
-- vacancy list
-- vacancy detail
-- application form
-- resume upload
-- chat screen
-- profile screen
-- admin dashboard
-- desktop analytics screen
+- Login / Register
+- Dashboard / Home
+- Job Search
+- Job Detail
+- Apply Form
+- Resume Upload
+- Chat
+- Profile
+- Admin Dashboard
+- Analytics View
 
-## 6. Design rules
+## UX goals
 
-- keep one primary CTA per screen
-- use consistent spacing (8px grid)
-- maintain strong color contrast
-- mobile and desktop interface must feel connected
-- support both light and dark themes in the future
+- apply flow must be fast and simple
+- job seekers must find jobs quickly
+- employers must post jobs easily
+- chat must be intuitive and lightweight
+- admin must access data quickly
 
-## 7. Example user flow
+## Brand feeling
 
-1. user signs in
-2. sees recommended jobs
-3. opens detail page
-4. applies for job
-5. receives status update
-6. chats with employer
+WorkHub brandi professional, zamonaviy, ishonchli va texnologik bo‘lishi kerak. U har bir platformada bir xil ko‘rinishga ega bo‘lishi kerak: mobile, web, desktop va admin.
 
-## 8. UX goals
-
-- easy job discovery
-- fast application process
-- transparent employer communication
-- minimal user friction

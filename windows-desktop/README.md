@@ -1,29 +1,34 @@
 # Windows desktop
 
-Bu katalog Windows desktop client uchun skelet va loyiha tavsifi mavjud.
+Windows desktop bo‘limi WorkHub platformasining desktop clientini ishlab chiqish uchun yakuniy skelet sifatida yaratilgan.
 
-## Maqsad
+## Desktop use cases
 
-- desktop foydalanuvchi uchun job monitoring
-- employer dashboard, reports, analytics
-- backend bilan real-time integratsiya
+- employer panel
+- recruiter dashboard
+- vacancy management
+- application review
+- analytics and reporting
+- notifications and status tracking
 
-## Suggested stack
+## Recommended stack
 
 - .NET 8
 - WPF or WinUI 3
 - MVVM pattern
 - REST API communication
 
-## Recommended features
+## Suggested features
 
-- login dashboard
-- vacancy management
+- login screen
+- dashboard
+- vacancies list
 - applications list
-- analytics and charts
+- analytics charts
+- export to CSV/PDF
 - notifications
-- export to CSV / PDF
 
 ## Notes
 
-Bu bo‘lim desktop dastur uchun boshlang‘ich arxitektura bo‘lib, keyinchalik backend bilan to‘liq integratsiya qilinadi.
+Bu qism desktop platformasi uchun boshlang‘ich arxitektura va feature list bo‘lib, keyinchalik admin panel va backend bilan chambarchas bog‘lanadi.
+

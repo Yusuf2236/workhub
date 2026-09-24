@@ -1,48 +1,88 @@
 # Integrations
 
+WorkHub loyihasida bir nechta tashqi xizmatlar va internal services bir-biriga ulanadi. Ularning barchasi platformaning ishlashi va scalability uchun muhim.
+
 ## 1. Database integration
 
-- PostgreSQL as primary database
-- Redis for caching and real-time support
-- SQL migration system for schema updates
+### PostgreSQL
+- primary database
+- users, vacancies, applications, resumes, chat messages
+- migration-based schema management
+
+### Redis
+- cache layer
+- rate limiting
+- session and token caching
+- real-time queue / notification support
 
 ## 2. File storage integration
 
-- MinIO for local dev environment
-- Cloudflare R2 for production CDN-like storage
-- upload service for resumes, avatars, company logos
+### MinIO
+- local development environment
+- resume PDFs, avatar images, company logo storage
+- S3-like API behavior
 
-## 3. Authentication integration
+### Cloudflare R2
+- production storage
+- faster, secure and scalable object storage
+- signed URLs for private files
 
-- JWT access + refresh tokens
-- optional Firebase Auth for mobile auth
+## 3. Authentication and identity
+
+- JWT access token + refresh token
 - password hashing via bcrypt
+- optional Firebase Auth integration
+- Google / Apple sign-in (future)
 
-## 4. Notification integration
+## 4. Push notifications
 
-- Firebase Cloud Messaging for push notifications
-- WebSocket chat for live communication
-- email / SMS service integration optional
+### Firebase Cloud Messaging
+- iOS and Android push notifications
+- application status updates
+- employer replies and messages
 
 ## 5. Payment integration
 
-- Stripe / Payme / Click integration
-- premium memberships
-- employer plan upgrades
+### Recommended gateways
+- Stripe
+- Payme
+- Click
 
-## 6. Analytics integration
+### Use cases
+- employer subscription plans
+- featured vacancy fee
+- premium resume or account upgrade
 
-- PostHog / Mixpanel / Google Analytics
-- crash reporting: Sentry
+## 6. Analytics and monitoring
+
+- Sentry for error tracking
+- PostHog / Mixpanel / Google Analytics for product analytics
+- logs and dashboard monitoring
 
 ## 7. Deployment integration
 
-- Docker Compose for development
-- Docker build for production
-- optional VPS / Railway / Render / AWS deployment
+### Development
+- Docker Compose
+- local PostgreSQL, Redis, MinIO
 
-## 8. Mobile app integration
+### Production
+- Docker build for backend
+- VPS / Railway / Render / AWS / Azure
+- environment variables and secret management
 
-- Android app calls backend endpoints
-- iOS app uses same API contracts
-- shared JSON schema for requests and responses
+## 8. API integration pattern
+
+- backend exposes REST API
+- mobile apps consume same endpoints
+- secure request/response schema
+- constant API versioning (`/api/v1/...`)
+
+## 9. Recommended architecture flow
+
+1. Mobile app sends request to backend
+2. Backend validates JWT credentials
+3. Data layer queries PostgreSQL
+4. Redis caches hot data
+5. Storage service saves uploaded files
+6. Push notifications sent to mobile clients
+

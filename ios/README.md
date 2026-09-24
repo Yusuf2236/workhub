@@ -1,30 +1,67 @@
 # WorkHub iOS
 
-Bu papka SwiftUI bilan yaratilgan iOS ilovasini o‘z ichiga oladi.
+iOS qismi SwiftUI bilan yaratilgan native mobil application bo‘lib, JobHub platformasi uchun barcha asosiy ekranlar va API integratsiyasi uchun skelet beradi.
 
-## Loyiha haqida
+## iOS features
 
-iOS qismi native tarzda, SwiftUI uslubida yaratilgan bo‘lib, quyidagi imkoniyatlarga ega:
+- login screen
+- home/dashboard screen
+- job list and application status
+- API config
+- lightweight MVVM structure
+- future push notification hook
 
-- login ekran
-- home/dashboard ekran
-- API bilan aloqa
-- backendga so‘rov jo‘natish
-- minimal MVVM skelet
+## Suggested project structure
 
-## Ishga tushirish
+```text
+ios/
+├── APIConfig.swift
+├── ContentView.swift
+├── HomeView.swift
+├── JobPlatformApp.swift
+├── LoginView.swift
+├── README.md
+├── WorkhubApp.swift
+└── Assets.xcassets/
+```
 
-1. `ios/` papkasini Xcode da oching.
-2. simulator yoki haqiqiy qurilma tanlang.
-3. ilovani ishga tushiring.
-
-## API konfiguratsiyasi
-
-Ilova `APIConfig` modeli orqali backend URL bilan ishlaydi.
-
-## Texnologiyalar
+## Technologies used
 
 - Swift
 - SwiftUI
-- URLSession
 - Foundation
+- URLSession
+
+## Local setup
+
+```bash
+cd ios
+# Xcode orqali oching
+# simulator yoki real device tanlang
+# ilovani ishga tushiring
+```
+
+## API configuration
+
+```swift
+struct APIConfig {
+    static let baseURL = URL(string: "http://localhost:8080")!
+    static let authPath = "/api/v1/auth"
+    static let vacancyPath = "/api/v1/vacancies"
+}
+```
+
+## Suggested screens
+
+- LoginView
+- HomeView
+- VacancyListView
+- VacancyDetailView
+- ResumeUploadView
+- ChatView
+- ProfileView
+
+## Notes
+
+Ilova initial skeleton darajasida bo‘lib, keyinchalik real backend bilan to‘liq integratsiya qilinadi.
+
