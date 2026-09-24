@@ -1,19 +1,20 @@
 # WorkHub backend
 
-This directory contains the Go API service for the WorkHub platform.
+Bu papka Go tili bilan yozilgan backend API xizmatini o‘z ichiga oladi. Loyiha job platformasi uchun yaratilgan bo‘lib, auth, vacancy, application, resume va chat bo‘limlarini o‘z ichiga oladi.
 
-## Features
+## Xususiyatlar
 
-- Health check endpoint
-- JWT-based auth middleware
-- User registration and login endpoints
-- Vacancy listing and creation APIs
-- Application and resume handler skeletons
-- WebSocket chat endpoint
-- PostgreSQL and Redis config wiring
-- Docker Compose support for local infrastructure
+- health check endpoint
+- JWT bazasidagi autentifikatsiya
+- foydalanuvchi ro‘yxatdan o‘tish va kirish endpointlari
+- vakansiya ro‘yxatini ko‘rish va yaratish
+- ariza topshirish endpointlari
+- resume endpointlari
+- WebSocket chat endpointi
+- PostgreSQL va Redis konfiguratsiyasi
+- Docker Compose bilan lokallashtrish
 
-## Run locally
+## Ishga tushirish
 
 ```bash
 cp .env.example .env
@@ -30,4 +31,27 @@ docker compose up --build
 
 ## Environment variables
 
-See `.env.example` for the full list.
+Barcha konfiguratsiya o‘zgaruvchilari `.env.example` faylida ko‘rsatilgan.
+
+## Backend arxitekturasi
+
+- `cmd/api` — serverni ishga tushirish nuqtasi
+- `internal/config` — konfiguratsiya va env loading
+- `internal/handlers` — HTTP handlerlar
+- `internal/middleware` — auth, CORS va logger
+- `internal/models` — data modellar
+- `pkg` — JWT, hash va response utilitlari
+- `migrations` — SQL migrationlar
+
+## Bo‘limlar
+
+- auth
+- user
+- vacancy
+- application
+- resume
+- chat
+
+## Maqsad
+
+Backend qismi frontend va mobil ilovalardan keladigan so‘rovlarga javob berish, ma’lumotlarni saqlash va xavfsiz autentifikatsiyani ta’minlash uchun xizmat qiladi.

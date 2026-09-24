@@ -1,11 +1,30 @@
 # WorkHub iOS
 
-This module contains the SwiftUI app for WorkHub.
+Bu papka SwiftUI bilan yaratilgan iOS ilovasini o‘z ichiga oladi.
 
-## Run locally
+## Loyiha haqida
 
-Open the `ios/` folder in Xcode, select a simulator, and run the app.
+iOS qismi native tarzda, SwiftUI uslubida yaratilgan bo‘lib, quyidagi imkoniyatlarga ega:
 
-## API configuration
+- login ekran
+- home/dashboard ekran
+- API bilan aloqa
+- backendga so‘rov jo‘natish
+- minimal MVVM skelet
 
-The app uses an `APIConfig` struct with a `baseURL` that points to the local backend server.
+## Ishga tushirish
+
+1. `ios/` papkasini Xcode da oching.
+2. simulator yoki haqiqiy qurilma tanlang.
+3. ilovani ishga tushiring.
+
+## API konfiguratsiyasi
+
+Ilova `APIConfig` modeli orqali backend URL bilan ishlaydi.
+
+## Texnologiyalar
+
+- Swift
+- SwiftUI
+- URLSession
+- Foundation
