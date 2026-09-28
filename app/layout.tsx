@@ -2,12 +2,16 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import {
   SITE_DESCRIPTION,
+  SITE_DESCRIPTION_EN,
+  SITE_DESCRIPTION_RU,
+  SITE_DESCRIPTION_UZ,
   SITE_KEYWORDS,
   SITE_LOCALE,
   SITE_NAME,
   SITE_OG_IMAGE,
   SITE_TITLE,
   SITE_URL,
+  keywordsMetaString,
 } from '../lib/seo';
 
 export const metadata: Metadata = {
@@ -23,7 +27,7 @@ export const metadata: Metadata = {
   creator: SITE_NAME,
   publisher: SITE_NAME,
   category: 'employment',
-  classification: 'Job Board',
+  classification: 'Job Board, Career, Vacancies, Resume, Recruitment',
   referrer: 'origin-when-cross-origin',
   formatDetection: {
     email: false,
@@ -34,12 +38,15 @@ export const metadata: Metadata = {
     canonical: '/',
     languages: {
       'uz-UZ': '/',
+      'ru-RU': '/',
+      'en-US': '/',
       'x-default': '/',
     },
   },
   openGraph: {
     type: 'website',
     locale: SITE_LOCALE,
+    alternateLocale: ['ru_RU', 'en_US'],
     url: SITE_URL,
     siteName: SITE_NAME,
     title: SITE_TITLE,
@@ -49,7 +56,7 @@ export const metadata: Metadata = {
         url: SITE_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: `${SITE_NAME} — ish va vakansiyalar platformasi`,
+        alt: `${SITE_NAME} — ish, vakansiya, rezyume, karyera | Work Zone`,
         type: 'image/png',
       },
     ],
@@ -87,7 +94,24 @@ export const metadata: Metadata = {
   other: {
     'geo.region': 'UZ',
     'geo.placename': 'Uzbekistan',
-    'content-language': 'uz',
+    'content-language': 'uz,ru,en',
+    subject:
+      'ish, vakansiya, job, work, career, resume, interview, recruitment, Work Zone',
+    topic: 'Jobs, Vacancies, Career, Resume, Interview, Hiring Uzbekistan',
+    abstract: SITE_DESCRIPTION,
+    summary: SITE_DESCRIPTION_UZ,
+    'og:description:uz': SITE_DESCRIPTION_UZ,
+    'og:description:ru': SITE_DESCRIPTION_RU,
+    'og:description:en': SITE_DESCRIPTION_EN,
+    keywords: keywordsMetaString(),
+    news_keywords: keywordsMetaString([
+      'ish topish',
+      'vakansiya',
+      'работа',
+      'вакансии',
+      'jobs',
+      'career',
+    ]),
   },
 };
 
@@ -107,10 +131,18 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: SITE_NAME,
   legalName: 'WZone',
+  alternateName: [
+    'Work Zone',
+    'WorkZone',
+    'Work Zona',
+    'WZone.uz',
+    'Ish zona',
+  ],
   url: SITE_URL,
   logo: `${SITE_URL}/icon`,
   description: SITE_DESCRIPTION,
   foundingDate: '2026',
+  knowsLanguage: ['uz', 'ru', 'en'],
   areaServed: {
     '@type': 'Country',
     name: 'Uzbekistan',
@@ -132,9 +164,10 @@ const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: SITE_NAME,
+  alternateName: ['Work Zone', 'WorkZone', 'Work Zona'],
   url: SITE_URL,
   description: SITE_DESCRIPTION,
-  inLanguage: 'uz-UZ',
+  inLanguage: ['uz-UZ', 'ru-RU', 'en-US'],
   publisher: {
     '@type': 'Organization',
     name: SITE_NAME,
@@ -152,10 +185,19 @@ const websiteJsonLd = {
 
 const jobBoardJsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'JobBoard',
+  '@type': 'WebApplication',
   name: SITE_NAME,
+  alternateName: ['Work Zone', 'Job Board Uzbekistan'],
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
   url: SITE_URL,
   description: SITE_DESCRIPTION,
+  inLanguage: ['uz', 'ru', 'en'],
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'UZS',
+  },
   provider: {
     '@type': 'Organization',
     name: SITE_NAME,
