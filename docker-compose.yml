@@ -1,26 +1,64 @@
-version: '3.8'
-
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wzone_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wzone
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-wzone_prod_change_me}
+      POSTGRES_DB: wzone
+    volumes:
+      - wzone_pgdata:/var/lib/postgresql/data
+    networks: [wzone]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wzone -d wzone"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    container_name: wzone_redis
+    restart: unless-stopped
+    networks: [wzone]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: wzone_backend
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
-      - "${PORT_BIND:-18090}:8080"
+      - "127.0.0.1:${PORT_BIND:-18090}:8080"
     environment:
-      - SERVER_PORT=8080
-      - SERVER_ENV=production
-      - DB_HOST=${DB_HOST:-postgres}
-      - DB_PORT=${DB_PORT:-5432}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - DB_NAME=${DB_NAME:-wzone}
-      - DB_SSLMODE=disable
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - JWT_SECRET=${JWT_SECRET:-wzone_secret_key_2026}
-      - ONEID_ENCRYPTION_KEY=${ONEID_ENCRYPTION_KEY:-wzone_aes_256_gcm_secret_key_2026}
+      PORT: "8080"
+      APP_ENV: production
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: wzone
+      DB_PASSWORD: ${DB_PASSWORD:-wzone_prod_change_me}
+      DB_NAME: wzone
+      DB_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-wzone_jwt_prod_secret_change_me_2026}
+      ONEID_ENCRYPTION_KEY: ${ONEID_ENCRYPTION_KEY:-wzone_aes_256_gcm_secret_key_2026!!}
+      CORS_ALLOWED_ORIGINS: https://wzone.uz,https://www.wzone.uz,https://admin.wzone.uz,https://api.wzone.uz
     volumes:
-      - ./uploads:/app/uploads
+      - wzone_uploads:/app/uploads
+    networks: [wzone]
+networks:
+  wzone:
+    name: wzone_net
+volumes:
+  wzone_pgdata:
+  wzone_uploads:
