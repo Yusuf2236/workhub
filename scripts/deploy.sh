@@ -23,6 +23,7 @@ case "$APP_NAME" in
       cd src
       docker network create wzone_net 2>/dev/null || true
       docker network connect wzone_net wzone_backend 2>/dev/null || true
+      if [[ -f .env.prod ]]; then set -a; . ./.env.prod; set +a; fi
       COMPOSE_PROJECT_NAME=wzone-web WEB_PORT="${WEB_PORT:-13000}" docker compose -p wzone-web up -d --build
     fi
     ;;
