@@ -257,6 +257,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
   const handleRealGoogleSignIn = () => {
     setError(null);
+    if (!GOOGLE_CLIENT_ID) {
+      setError("Google kirish sozlanmagan: NEXT_PUBLIC_GOOGLE_CLIENT_ID yo‘q. Google Cloud OAuth Client ID qo‘shing.");
+      return;
+    }
     setLoading(true);
     setGoogleLoading(true);
 
