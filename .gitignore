@@ -1,0 +1,16 @@
+# Binaries
+bin/
+/api
+*.exe
+*.test
+*.out
+
+# Uploads & local data
+uploads/
+tmp/
+*.log
+
+# Environment variables
+.env
+.env.*
+!.env.example
