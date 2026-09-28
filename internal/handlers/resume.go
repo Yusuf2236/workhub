@@ -80,6 +80,126 @@ func CreateResume(c *gin.Context) {
 	response.Success(c, http.StatusCreated, gin.H{"resume": payload})
 }
 
+func GetResume(c *gin.Context) {
+	id := c.Param("id")
+	if strings.TrimSpace(id) == "" {
+		response.Error(c, http.StatusBadRequest, "resume id is required")
+		return
+	}
+
+	userID, ok := c.Get("user_id")
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	if resumeRepo == nil {
+		response.Error(c, http.StatusServiceUnavailable, "resume storage unavailable")
+		return
+	}
+
+	item, err := resumeRepo.Get(id)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to load resume")
+		return
+	}
+	if item == nil || item.UserID != userID.(string) {
+		response.Error(c, http.StatusNotFound, "resume not found")
+		return
+	}
+
+	response.Success(c, http.StatusOK, gin.H{"resume": item})
+}
+
+func UpdateResume(c *gin.Context) {
+	id := c.Param("id")
+	if strings.TrimSpace(id) == "" {
+		response.Error(c, http.StatusBadRequest, "resume id is required")
+		return
+	}
+
+	userID, ok := c.Get("user_id")
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var payload models.Resume
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	if strings.TrimSpace(payload.Title) == "" {
+		response.Error(c, http.StatusBadRequest, "title is required")
+		return
+	}
+
+	if resumeRepo == nil {
+		response.Error(c, http.StatusServiceUnavailable, "resume storage unavailable")
+		return
+	}
+
+	existing, err := resumeRepo.Get(id)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to load resume")
+		return
+	}
+	if existing == nil || existing.UserID != userID.(string) {
+		response.Error(c, http.StatusNotFound, "resume not found")
+		return
+	}
+
+	existing.Title = strings.TrimSpace(payload.Title)
+	existing.Summary = payload.Summary
+	if payload.FileURL != "" {
+		existing.FileURL = payload.FileURL
+	}
+	existing.UpdatedAt = time.Now().UTC()
+
+	if err := resumeRepo.Update(*existing); err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to update resume")
+		return
+	}
+
+	response.Success(c, http.StatusOK, gin.H{"resume": existing})
+}
+
+func DeleteResume(c *gin.Context) {
+	id := c.Param("id")
+	if strings.TrimSpace(id) == "" {
+		response.Error(c, http.StatusBadRequest, "resume id is required")
+		return
+	}
+
+	userID, ok := c.Get("user_id")
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	if resumeRepo == nil {
+		response.Error(c, http.StatusServiceUnavailable, "resume storage unavailable")
+		return
+	}
+
+	existing, err := resumeRepo.Get(id)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to load resume")
+		return
+	}
+	if existing == nil || existing.UserID != userID.(string) {
+		response.Error(c, http.StatusNotFound, "resume not found")
+		return
+	}
+
+	if err := resumeRepo.Delete(id); err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to delete resume")
+		return
+	}
+
+	response.Success(c, http.StatusOK, gin.H{"deleted": true, "id": id})
+}
+
 func UploadResumeFile(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
