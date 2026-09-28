@@ -54,6 +54,9 @@ type Config struct {
 
 func Load() (*Config, error) {
     v := viper.New()
+    v.SetConfigFile(".env")
+    _ = v.ReadInConfig()
+
     v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
     v.AutomaticEnv()
 
@@ -63,21 +66,21 @@ func Load() (*Config, error) {
     v.SetDefault("JWT_ACCESS_TTL", "15m")
     v.SetDefault("JWT_REFRESH_TTL", "168h")
     v.SetDefault("DB_HOST", "localhost")
-    v.SetDefault("DB_PORT", 5432)
+    v.SetDefault("DB_PORT", 5433)
     v.SetDefault("DB_USER", "postgres")
     v.SetDefault("DB_PASSWORD", "postgres")
     v.SetDefault("DB_NAME", "workhub")
     v.SetDefault("DB_SSLMODE", "disable")
     v.SetDefault("REDIS_HOST", "localhost")
-    v.SetDefault("REDIS_PORT", 6379)
+    v.SetDefault("REDIS_PORT", 6380)
     v.SetDefault("REDIS_PASSWORD", "")
-    v.SetDefault("REDIS_URL", "redis://localhost:6379")
+    v.SetDefault("REDIS_URL", "redis://localhost:6380")
     v.SetDefault("STORAGE_PROVIDER", "minio")
-    v.SetDefault("STORAGE_ENDPOINT", "localhost:9000")
+    v.SetDefault("STORAGE_ENDPOINT", "localhost:9002")
     v.SetDefault("STORAGE_BUCKET", "workhub")
     v.SetDefault("STORAGE_ACCESS_KEY", "minioadmin")
     v.SetDefault("STORAGE_SECRET_KEY", "minioadmin")
-    v.SetDefault("STORAGE_PUBLIC_URL", "http://localhost:9000/workhub")
+    v.SetDefault("STORAGE_PUBLIC_URL", "http://localhost:9002/workhub")
     v.SetDefault("STORAGE_USE_SSL", false)
     v.SetDefault("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
 

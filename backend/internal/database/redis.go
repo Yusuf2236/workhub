@@ -4,7 +4,6 @@ import (
     "fmt"
     "github.com/go-redis/redis/v8"
 )
-)
 
 type RedisConfig struct {
     Host     string

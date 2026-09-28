@@ -13,7 +13,11 @@ dist/
 # Go
 backend/.env
 backend/bin/
+backend/api
 backend/*.out
+backend/uploads/
+uploads/
+web/tsconfig.tsbuildinfo
 
 # Android
 android/.gradle/
@@ -31,6 +35,10 @@ ios/*.xcodeproj/project.xcworkspace/
 ios/*.xcuserdata/
 ios/**/DerivedData/
 
-# Node / general
+# Node / Next.js / general
 node_modules/
 coverage/
+.next/
+web/.next/
+admin/.next/
+

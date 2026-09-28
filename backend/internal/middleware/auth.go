@@ -3,7 +3,6 @@ package middleware
 import (
     "net/http"
     "strings"
-    "time"
 
     "github.com/gin-gonic/gin"
     "github.com/Yusuf2236/workhub/backend/pkg/jwt"
@@ -29,3 +28,18 @@ func AuthRequired() gin.HandlerFunc {
         c.Next()
     }
 }
+
+func OptionalAuth() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        authHeader := c.GetHeader("Authorization")
+        if strings.HasPrefix(authHeader, "Bearer ") {
+            token := strings.TrimPrefix(authHeader, "Bearer ")
+            if claims, err := jwt.ParseToken(token); err == nil {
+                c.Set("user_id", claims.UserID)
+                c.Set("email", claims.Email)
+            }
+        }
+        c.Next()
+    }
+}
+

@@ -1,8 +1,12 @@
 package database
 
 import (
+    "database/sql"
     "fmt"
     "strings"
+    "time"
+
+    _ "github.com/lib/pq"
 )
 
 type PostgresConfig struct {
@@ -46,4 +50,21 @@ func (c PostgresConfig) DSN() string {
     }
 
     return strings.Join(parts, " ")
+}
+
+func NewPostgresDB(cfg PostgresConfig) (*sql.DB, error) {
+    db, err := sql.Open("postgres", cfg.DSN())
+    if err != nil {
+        return nil, fmt.Errorf("open postgres connection: %w", err)
+    }
+
+    db.SetMaxOpenConns(25)
+    db.SetMaxIdleConns(10)
+    db.SetConnMaxLifetime(5 * time.Minute)
+
+    if err := db.Ping(); err != nil {
+        return nil, fmt.Errorf("ping postgres: %w", err)
+    }
+
+    return db, nil
 }
