@@ -28,15 +28,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = `${vacancy.title} — ${vacancy.company}`;
   const description = truncateText(
-    vacancy.description ||
-      `${vacancy.title} lavozimi ${vacancy.company} kompaniyasida. Hudud: ${vacancy.location}. WZone orqali ariza qoldiring.`,
-    165
+    `${vacancy.title} | ${vacancy.company} | ${vacancy.location}. ` +
+      `Ish, vakansiya, job, работа, vacancy. ${vacancy.description || 'WZone orqali ariza qoldiring. Rezyume, suhbat, karyera.'}`,
+    200
   );
   const url = absoluteUrl(`/job/${vacancy.id}`);
 
   return {
     title,
     description,
+    keywords: [
+      vacancy.title,
+      vacancy.company,
+      vacancy.location,
+      vacancy.category,
+      'ish',
+      'vakansiya',
+      'job',
+      'work',
+      'работа',
+      'вакансия',
+      'rezyume',
+      'resume',
+      'suhbat',
+      'interview',
+      'karyera',
+      'career',
+      'WZone',
+      'Work Zone',
+    ].filter(Boolean) as string[],
     alternates: { canonical: url },
     openGraph: {
       type: 'article',
@@ -45,6 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       siteName: SITE_NAME,
       locale: 'uz_UZ',
+      alternateLocale: ['ru_RU', 'en_US'],
     },
     twitter: {
       card: 'summary_large_image',
