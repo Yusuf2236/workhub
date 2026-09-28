@@ -15,7 +15,6 @@ services:
       NEXT_PUBLIC_API_URL: https://api.wzone.uz/api/v1
     networks:
       - wzone_net
-
 networks:
   wzone_net:
     external: true
