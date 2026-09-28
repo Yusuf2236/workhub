@@ -1,0 +1,127 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+stages:
+  - validate
+  - build
+  - test
+  - deploy
+
+variables:
+  GO_VERSION: "1.23.6"
+  APP_NAME: backend
+  DEPLOY_PATH: /opt/wzone/backend
+
+guard:main-source:
+  stage: validate
+  image: alpine:3.20
+  script:
+    - |
+      if [ "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" = "main" ] \
+         && [ "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" != "develop" ]; then
+        echo "ERROR: main only accepts merges from develop"
+        exit 1
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+
+build:
+  stage: build
+  image: golang:${GO_VERSION}
+  script:
+    - go version
+    - |
+      if [ ! -f go.mod ]; then
+        echo "go.mod missing — scaffold pending"
+        mkdir -p bin && echo pending > bin/api
+        exit 0
+      fi
+    - go mod download
+    - CGO_ENABLED=0 go build -o bin/api ./cmd/api
+  artifacts:
+    paths:
+      - bin/api
+    expire_in: 1 day
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+test:
+  stage: test
+  image: golang:${GO_VERSION}
+  script:
+    - |
+      if [ ! -f go.mod ]; then
+        echo "skip tests — scaffold pending"
+        exit 0
+      fi
+    - go test ./...
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+.ssh_setup:
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache openssh-client rsync bash docker-cli
+    - eval $(ssh-agent -s)
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - |
+      set -e
+      KEYFILE="$HOME/.ssh/deploy_key"
+      if [ -n "$SSH_PRIVATE_KEY" ] && [ -f "$SSH_PRIVATE_KEY" ]; then
+        cp "$SSH_PRIVATE_KEY" "$KEYFILE"
+      else
+        printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > "$KEYFILE"
+      fi
+      chmod 600 "$KEYFILE"
+      ssh-keygen -y -f "$KEYFILE" >/dev/null
+      ssh-add "$KEYFILE"
+    - printf "Host *\n\tStrictHostKeyChecking accept-new\n" > ~/.ssh/config
+
+deploy:test:
+  extends: .ssh_setup
+  stage: deploy
+  environment:
+    name: test
+  variables:
+    SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY_TEST
+  script:
+    - |
+      set -e
+      rsync -az --delete --exclude '.git' --exclude '.gitlab-ci.yml' \
+        ./ "${DEPLOY_USER}@${DEPLOY_HOST_TEST}:${DEPLOY_PATH}/src/"
+      if [ -f scripts/deploy.sh ]; then
+        rsync -az scripts/deploy.sh "${DEPLOY_USER}@${DEPLOY_HOST_TEST}:${DEPLOY_PATH}/scripts/deploy.sh"
+      fi
+      ssh "${DEPLOY_USER}@${DEPLOY_HOST_TEST}" \
+        "chmod +x ${DEPLOY_PATH}/scripts/deploy.sh && cd ${DEPLOY_PATH} && bash scripts/deploy.sh test"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE != "merge_request_event" && $DEPLOY_HOST_TEST
+
+deploy:production:
+  extends: .ssh_setup
+  stage: deploy
+  environment:
+    name: production
+  variables:
+    SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY_PROD
+  when: manual
+  allow_failure: false
+  script:
+    - |
+      set -e
+      rsync -az --delete --exclude '.git' --exclude '.gitlab-ci.yml' \
+        ./ "${DEPLOY_USER}@${DEPLOY_HOST_PROD}:${DEPLOY_PATH}/src/"
+      if [ -f scripts/deploy.sh ]; then
+        rsync -az scripts/deploy.sh "${DEPLOY_USER}@${DEPLOY_HOST_PROD}:${DEPLOY_PATH}/scripts/deploy.sh"
+      fi
+      ssh "${DEPLOY_USER}@${DEPLOY_HOST_PROD}" \
+        "chmod +x ${DEPLOY_PATH}/scripts/deploy.sh && cd ${DEPLOY_PATH} && bash scripts/deploy.sh prod"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE != "merge_request_event" && $DEPLOY_HOST_PROD
