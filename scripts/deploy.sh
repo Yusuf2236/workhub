@@ -27,8 +27,8 @@ case "$APP_NAME" in
     if [[ -f src/docker-compose.yml ]] && can_docker; then
       (
         cd src
-        PORT_BIND="${PORT_BIND:-18080}" docker compose pull || true
-        PORT_BIND="${PORT_BIND:-18080}" docker compose up -d --build
+        PORT_BIND="${PORT_BIND:-18090}" docker compose pull || true
+        PORT_BIND="${PORT_BIND:-18090}" docker compose up -d --build
       )
     else
       echo "WARN: docker compose unavailable — write heartbeat"
