@@ -61,7 +61,8 @@ esac
 if command -v apachectl >/dev/null && systemctl is-active apache2 >/dev/null 2>&1; then
   sudo apachectl configtest && sudo systemctl reload apache2 || true
 elif command -v nginx >/dev/null && systemctl is-active nginx >/dev/null 2>&1; then
-  sudo nginx -t && sudo systemctl reload nginx || true
+  # sudoers allows exact paths only (/usr/sbin/nginx, /bin/systemctl reload nginx)
+  sudo /usr/sbin/nginx -t && sudo /bin/systemctl reload nginx || true
 fi
 
 echo "OK ${APP_NAME} deploy done"
