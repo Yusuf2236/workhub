@@ -24,8 +24,8 @@ export default function ResumesView({
   const t = translations[lang] || translations.uz;
 
   const formatTime = (dateStr?: string) => {
-    if (!dateStr) return 'Yaqinda';
-    return new Date(dateStr).toLocaleDateString('uz-UZ');
+    if (!dateStr) return t.recently;
+    return new Date(dateStr).toLocaleDateString(lang === 'ru' ? 'ru-RU' : lang === 'en' ? 'en-US' : 'uz-UZ');
   };
 
   return (
@@ -35,12 +35,12 @@ export default function ResumesView({
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
-              Nomzodlar va Rezyumelar bazasi
+              {t.resumesTitle}
             </h2>
             {onRefresh && (
               <button
                 onClick={onRefresh}
-                title="Nomzodlar bazasini yangilash"
+                title={t.refreshResumes}
                 className="p-1 rounded-lg text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition"
               >
                 <RefreshCw size={15} className={loading ? 'animate-spin text-blue-600' : ''} />
@@ -48,7 +48,7 @@ export default function ResumesView({
             )}
           </div>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            O‘zbekiston bo‘ylab malakali mutaxassislar va ularning tasdiqlangan rezyumelari (PostgreSQL real-time)
+            {t.resumesSub}
           </p>
         </div>
 
@@ -66,10 +66,10 @@ export default function ResumesView({
         <div className="p-12 text-center bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <Users size={44} className="mx-auto text-slate-400 mb-2" />
           <h4 className="text-base font-bold text-slate-900 dark:text-white">
-            Hozircha rezyumelar mavjud emas
+            {t.noResumes}
           </h4>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Birinchi bo‘lib rezyumeingizni joylashtiring va ish beruvchilar e’tiboriga tushing.
+            {t.noResumesSub}
           </p>
         </div>
       ) : (
@@ -98,7 +98,7 @@ export default function ResumesView({
                 </div>
 
                 <p className="text-xs text-slate-700 dark:text-slate-200 line-clamp-3 leading-relaxed mb-4 font-normal">
-                  {resume.summary || 'Tavsif berilmagan'}
+                  {resume.summary || t.noSummaryProvided}
                 </p>
               </div>
 
@@ -111,10 +111,10 @@ export default function ResumesView({
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     <Download size={14} />
-                    <span>Faylni ko‘rish (PDF)</span>
+                    <span>{t.viewFilePdf}</span>
                   </a>
                 ) : (
-                  <span className="text-[11px] font-semibold text-slate-400">Onlayn profil</span>
+                  <span className="text-[11px] font-semibold text-slate-400">{t.onlineProfile}</span>
                 )}
 
                 <button
@@ -122,7 +122,7 @@ export default function ResumesView({
                   className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-800 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
                 >
                   <MessageSquare size={14} />
-                  <span>Bog‘lanish</span>
+                  <span>{t.contactCandidate}</span>
                 </button>
               </div>
             </div>

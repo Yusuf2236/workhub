@@ -78,10 +78,10 @@ export default function LeftSidebar({
         <div className="mt-4 p-3.5 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/30 border border-indigo-200/60 dark:border-indigo-900/50">
           <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400 text-xs font-extrabold mb-1">
             <Sparkles size={15} />
-            <span>AI Rezyume tahlili</span>
+            <span>{t.aiResumeAnalysisTitle}</span>
           </div>
           <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight font-medium">
-            WZone AI sizning ko‘nikmalaringizga mos eng sara vakansiyalarni real-vaqtda tavsiya qiladi.
+            {t.aiResumeAnalysisDesc}
           </p>
         </div>
       </div>

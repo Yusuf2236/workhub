@@ -17,11 +17,13 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { generateVacancyWithAI, AIVacancyOutput } from '../lib/aiVacancyGenerator';
+import { Language, translations } from '../lib/translations';
 
 interface CreateVacancyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (newVacancy?: any) => void;
+  lang?: Language;
 }
 
 const SAMPLE_ROLES = [
@@ -49,7 +51,8 @@ const CATEGORIES_LIST = [
   'Servis & Xizmat ko‘rsatish',
 ];
 
-export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: CreateVacancyModalProps) {
+export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 'uz' }: CreateVacancyModalProps) {
+  const t = translations[lang || 'uz'];
   const [title, setTitle] = useState('');
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('Toshkent shahri');
@@ -223,7 +226,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: Creat
             <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200 font-medium">
               <Lightbulb size={16} className="text-amber-500 shrink-0" />
               <span>
-                Lavozim nomini kiriting va <strong>«AI bilan to‘ldirish»</strong> tugmasini bosing — barcha talablar, maosh va vazifalar avtomatik to‘ldiriladi!
+                Lavozim nomini kiriting va <strong>{t.fillWithAi}</strong> tugmasini bosing — barcha talablar, maosh va vazifalar avtomatik to‘ldiriladi!
               </span>
             </div>
           </div>
@@ -241,7 +244,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: Creat
                 className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition disabled:opacity-50"
               >
                 <Sparkles size={13} className={aiLoading ? 'animate-spin' : 'animate-pulse text-amber-300'} />
-                <span>{aiLoading ? 'AI tahlil qilmoqda...' : '✨ AI bilan to‘ldirish'}</span>
+                <span>{aiLoading ? '...' : `✨ ${t.fillWithAi}`}</span>
               </button>
             </div>
 
@@ -258,7 +261,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: Creat
 
             {/* Quick Sample Role Chips */}
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              <span className="text-[11px] text-slate-400 font-medium mr-1">Ommabop namunalar:</span>
+              <span className="text-[11px] text-slate-400 font-medium mr-1">{t.popularExamples}</span>
               {SAMPLE_ROLES.map((sample) => (
                 <button
                   key={sample}
@@ -316,10 +319,10 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: Creat
                 onChange={(e) => setJobType(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
               >
-                <option value="Full-time">Full-time (To‘liq)</option>
-                <option value="Part-time">Part-time (Qisman)</option>
-                <option value="Remote">Masofaviy (Remote)</option>
-                <option value="Gibrid">Gibrid</option>
+                <option value="Full-time">{t.jobTypeFullTime}</option>
+                <option value="Part-time">{t.jobTypePartTime}</option>
+                <option value="Remote">{t.jobTypeRemote}</option>
+                <option value="Gibrid">{t.jobTypeHybrid}</option>
               </select>
             </div>
 
@@ -332,10 +335,10 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: Creat
                 onChange={(e) => setExperience(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
               >
-                <option value="Talab etilmaydi">Talab etilmaydi</option>
-                <option value="1-3 yil">1-3 yil</option>
-                <option value="3-5 yil">3-5 yil</option>
-                <option value="5+ yil">5+ yil</option>
+                <option value="Talab etilmaydi">{t.expNotRequired}</option>
+                <option value="1-3 yil">{t.exp1to3}</option>
+                <option value="3-5 yil">{t.exp3to5}</option>
+                <option value="5+ yil">{t.exp5plus}</option>
               </select>
             </div>
 
@@ -375,7 +378,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: Creat
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Ko‘nikmalar va teglari (vergul bilan)
               </label>
-              <span className="text-[10px] text-slate-400">Qidiruvda mos vakansiyalar chiqishi uchun</span>
+              <span className="text-[10px] text-slate-400">{t.searchRelevanceHint}</span>
             </div>
             <input
               type="text"
@@ -387,7 +390,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: Creat
 
             {suggestedTags.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                <span className="text-[11px] text-slate-400 font-medium">Tavsiya etilgan teglar:</span>
+                <span className="text-[11px] text-slate-400 font-medium">{t.suggestedTags}</span>
                 {suggestedTags.map((st) => (
                   <button
                     key={st}
@@ -415,7 +418,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: Creat
                 className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 <Sparkles size={12} />
-                <span>AI matnini qayta yaratish</span>
+                <span>{t.regenerateAi}</span>
               </button>
             </div>
             <textarea
@@ -441,11 +444,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess }: Creat
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400">O‘rtacha bozor maoshi: </span>
+                  <span className="text-slate-500 dark:text-slate-400">{t.avgMarketSalary} </span>
                   <strong className="text-slate-800 dark:text-slate-200">{aiInsights.averageSalary}</strong>
                 </div>
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400">O‘xshash vakansiyalar: </span>
+                  <span className="text-slate-500 dark:text-slate-400">{t.similarVacancies} </span>
                   <span className="text-slate-700 dark:text-slate-300 font-medium">
                     {aiInsights.similarRoles.slice(0, 3).join(', ')}
                   </span>

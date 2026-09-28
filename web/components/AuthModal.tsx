@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, ShieldCheck, Mail, Lock, User, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { api, setAuthToken, setCurrentUser } from '../lib/api';
 import OneIDPortalModal from './OneIDPortalModal';
+import { Language, translations } from '../lib/translations';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
@@ -41,9 +42,11 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (user: any) => void;
+  lang?: Language;
 }
 
-export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: AuthModalProps) {
+  const t = translations[lang] || translations.uz;
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -399,10 +402,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         <div className="p-6">
           <div className="text-center mb-6">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-              {tab === 'login' ? 'Tizimga kirish' : 'Ro‘yxatdan o‘tish'}
+              {tab === 'login'
+                ? (lang === 'ru' ? 'Вход в систему' : lang === 'en' ? 'Sign In to Account' : 'Tizimga kirish')
+                : (lang === 'ru' ? 'Регистрация' : lang === 'en' ? 'Create Account' : 'Ro‘yxatdan o‘tish')}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              WZone imkoniyatlaridan to‘liq foydalanish uchun hisobingizga kiring
+              {lang === 'ru'
+                ? 'Войдите в аккаунт, чтобы получить доступ ко всем возможностям WZone'
+                : lang === 'en'
+                ? 'Sign in to access all features of WZone'
+                : 'WZone imkoniyatlaridan to‘liq foydalanish uchun hisobingizga kiring'}
             </p>
           </div>
 
@@ -428,13 +437,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 </div>
                 <div className="text-left">
                   <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm">
-                    <span>OneID orqali kirish</span>
+                    <span>{lang === 'ru' ? 'Войти через OneID' : lang === 'en' ? 'Sign in with OneID' : 'OneID orqali kirish'}</span>
                     <span className="text-[10px] px-1.5 py-0.5 bg-blue-600/10 dark:bg-blue-500/20 text-[#0047BA] dark:text-blue-300 font-bold rounded">
                       id.egov.uz
                     </span>
                   </div>
                   <p className="text-[11px] text-blue-800/80 dark:text-blue-300/80 font-normal">
-                    Yagona darcha (SSO) davlat xizmatlari orqali kirish
+                    {lang === 'ru' ? 'Единый портал идентификации электронного правительства' : lang === 'en' ? 'Sovereign single sign-on via e-government ID' : 'Yagona darcha (SSO) davlat xizmatlari orqali kirish'}
                   </p>
                 </div>
               </div>
@@ -450,7 +459,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             >
               <GoogleIcon />
               <span>
-                {googleLoading ? 'Google hisobi tasdiqlanmoqda...' : 'Google orqali davom etish'}
+                {googleLoading
+                  ? (lang === 'ru' ? 'Проверка аккаунта Google...' : lang === 'en' ? 'Verifying Google Account...' : 'Google hisobi tasdiqlanmoqda...')
+                  : (lang === 'ru' ? 'Продолжить с Google' : lang === 'en' ? 'Continue with Google' : 'Google orqali davom etish')}
               </span>
             </button>
           </div>
@@ -459,7 +470,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           <div className="relative flex items-center justify-center mb-6">
             <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
             <span className="bg-white dark:bg-slate-900 px-3 text-xs text-slate-400 uppercase tracking-wider">
-              yoki email orqali
+              {lang === 'ru' ? 'или через email' : lang === 'en' ? 'or continue with email' : 'yoki email orqali'}
             </span>
             <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
           </div>
@@ -475,7 +486,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
               }`}
             >
-              Kirish
+              {t.loginBtn}
             </button>
             <button
               type="button"
@@ -486,7 +497,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
               }`}
             >
-              Ro‘yxatdan o‘tish
+              {lang === 'ru' ? 'Регистрация' : lang === 'en' ? 'Register' : 'Ro‘yxatdan o‘tish'}
             </button>
           </div>
 
@@ -495,7 +506,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             {tab === 'register' && (
               <div>
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                  To‘liq ismingiz
+                  {t.fullName}
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-2.5 text-slate-400" size={16} />
@@ -513,7 +524,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Elektron pochta
+                {lang === 'ru' ? 'Электронная почта' : lang === 'en' ? 'Email Address' : 'Elektron pochta'}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-2.5 text-slate-400" size={16} />
@@ -530,7 +541,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Maxfiy parol
+                {lang === 'ru' ? 'Пароль' : lang === 'en' ? 'Password' : 'Maxfiy parol'}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 text-slate-400" size={16} />
@@ -550,7 +561,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               disabled={loading}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-medium text-sm rounded-xl shadow-lg shadow-blue-500/25 transition disabled:opacity-50"
             >
-              {loading ? 'Kutilmoqda...' : tab === 'login' ? 'Tizimga kirish' : 'Hisob yaratish'}
+              {loading
+                ? (lang === 'ru' ? 'Подождите...' : lang === 'en' ? 'Please wait...' : 'Kutilmoqda...')
+                : tab === 'login'
+                ? t.loginBtn
+                : (lang === 'ru' ? 'Создать аккаунт' : lang === 'en' ? 'Create Account' : 'Hisob yaratish')}
             </button>
           </form>
         </div>
@@ -564,6 +579,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           onSuccess(u);
           onClose();
         }}
+        lang={lang}
       />
     </div>
   );

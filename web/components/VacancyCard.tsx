@@ -28,15 +28,21 @@ export default function VacancyCard({
     : [];
 
   const formatRelativeTime = (dateStr?: string) => {
-    if (!dateStr) return 'Yaqinda';
+    if (!dateStr) return t.recently;
     const date = new Date(dateStr);
     const now = new Date();
     const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    if (diffHours < 1) return 'Hozirgina';
-    if (diffHours < 24) return `${diffHours} soat oldin`;
+    if (diffHours < 1) {
+      return lang === 'ru' ? 'Только что' : lang === 'en' ? 'Just now' : 'Hozirgina';
+    }
+    if (diffHours < 24) {
+      return lang === 'ru' ? `${diffHours} ч назад` : lang === 'en' ? `${diffHours}h ago` : `${diffHours} soat oldin`;
+    }
     const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) return 'Kecha';
-    return `${diffDays} kun oldin`;
+    if (diffDays === 1) {
+      return lang === 'ru' ? 'Вчера' : lang === 'en' ? 'Yesterday' : 'Kecha';
+    }
+    return lang === 'ru' ? `${diffDays} дн назад` : lang === 'en' ? `${diffDays}d ago` : `${diffDays} kun oldin`;
   };
 
   return (
@@ -93,7 +99,7 @@ export default function VacancyCard({
               ? 'bg-blue-50 dark:bg-blue-950/80 border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
-          title="Saqlash"
+          title={t.navSaved}
         >
           <Bookmark size={18} className={isSaved ? 'fill-current' : ''} />
         </button>
@@ -168,7 +174,7 @@ export default function VacancyCard({
                 onSelect(vacancy);
               }}
               className="text-[11px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 hover:underline mr-1"
-              title="Fikr-mulohazalar"
+              title={t.commentsTitle}
             >
               <MessageCircle size={13} />
               <span>{vacancy.comments_count}</span>

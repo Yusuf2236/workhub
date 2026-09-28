@@ -3,12 +3,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Send, MessageSquare, User, Radio, CheckCircle2, RefreshCw, Wifi } from 'lucide-react';
 import { api } from '../lib/api';
+import { Language, translations } from '../lib/translations';
 
 interface ChatModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: any;
   targetUser?: { id?: string; name?: string; role?: string };
+  lang?: Language;
 }
 
 interface ChatMessage {
@@ -47,7 +49,9 @@ export default function ChatModal({
   onClose,
   currentUser,
   targetUser,
+  lang = 'uz',
 }: ChatModalProps) {
+  const t = translations[lang] || translations.uz;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [guestName, setGuestName] = useState('');
@@ -286,14 +290,18 @@ export default function ChatModal({
             </div>
             <div>
               <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
-                <span>{targetUser?.name || 'WZone Jonli Muloqot'}</span>
+                <span>{targetUser?.name || t.liveChat}</span>
                 <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
                   <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                  {connected ? 'Onlayn' : 'Avto-rejim'}
+                  {connected
+                    ? (lang === 'ru' ? 'Онлайн' : lang === 'en' ? 'Online' : 'Onlayn')
+                    : (lang === 'ru' ? 'Авто-режим' : lang === 'en' ? 'Auto-mode' : 'Avto-rejim')}
                 </span>
               </h3>
               <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                {targetUser?.role ? `${targetUser.role} bilan suhbat` : 'Barcha foydalanuvchilar bilan muloqot'}
+                {targetUser?.role
+                  ? (lang === 'ru' ? `Беседа с ${targetUser.role}` : lang === 'en' ? `Chat with ${targetUser.role}` : `${targetUser.role} bilan suhbat`)
+                  : (lang === 'ru' ? 'Общий чат сообщества' : lang === 'en' ? 'Community open chat' : 'Barcha foydalanuvchilar bilan muloqot')}
               </p>
             </div>
           </div>
@@ -301,7 +309,7 @@ export default function ChatModal({
           <div className="flex items-center gap-1">
             <button
               onClick={() => fetchMessagesViaHTTP(roomId)}
-              title="Yangilash"
+              title={lang === 'ru' ? 'Обновить' : lang === 'en' ? 'Refresh' : 'Yangilash'}
               className="p-1.5 text-slate-400 hover:text-blue-600 transition rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <RefreshCw size={14} className={loadingHistory ? 'animate-spin text-blue-600' : ''} />
@@ -320,7 +328,7 @@ export default function ChatModal({
           {loadingHistory && messages.length === 0 ? (
             <div className="h-full flex items-center justify-center text-xs text-slate-400 gap-2">
               <RefreshCw size={15} className="animate-spin text-blue-600" />
-              <span>Xabarlar yuklanmoqda...</span>
+              <span>{lang === 'ru' ? 'Загрузка сообщений...' : lang === 'en' ? 'Loading messages...' : 'Xabarlar yuklanmoqda...'}</span>
             </div>
           ) : messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
@@ -328,10 +336,14 @@ export default function ChatModal({
                 <MessageSquare size={22} />
               </div>
               <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">
-                Muloqotni boshlang
+                {lang === 'ru' ? 'Начните диалог' : lang === 'en' ? 'Start conversation' : 'Muloqotni boshlang'}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
-                Ushbu suhbat xavfsiz va real-vaqt rejimida amalga oshiriladi.
+                {lang === 'ru'
+                  ? 'Этот диалог защищен и работает в режиме реального времени.'
+                  : lang === 'en'
+                  ? 'This conversation is secure and runs in real time.'
+                  : 'Ushbu suhbat xavfsiz va real-vaqt rejimida amalga oshiriladi.'}
               </p>
             </div>
           ) : (
@@ -390,10 +402,12 @@ export default function ChatModal({
         {/* Guest Input Notice if not logged in */}
         {!currentUser && (
           <div className="px-4 py-2 bg-slate-100/80 dark:bg-slate-800/80 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-500">Ismingiz:</span>
+            <span className="text-[11px] font-bold text-slate-500">
+              {lang === 'ru' ? 'Ваше имя:' : lang === 'en' ? 'Your name:' : 'Ismingiz:'}
+            </span>
             <input
               type="text"
-              placeholder="Mehmon..."
+              placeholder={lang === 'ru' ? 'Гость...' : lang === 'en' ? 'Guest...' : 'Mehmon...'}
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
               className="px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 flex-1"
@@ -408,7 +422,7 @@ export default function ChatModal({
         >
           <input
             type="text"
-            placeholder="Xabaringizni yozing..."
+            placeholder={lang === 'ru' ? 'Напишите ваше сообщение...' : lang === 'en' ? 'Type your message...' : 'Xabaringizni yozing...'}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             className="flex-1 px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -418,7 +432,7 @@ export default function ChatModal({
             disabled={!inputMessage.trim() || isSending}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-bold text-xs transition disabled:opacity-50 shadow-md shadow-blue-500/25 flex items-center gap-1.5 cursor-pointer"
           >
-            <span>{isSending ? '...' : 'Yuborish'}</span>
+            <span>{isSending ? '...' : (lang === 'ru' ? 'Отправить' : lang === 'en' ? 'Send' : 'Yuborish')}</span>
             <Send size={15} />
           </button>
         </form>

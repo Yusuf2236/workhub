@@ -94,7 +94,7 @@ export default function RightSidebar({ vacanciesCount, lang = 'uz' }: RightSideb
             <span className="text-slate-700 dark:text-slate-300 font-medium flex items-center gap-1.5">
               <ShieldCheck size={15} className="text-blue-500" /> {t.verifiedCompanies}
             </span>
-            <span className="font-bold text-slate-800 dark:text-slate-200">100% Tasdiqlangan</span>
+            <span className="font-bold text-slate-800 dark:text-slate-200">{t.verifiedPercent}</span>
           </div>
         </div>
       </div>

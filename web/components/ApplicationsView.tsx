@@ -61,7 +61,7 @@ export default function ApplicationsView({
           </p>
         </div>
         <span className="text-xs font-bold px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-          Jami: {applications.length} ta
+          {applications.length} {t.totalCountSuffix}
         </span>
       </div>
 
@@ -72,7 +72,7 @@ export default function ApplicationsView({
             {t.noApplications}
           </h4>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Bosh sahifadagi vakansiyalarni ko‘rib chiqing va 1 klikda ariza jo‘nating.
+            {t.noApplicationsSub}
           </p>
         </div>
       ) : (
@@ -88,15 +88,15 @@ export default function ApplicationsView({
                 </div>
                 <div>
                   <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
-                    {app.vacancy_title || 'Vakansiya arizasi'}
+                    {app.vacancy_title || t.defaultAppTitle}
                   </h4>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
                     <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-bold">
                       <Clock size={13} />
-                      {new Date(app.created_at || Date.now()).toLocaleDateString('uz-UZ')}
+                      {new Date(app.created_at || Date.now()).toLocaleDateString(lang === 'ru' ? 'ru-RU' : lang === 'en' ? 'en-US' : 'uz-UZ')}
                     </span>
                     <span>•</span>
-                    <span className="text-slate-600 dark:text-slate-300">Ariza ID: {app.id?.slice(0, 8)}</span>
+                    <span className="text-slate-600 dark:text-slate-300">{t.applicationIdLabel}: {app.id?.slice(0, 8)}</span>
                   </div>
                 </div>
               </div>

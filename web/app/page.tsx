@@ -274,7 +274,7 @@ export default function WZonePortal() {
     }
     restoreSession();
 
-    // Listen for OneID postMessage from popups
+    // Listen for OneID and language sync postMessage from popups or parent iframe
     const handleOneIDMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'WORKHUB_ONEID_AUTH_CALLBACK' && event.data?.code) {
         try {
@@ -292,6 +292,18 @@ export default function WZonePortal() {
             setTimeout(() => setOneidNotice(null), 5000);
           }
         } catch (e) {}
+      }
+      if (event.data?.type === 'WORKHUB_CHANGE_LANG' && event.data?.lang) {
+        const incoming = event.data.lang;
+        if (incoming === 'uz' || incoming === 'ru' || incoming === 'en') {
+          setLang(incoming);
+          try {
+            localStorage.setItem('workhub_lang', incoming);
+          } catch (_) {}
+        }
+      }
+      if (event.data?.type === 'WORKHUB_SET_TAB' && event.data?.tab) {
+        setCurrentTab(event.data.tab);
       }
     };
     window.addEventListener('message', handleOneIDMessage);
@@ -317,7 +329,12 @@ export default function WZonePortal() {
 
   const handleLanguageChange = (newLang: Language) => {
     setLang(newLang);
-    localStorage.setItem('workhub_lang', newLang);
+    try {
+      localStorage.setItem('workhub_lang', newLang);
+      if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'WORKHUB_LANG_CHANGED', lang: newLang }, '*');
+      }
+    } catch (_) {}
   };
 
   const toggleDarkMode = () => {
@@ -550,7 +567,7 @@ export default function WZonePortal() {
       )}
 
       {/* Main 3-Column Layout */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6 pb-24 lg:pb-6">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6 pb-32 lg:pb-6">
         {/* Left Navigation Sidebar */}
         <LeftSidebar
           currentTab={currentTab}
@@ -637,26 +654,26 @@ export default function WZonePortal() {
             <div className="p-14 text-center bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
               <Bookmark size={44} className="mx-auto text-slate-400" />
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                Saqlangan vakansiyalar yo‘q
+                {t.noSavedVacanciesTitle}
               </h3>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                Sizga ma’qul kelgan vakansiya kartasidagi belgi (bookmark) ustiga bosib saqlab qo‘yishingiz mumkin.
+                {t.noSavedVacanciesDesc}
               </p>
               <button
                 onClick={() => setCurrentTab('feed')}
                 className="mt-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20"
               >
-                Vakansiyalarni ko‘rish
+                {t.viewVacanciesBtn}
               </button>
             </div>
           ) : currentTab === 'my-vacancies' && (!user || displayedVacancies().length === 0) ? (
             <div className="p-14 text-center bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
               <Briefcase size={44} className="mx-auto text-slate-400" />
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                Siz joylashtirgan e’lonlar mavjud emas
+                {t.noMyVacanciesTitle}
               </h3>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                Kompaniyangiz uchun yangi bo‘sh ish o‘rni yaratish uchun quyidagi tugmani bosing.
+                {t.noMyVacanciesDesc}
               </p>
               <button
                 onClick={() => {
@@ -665,7 +682,7 @@ export default function WZonePortal() {
                 }}
                 className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition"
               >
-                + Vakansiya e’lon qilish
+                {t.postVacancyBtn}
               </button>
             </div>
           ) : currentTab === 'feed' ? (
@@ -706,7 +723,7 @@ export default function WZonePortal() {
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold'
                       }`}
                     >
-                      {cat}
+                      {t.categories?.[cat] || cat}
                     </button>
                   ))}
                 </div>
@@ -725,7 +742,7 @@ export default function WZonePortal() {
                       >
                         {REGIONS.map((loc) => (
                           <option key={loc} value={loc}>
-                            {loc}
+                            {t.regions?.[loc] || loc}
                           </option>
                         ))}
                       </select>
@@ -742,7 +759,7 @@ export default function WZonePortal() {
                       >
                         {JOB_TYPES.map((jt) => (
                           <option key={jt} value={jt}>
-                            {jt}
+                            {t.jobTypes?.[jt] || jt}
                           </option>
                         ))}
                       </select>
@@ -786,10 +803,10 @@ export default function WZonePortal() {
                 <div className="p-14 text-center bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
                   <Briefcase size={40} className="mx-auto text-slate-400" />
                   <h4 className="font-extrabold text-base text-slate-900 dark:text-white">
-                    Ushbu hudud yoki mezon bo‘yicha vakansiyalar topilmadi
+                    {t.noVacanciesFound}
                   </h4>
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    Boshqa viloyatni tanlang yoki qidiruv so‘zini tozalang.
+                    {t.noVacanciesSub}
                   </p>
                 </div>
               ) : (
@@ -812,12 +829,12 @@ export default function WZonePortal() {
                       {loadingMore && (
                         <div className="flex items-center justify-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 py-3 bg-white/60 dark:bg-slate-900/60 rounded-2xl border border-slate-200/60 dark:border-slate-800">
                           <RefreshCw size={15} className="animate-spin text-blue-600" />
-                          <span>Yangi vakansiyalar yuklanmoqda...</span>
+                          <span>{t.loadingMoreNotice}</span>
                         </div>
                       )}
                       {!hasMore && vacancies.length > 0 && (
                         <p className="text-[11px] font-bold text-slate-400 py-2">
-                          ✓ Barcha vakansiyalar ko‘rsatildi ({totalVacancies || vacancies.length} ta)
+                          ✓ {t.allLoadedNotice} ({totalVacancies || vacancies.length} {t.vacanciesCount})
                         </p>
                       )}
                     </div>
@@ -833,7 +850,7 @@ export default function WZonePortal() {
       </div>
 
       {/* Mobile Responsive Bottom Navigation Bar (Visible on screens < 1024px) */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-40 px-2 py-2 flex items-center justify-around shadow-2xl safe-area-bottom transition-colors">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-40 px-3 pt-2.5 pb-6 flex items-center justify-around shadow-2xl safe-area-bottom transition-colors">
         <button
           onClick={() => {
             setCurrentTab('feed');
@@ -934,6 +951,7 @@ export default function WZonePortal() {
           setCurrentTab('profile');
           fetchUserData();
         }}
+        lang={lang}
       />
 
       <VacancyDetailModal
@@ -944,6 +962,7 @@ export default function WZonePortal() {
           handleApplyClick(v);
         }}
         currentUser={user}
+        lang={lang}
       />
 
       <ApplyModal
@@ -956,6 +975,7 @@ export default function WZonePortal() {
         onSuccess={() => {
           fetchUserData();
         }}
+        lang={lang}
       />
 
       <CreateVacancyModal
@@ -969,6 +989,7 @@ export default function WZonePortal() {
           }
           fetchVacancies();
         }}
+        lang={lang}
       />
 
       <CreateResumeModal
@@ -979,6 +1000,7 @@ export default function WZonePortal() {
           setCurrentTab('resumes');
         }}
         currentUser={user}
+        lang={lang}
       />
 
       <ChatModal
@@ -989,6 +1011,7 @@ export default function WZonePortal() {
         }}
         currentUser={user}
         targetUser={chatTargetUser}
+        lang={lang}
       />
 
       <NotificationsModal
@@ -996,6 +1019,7 @@ export default function WZonePortal() {
         onClose={() => setNotificationsModalOpen(false)}
         notifications={notifications}
         onRefresh={fetchUserData}
+        lang={lang}
       />
     </div>
   );

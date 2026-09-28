@@ -17,12 +17,14 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { api } from '../lib/api';
+import { Language, translations } from '../lib/translations';
 
 interface VacancyDetailModalProps {
   vacancy: any | null;
   onClose: () => void;
   onApply: (v: any) => void;
   currentUser?: any;
+  lang?: Language;
 }
 
 export default function VacancyDetailModal({
@@ -30,7 +32,9 @@ export default function VacancyDetailModal({
   onClose,
   onApply,
   currentUser,
+  lang = 'uz',
 }: VacancyDetailModalProps) {
+  const t = translations[lang] || translations.uz;
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
   const [guestName, setGuestName] = useState('');
@@ -160,34 +164,34 @@ export default function VacancyDetailModal({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
               <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                <DollarSign size={13} /> Maosh
+                <DollarSign size={13} /> {lang === 'ru' ? 'Зарплата' : lang === 'en' ? 'Salary' : 'Maosh'}
               </span>
               <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                {vacancy.salary || 'Kelishilgan'}
+                {vacancy.salary || t.salaryNegotiable}
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
               <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                <MapPin size={13} /> Joylashuv
+                <MapPin size={13} /> {lang === 'ru' ? 'Локация' : lang === 'en' ? 'Location' : 'Joylashuv'}
               </span>
               <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-1 truncate">
-                {vacancy.location || 'O‘zbekiston'}
+                {t.regions[vacancy.location] || vacancy.location || (lang === 'ru' ? 'Узбекистан' : lang === 'en' ? 'Uzbekistan' : 'O‘zbekiston')}
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
               <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                <Briefcase size={13} /> Bandlik
+                <Briefcase size={13} /> {lang === 'ru' ? 'Занятость' : lang === 'en' ? 'Job Type' : 'Bandlik'}
               </span>
               <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-1">
-                {vacancy.job_type || 'Full-time'}
+                {t.jobTypes[vacancy.job_type] || vacancy.job_type || 'Full-time'}
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
               <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                <Calendar size={13} /> Tajriba
+                <Calendar size={13} /> {lang === 'ru' ? 'Опыт' : lang === 'en' ? 'Experience' : 'Tajriba'}
               </span>
               <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-1">
                 {vacancy.experience || '1-3 yil'}
@@ -198,10 +202,10 @@ export default function VacancyDetailModal({
           {/* Description */}
           <div>
             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-2">
-              Vakansiya tavsifi
+              {lang === 'ru' ? 'Описание вакансии' : lang === 'en' ? 'Job Description' : 'Vakansiya tavsifi'}
             </h4>
             <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line bg-slate-50/70 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800">
-              {vacancy.description || 'Vakansiya bo‘yicha batafsil ma‘lumot keltirilmagan.'}
+              {vacancy.description || (lang === 'ru' ? 'Подробная информация о вакансии не указана.' : lang === 'en' ? 'No detailed description provided.' : 'Vakansiya bo‘yicha batafsil ma‘lumot keltirilmagan.')}
             </div>
           </div>
 
@@ -209,7 +213,7 @@ export default function VacancyDetailModal({
           {tagsList.length > 0 && (
             <div>
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-2">
-                Talab etiladigan ko‘nikmalar
+                {t.skillsLabel}
               </h4>
               <div className="flex flex-wrap gap-2">
                 {tagsList.map((tag: string, idx: number) => (
@@ -229,16 +233,16 @@ export default function VacancyDetailModal({
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                 <MessageCircle size={18} className="text-blue-600" />
-                <span>Savollar va Fikr-mulohazalar ({comments.length})</span>
+                <span>{lang === 'ru' ? 'Вопросы и обсуждение' : lang === 'en' ? 'Questions & Discussion' : 'Savollar va Fikr-mulohazalar'} ({comments.length})</span>
               </h4>
-              <span className="text-[11px] text-slate-400 font-semibold">Jonli muhokama</span>
+              <span className="text-[11px] text-slate-400 font-semibold">{lang === 'ru' ? 'Живое обсуждение' : lang === 'en' ? 'Live discussion' : 'Jonli muhokama'}</span>
             </div>
 
             {/* Comments List */}
             <div className="space-y-3">
               {comments.length === 0 ? (
                 <div className="py-6 text-center text-slate-500 dark:text-slate-400 text-xs bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4">
-                  Hozircha hech kim fikr qoldirmagan. Birinchi bo‘lib savol bering yoki fikr bildiring!
+                  {lang === 'ru' ? 'Пока никто не оставил комментариев. Будьте первыми!' : lang === 'en' ? 'No comments yet. Be the first to ask a question!' : 'Hozircha hech kim fikr qoldirmagan. Birinchi bo‘lib savol bering yoki fikr bildiring!'}
                 </div>
               ) : (
                 comments.map((c) => (
@@ -279,10 +283,10 @@ export default function VacancyDetailModal({
             <form onSubmit={handleAddComment} className="space-y-2 pt-2">
               {!currentUser && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-500">Ismingiz:</span>
+                  <span className="text-xs font-bold text-slate-500">{lang === 'ru' ? 'Ваше имя:' : lang === 'en' ? 'Your name:' : 'Ismingiz:'}</span>
                   <input
                     type="text"
-                    placeholder="Ismingizni kiriting..."
+                    placeholder={lang === 'ru' ? 'Введите ваше имя...' : lang === 'en' ? 'Enter your name...' : 'Ismingizni kiriting...'}
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
                     className="px-3 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -293,7 +297,7 @@ export default function VacancyDetailModal({
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  placeholder="Vakansiya bo‘yicha savol yoki fikringizni yozing..."
+                  placeholder={lang === 'ru' ? 'Задайте вопрос или напишите отзыв по вакансии...' : lang === 'en' ? 'Ask a question or leave a note about this job...' : 'Vakansiya bo‘yicha savol yoki fikringizni yozing...'}
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   className="flex-1 px-4 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -303,7 +307,7 @@ export default function VacancyDetailModal({
                   disabled={!newComment.trim() || submitting}
                   className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm"
                 >
-                  <span>Yuborish</span>
+                  <span>{t.commentSubmitBtn}</span>
                   <Send size={13} />
                 </button>
               </div>
@@ -314,9 +318,9 @@ export default function VacancyDetailModal({
         {/* Footer */}
         <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
           <div>
-            <p className="text-[11px] text-slate-400">Ish beruvchi: {vacancy.company}</p>
+            <p className="text-[11px] text-slate-400">{lang === 'ru' ? 'Работодатель:' : lang === 'en' ? 'Employer:' : 'Ish beruvchi:'} {vacancy.company}</p>
             <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              {vacancy.salary || 'Maosh suhbatda kelishiladi'}
+              {vacancy.salary || t.salaryNegotiable}
             </p>
           </div>
 
@@ -327,7 +331,7 @@ export default function VacancyDetailModal({
             }}
             className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-500/25 transition flex items-center gap-2"
           >
-            <span>Ariza topshirish</span>
+            <span>{t.applyBtn}</span>
             <ArrowRight size={16} />
           </button>
         </div>

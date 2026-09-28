@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { X, Lock, ShieldCheck, KeyRound, Smartphone, FileText, CheckCircle2, AlertCircle, ArrowRight, Upload, QrCode, ScanLine, RefreshCw, Sparkles } from 'lucide-react';
 import QRCode from 'qrcode';
 import { api, setAuthToken, setCurrentUser } from '../lib/api';
+import { Language, translations } from '../lib/translations';
 
 interface OneIDPortalModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (user: any) => void;
+  lang?: Language;
 }
 
 function parsePINFL(pinfl: string) {
@@ -42,7 +44,8 @@ function parsePINFL(pinfl: string) {
   return { gender, birthDate, location };
 }
 
-export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPortalModalProps) {
+export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'uz' }: OneIDPortalModalProps) {
+  const t = translations[lang || 'uz'];
   const [tab, setTab] = useState<'password' | 'qr' | 'eri' | 'mobile'>('password');
 
   // Input states - clean and empty (no sample presets)
@@ -357,7 +360,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                 O‘zbekiston Respublikasi Raqamli texnologiyalar vazirligi
               </div>
               <h2 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
-                <span>Yagona identifikatsiya tizimi — OneID</span>
+                <span>{t.oneIdTitle}</span>
                 <span className="px-1.5 py-0.2 bg-white/20 text-[10px] rounded font-bold">id.egov.uz</span>
               </h2>
             </div>
@@ -387,8 +390,8 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                     W
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">WZone Axborot Tizimi</span>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">OneID orqali xavfsiz autentifikatsiya so‘rovi</p>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{t.wzoneSystemName}</span>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">{t.oneIdAuthRequest}</p>
                   </div>
                 </div>
                 <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
@@ -408,7 +411,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                   }`}
                 >
                   <KeyRound size={14} />
-                  <span>Login va parol</span>
+                  <span>{t.oneIdTabLogin}</span>
                 </button>
                 <button
                   type="button"
@@ -420,7 +423,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                   }`}
                 >
                   <QrCode size={14} />
-                  <span>QR-kod (Mobile)</span>
+                  <span>{t.oneIdTabQr}</span>
                 </button>
                 <button
                   type="button"
@@ -432,7 +435,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                   }`}
                 >
                   <FileText size={14} />
-                  <span>ERI (E-IMZO)</span>
+                  <span>{t.oneIdTabEri}</span>
                 </button>
                 <button
                   type="button"
@@ -444,7 +447,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                   }`}
                 >
                   <Smartphone size={14} />
-                  <span>Mobile-ID</span>
+                  <span>{t.oneIdTabMobileId}</span>
                 </button>
               </div>
 
@@ -473,12 +476,12 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                       <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 rounded-lg text-emerald-900 dark:text-emerald-200 text-xs space-y-1 animate-fadeIn">
                         <div className="flex items-center gap-1.5 font-bold text-[11px] text-emerald-700 dark:text-emerald-400">
                           <CheckCircle2 size={13} className="text-emerald-600" />
-                          <span>OneID identifikatsiyasi tasdiqlandi:</span>
+                          <span>{t.oneIdVerifiedNotice}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-1 text-[11px] pl-4">
-                          <div>Jinsi: <b>{parsedData.gender}</b></div>
-                          <div>Tug‘ilgan: <b>{parsedData.birthDate}</b></div>
-                          <div>Hudud: <b>{parsedData.location}</b></div>
+                          <div>{t.oneIdGender} <b>{parsedData.gender}</b></div>
+                          <div>{t.oneIdBirth} <b>{parsedData.birthDate}</b></div>
+                          <div>{t.oneIdRegion} <b>{parsedData.location}</b></div>
                         </div>
                       </div>
                     )}
@@ -552,7 +555,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                       disabled={loading}
                       className="flex-1 py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.99] disabled:opacity-50"
                     >
-                      <span>Rozilik va kirish</span>
+                      <span>{t.oneIdConsentBtn}</span>
                       <ArrowRight size={14} />
                     </button>
                   </div>
@@ -569,9 +572,9 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                       OneID Mobile yoki MyGov ilovasi orqali kirish
                     </p>
                     <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-700 dark:text-slate-300">
-                      <li>Smartfoningizda <b>OneID Mobile</b> yoki <b>MyGov</b> mobil ilovasini oching;</li>
-                      <li>Ilova bosh sahifasidagi <b>QR-skaner</b> tugmasini bosing;</li>
-                      <li>Kamerani quyidagi QR-kodga qarating va barmoq izi / FaceID bilan tasdiqlang.</li>
+                      <li>{t.oneIdQrStep1}</li>
+                      <li>{t.oneIdQrStep2}</li>
+                      <li>{t.oneIdQrStep3}</li>
                     </ol>
                   </div>
 
@@ -587,7 +590,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                     ) : qrStatus === 'approved' ? (
                       <div className="w-full h-full bg-emerald-50 dark:bg-emerald-950/60 rounded-xl p-4 flex flex-col items-center justify-center text-emerald-800 dark:text-emerald-200 animate-fadeIn">
                         <CheckCircle2 size={54} className="text-emerald-600 mb-2 animate-bounce" />
-                        <span className="text-sm font-bold text-center">Tasdiqlandi!</span>
+                        <span className="text-sm font-bold text-center">{t.oneIdConfirmed}</span>
                         <p className="text-xs text-center mt-1 font-medium text-emerald-700 dark:text-emerald-300">
                           {approvedCitizen?.full_name || 'OneID Fuqarosi'}
                         </p>
@@ -610,14 +613,14 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
                         <QrCode size={48} className="animate-pulse text-slate-800" />
-                        <span className="text-xs mt-2 text-slate-600">QR-kod yaratilmoqda...</span>
+                        <span className="text-xs mt-2 text-slate-600">{t.oneIdQrGenerating}</span>
                       </div>
                     )}
 
                     {qrStatus === 'expired' && (
                       <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-xs flex flex-col items-center justify-center text-white p-4 rounded-2xl animate-fadeIn">
                         <AlertCircle size={36} className="text-amber-400 mb-1" />
-                        <p className="text-xs font-bold mb-1">QR-kod muddati tugadi</p>
+                        <p className="text-xs font-bold mb-1">{t.oneIdQrExpired}</p>
                         <p className="text-[11px] text-slate-300 text-center mb-3">
                           Xavfsizlik maqsadida yangi kod yarating
                         </p>
@@ -627,7 +630,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg active:scale-95"
                         >
                           <RefreshCw size={14} />
-                          <span>Qayta yangilash</span>
+                          <span>{t.oneIdRefresh}</span>
                         </button>
                       </div>
                     )}
@@ -638,7 +641,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                     {qrStatus === 'waiting' && (
                       <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-full text-amber-800 dark:text-amber-200 text-xs font-medium animate-pulse">
                         <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                        <span>OneID ilovasidan skanerlash kutilmoqda...</span>
+                        <span>{t.oneIdWaitingQr}</span>
                       </div>
                     )}
 
@@ -667,7 +670,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                         className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 transition shadow-md active:scale-95 disabled:opacity-50"
                       >
                         <ShieldCheck size={15} />
-                        <span>Demo: OneID orqali avtomatik tasdiqlash</span>
+                        <span>{t.oneIdDemoConfirm}</span>
                       </button>
                     </div>
                   </div>
@@ -679,7 +682,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                 <form onSubmit={handleProceedToConsent} className="space-y-3.5 pt-1">
                   <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 font-semibold">
                     <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                    <span>E-IMZO 3.42 moduli faol</span>
+                    <span>{t.oneIdEimzoActive}</span>
                   </div>
 
                   <div>
@@ -747,7 +750,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                     type="submit"
                     className="w-full py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 mt-4 active:scale-[0.99]"
                   >
-                    <span>ERI bilan imzolash va kirish</span>
+                    <span>{t.oneIdSignInEri}</span>
                     <ArrowRight size={15} />
                   </button>
                 </form>
@@ -832,7 +835,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                     type="submit"
                     className="w-full py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 mt-4 active:scale-[0.99]"
                   >
-                    <span>Mobile-ID bilan tasdiqlash</span>
+                    <span>{t.oneIdConfirmMobileId}</span>
                     <ArrowRight size={15} />
                   </button>
                 </form>
@@ -856,13 +859,13 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
               {/* Verified Citizen Details Being Shared */}
               <div className="p-4 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5 text-xs">
                 <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Fuqaro (F.I.O):</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdCitizen}</span>
                   <span className="font-extrabold text-slate-900 dark:text-white">
                     {fullNameInput || 'Fuqaro'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">JShShIR (PINFL):</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdPinflLabel}</span>
                   <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
                     {cleanPinfl || '14 xonali JShShIR'}
                   </span>
@@ -870,13 +873,13 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                 {parsedData && (
                   <>
                     <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Tug‘ilgan sana va jinsi:</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdBirth}</span>
                       <span className="font-semibold text-slate-800 dark:text-slate-200">
                         {parsedData.birthDate} ({parsedData.gender})
                       </span>
                     </div>
                     <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">Doimiy yashash hududi:</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdRegion}</span>
                       <span className="font-semibold text-slate-800 dark:text-slate-200">
                         {parsedData.location}
                       </span>
@@ -885,7 +888,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                 )}
                 {mobilePhone && (
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Telefon raqami:</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdPhone}</span>
                     <span className="font-semibold text-slate-800 dark:text-slate-200">{mobilePhone}</span>
                   </div>
                 )}
@@ -893,7 +896,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
 
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-[11px] text-emerald-800 dark:text-emerald-300">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                <span>Ushbu ma’lumotlar avtomatik tarzda WZone profilingizga ko‘chiriladi va tasdiqlanadi.</span>
+                <span>{t.oneIdAutoSyncNotice}</span>
               </div>
 
               {/* Action Buttons */}
@@ -921,7 +924,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
 
         {/* Footer info */}
         <div className="bg-slate-50 dark:bg-slate-950 px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-          <span>O‘zbekiston Respublikasi «Elektron hukumat to‘g‘risida»gi Qonuni</span>
+          <span>{t.oneIdLawNotice}</span>
           <span className="font-mono">id.egov.uz • 2026</span>
         </div>
       </div>

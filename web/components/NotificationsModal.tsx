@@ -3,12 +3,14 @@
 import React from 'react';
 import { X, Bell, Check, Clock } from 'lucide-react';
 import { api } from '../lib/api';
+import { Language, translations } from '../lib/translations';
 
 interface NotificationsModalProps {
   isOpen: boolean;
   onClose: () => void;
   notifications: any[];
   onRefresh: () => void;
+  lang?: Language;
 }
 
 export default function NotificationsModal({
@@ -16,7 +18,9 @@ export default function NotificationsModal({
   onClose,
   notifications,
   onRefresh,
+  lang = 'uz',
 }: NotificationsModalProps) {
+  const t = translations[lang] || translations.uz;
   if (!isOpen) return null;
 
   const handleMarkAsRead = async (id: string) => {
@@ -32,7 +36,7 @@ export default function NotificationsModal({
           <div className="flex items-center gap-2">
             <Bell size={18} className="text-blue-600" />
             <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-              Bildirishnomalar
+              {t.notifications}
             </h3>
           </div>
           <button
@@ -47,7 +51,7 @@ export default function NotificationsModal({
         <div className="flex-1 p-4 overflow-y-auto space-y-2.5">
           {notifications.length === 0 ? (
             <div className="py-12 text-center text-xs text-slate-400">
-              Hozircha hech qanday bildirishnoma yo‘q
+              {lang === 'ru' ? 'Пока нет новых уведомлений' : lang === 'en' ? 'No new notifications yet' : 'Hozircha hech qanday bildirishnoma yo‘q'}
             </div>
           ) : (
             notifications.map((n) => (

@@ -30,12 +30,14 @@ import {
   AIResumeOutput,
   AIResumeAnalysis,
 } from '../lib/aiResumeGenerator';
+import { Language, translations } from '../lib/translations';
 
 interface CreateResumeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   currentUser?: any;
+  lang?: Language;
 }
 
 const SAMPLE_ROLES = [
@@ -54,7 +56,9 @@ export default function CreateResumeModal({
   onClose,
   onSuccess,
   currentUser,
+  lang = 'uz',
 }: CreateResumeModalProps) {
+  const t = translations[lang || 'uz'];
   const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'ai-analyst'>('edit');
 
   // Form Fields
@@ -223,7 +227,7 @@ export default function CreateResumeModal({
               }`}
             >
               <SlidersHorizontal size={14} />
-              <span>Tahrirlash</span>
+              <span>{t.editResume}</span>
             </button>
 
             <button
@@ -236,7 +240,7 @@ export default function CreateResumeModal({
               }`}
             >
               <Eye size={14} />
-              <span>Original CV Ko‘rinishi</span>
+              <span>{t.originalCvPreview}</span>
             </button>
 
             <button
@@ -255,7 +259,7 @@ export default function CreateResumeModal({
               }`}
             >
               <Sparkles size={14} className="text-amber-500" />
-              <span>AI Tahlilchi {analysis ? `(${analysis.score} ball)` : ''}</span>
+              <span>AI Tahlilchi {analysis ? `(${analysis.score} ${t.scoreLabel})` : ''}</span>
             </button>
           </div>
 
@@ -276,7 +280,7 @@ export default function CreateResumeModal({
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium flex items-center gap-1 transition"
             >
               <Printer size={14} />
-              <span className="hidden sm:inline">Chop etish / PDF</span>
+              <span className="hidden sm:inline">{t.printPdf}</span>
             </button>
           </div>
         </div>
@@ -328,7 +332,7 @@ export default function CreateResumeModal({
 
                 {/* Sample Chips */}
                 <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                  <span className="text-[11px] text-slate-400 font-medium mr-1">Namunalar:</span>
+                  <span className="text-[11px] text-slate-400 font-medium mr-1">{t.resumeExamples}</span>
                   {SAMPLE_ROLES.map((sample) => (
                     <button
                       key={sample}
@@ -382,7 +386,7 @@ export default function CreateResumeModal({
                       className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
                     >
                       <Sparkles size={12} />
-                      <span>AI bilan yangilash</span>
+                      <span>{t.updateWithAi}</span>
                     </button>
                     <button
                       type="button"
@@ -390,7 +394,7 @@ export default function CreateResumeModal({
                       className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
                     >
                       <Award size={12} />
-                      <span>AI Tahlilini ko‘rish</span>
+                      <span>{t.viewAiAnalysis}</span>
                     </button>
                   </div>
                 </div>
@@ -562,26 +566,26 @@ export default function CreateResumeModal({
 
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex flex-col items-center justify-center shrink-0">
                       <span className="text-2xl sm:text-3xl font-black">{analysis.score}</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-100">Ball</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-100">{t.scoreLabel}</span>
                     </div>
                   </div>
 
                   {/* Market Fit */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-700">
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Bozor talabi:</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{t.marketDemand}</span>
                       <p className="text-xs font-bold text-slate-900 dark:text-white mt-0.5">
                         {analysis.marketFit.demand}
                       </p>
                     </div>
                     <div className="p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-700">
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Kutilayotgan oylik maosh:</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{t.expectedSalary}</span>
                       <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                         {analysis.marketFit.estimatedSalary}
                       </p>
                     </div>
                     <div className="p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-700">
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">ATS Mosligi:</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{t.atsScore}</span>
                       <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-0.5">
                         {analysis.atsReady ? '✓ 100% Mos keladi' : 'Tahrir talab etiladi'}
                       </p>

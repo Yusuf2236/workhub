@@ -156,18 +156,34 @@
         <div class="bg-slate-900 border border-slate-700/80 p-1 rounded-2xl flex items-center shadow-inner">
           <button id="btnModeLive" onclick="setAppEngine('live')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-blue-600 text-white shadow-md shadow-blue-500/25">
             <i class="fa-solid fa-globe"></i>
-            <span>Jonli Sayt (100% Sinxron)</span>
+            <span id="labelModeLive">Jonli Sayt (100% Sinxron)</span>
           </button>
           <button id="btnModeNative" onclick="setAppEngine('native')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 text-slate-400 hover:text-white">
             <i class="fa-solid fa-bolt"></i>
-            <span>Native App UI</span>
+            <span id="labelModeNative">Native App UI</span>
+          </button>
+        </div>
+
+        <!-- Language Switcher (100% Translations) -->
+        <div class="bg-slate-900 border border-slate-700/80 p-1 rounded-2xl flex items-center shadow-inner">
+          <button id="langBtnUz" onclick="setLanguage('uz')" class="px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-blue-600 text-white shadow-md shadow-blue-500/25">
+            <span>🇺🇿</span>
+            <span>O‘zbekcha</span>
+          </button>
+          <button id="langBtnRu" onclick="setLanguage('ru')" class="px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+            <span>🇷🇺</span>
+            <span>Русский</span>
+          </button>
+          <button id="langBtnEn" onclick="setLanguage('en')" class="px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+            <span>🇺🇸</span>
+            <span>English</span>
           </button>
         </div>
 
         <!-- View Mode Selector -->
         <div>
           <select id="modeSelector" onchange="changeMode(this.value)" class="bg-slate-900 border border-slate-700/80 text-white text-xs rounded-xl px-3 py-2 font-bold focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-sm">
-            <option value="dual" selected>⚡ YONMA-YON (Android + iOS ikkalasi)</option>
+            <option value="dual" selected>⚡ YONMA-YON (Android + iOS)</option>
             <option value="android">🤖 Faqat Android (Pixel 8 Pro)</option>
             <option value="ios">🍏 Faqat iOS (iPhone 16 Pro)</option>
           </select>
@@ -186,7 +202,7 @@
         <!-- Refresh Button -->
         <button onclick="refreshAllData()" title="Ikkala qurilmani yangilash" class="bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white px-3 py-2 rounded-xl border border-slate-700/80 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
           <i class="fa-solid fa-rotate text-blue-400"></i>
-          <span>Yangilash</span>
+          <span id="labelRefresh">Yangilash</span>
         </button>
 
       </div>
@@ -317,9 +333,355 @@
   </div>
 
   <script>
+    // Multilingual Dictionary for Native & Emulator Controls (100% Translated)
+    const I18N = {
+      uz: {
+        syncTitle: "Real-vaqtda Android (Kotlin) & iOS (Swift) 100% Avtomatik Sinxronizatsiyasi",
+        liveModeBtn: "Jonli Sayt (100% Sinxron)",
+        nativeModeBtn: "Native App UI",
+        dualView: "⚡ YONMA-YON (Android + iOS)",
+        androidOnly: "🤖 Faqat Android (Pixel 8 Pro)",
+        iosOnly: "🍏 Faqat iOS (iPhone 16 Pro)",
+        refreshBtn: "Yangilash",
+        siteOnline: "Sayt :3000 ✓ OK",
+        siteOffline: "Sayt :3000 Offline",
+        apiOnline: "API :8080 ✓ OK",
+        apiOffline: "API :8080 (Demo)",
+
+        tabFeed: "Lenta",
+        tabHome: "Bosh sahifa",
+        tabVacancies: "Vakansiyalar",
+        tabChat: "Chat",
+        tabApplications: "Arizalar",
+        tabProfile: "Profil",
+
+        heroTag: "✨ WZone 2026",
+        heroHeading: "O‘zbekistondagi eng yirik ish platformasi",
+        heroSub: "Vakansiyalar, OneID davlat verifikatsiyasi, jonli chat va maoshlar indeksi.",
+        heroBtn: "Barcha vakansiyalar →",
+        topCompanies: "Top Kompaniyalar",
+        pollTitle: "📊 Haftaning So‘rovnomasi",
+        pollTotal: "Jami ovozlar",
+        pollQuestion: "2026-yilda qaysi texnologik sohada maoshlar eng tez o‘smoqda?",
+        communityTitle: "Hamjamiyat & Yangiliklar",
+        liveFeed: "Jonli Lenta",
+        featuredTitle: "Haftaning Sara Vakansiyalari",
+        viewAll: "Barchasi →",
+        likesSuffix: "ta layk",
+        commentsSuffix: "ta fikr",
+        salaryNegotiable: "Kelishilgan",
+
+        vacCatalogTitle: "Vakansiyalar Katalogi",
+        vacCountSuffix: "ta vakansiya",
+        searchPlaceholder: "Kasb, texnologiya yoki kompaniya...",
+        regionLabel: "Hudud:",
+        regionAll: "Barcha hududlar",
+        applyBtn: "Ariza topshirish",
+
+        chatTitle: "WZone Real-Time Chat",
+        chatPartnerStatus: "Uzum Technologies HR • Online",
+        chatPlaceholder: "Xabaringizni yozing...",
+        chatSendBtn: "Yuborish",
+        chatAutoReply: "Xabaringiz qabul qilindi. Tez orada rekruterimiz siz bilan bog‘lanadi.",
+
+        appTitle: "Mening Arizalarim",
+        appActiveSuffix: "ta faol",
+        appAppliedDate: "Topshirildi",
+        appCancelBtn: "Arizani bekor qilish",
+        appStatusInterview: "Suhbat belgilandi",
+        appStatusReviewing: "Ko‘rib chiqilmoqda",
+        appStatusSubmitted: "Yuborildi",
+
+        oneidVerifiedTitle: "OneID Pasport Verifikatsiyasi",
+        oneidVerifiedDesc: "JSHSHIR va biometrik ma’lumotlar davlat tizimi orqali to‘liq tasdiqlangan.",
+        skillsTitle: "Mening Ko‘nikmalarim (Skills)",
+        atsMatchScore: "ATS Match: 92%",
+        newSkillPlaceholder: "Yangi ko‘nikma...",
+        appSettingsTitle: "Ilova Sozlamalari",
+        appLangLabel: "Ilova tili",
+        appLangCurrent: "O‘zbekcha (UZ)",
+        darkModeLabel: "Tungi rejim (Dark Theme)",
+        activeStatus: "Faol ✓",
+        notificationsLabel: "Push-bildirishnomalar",
+        enabledStatus: "Yoqilgan ✓",
+
+        detailsTitle: "Tafsilotlar",
+        closeBtn: "Yopish",
+        applySuccess: "✓ Arizangiz muvaffaqiyatli qabul qilindi!",
+        cancelConfirm: "Arizani bekor qilmoqchimisiz?"
+      },
+      ru: {
+        syncTitle: "Синхронизация Android (Kotlin) & iOS (Swift) 100% в реальном времени",
+        liveModeBtn: "Живой Сайт (100% Синхрон)",
+        nativeModeBtn: "Native App UI",
+        dualView: "⚡ БОК О БОК (Android + iOS)",
+        androidOnly: "🤖 Только Android (Pixel 8 Pro)",
+        iosOnly: "🍏 Только iOS (iPhone 16 Pro)",
+        refreshBtn: "Обновить",
+        siteOnline: "Сайт :3000 ✓ OK",
+        siteOffline: "Сайт :3000 Офлайн",
+        apiOnline: "API :8080 ✓ OK",
+        apiOffline: "API :8080 (Демо)",
+
+        tabFeed: "Лента",
+        tabHome: "Главная",
+        tabVacancies: "Вакансии",
+        tabChat: "Чат",
+        tabApplications: "Заявки",
+        tabProfile: "Профиль",
+
+        heroTag: "✨ WZone 2026",
+        heroHeading: "Крупнейшая платформа карьеры в Узбекистане",
+        heroSub: "Вакансии, верификация OneID, живой чат и статистика зарплат.",
+        heroBtn: "Все вакансии →",
+        topCompanies: "Топ Компании",
+        pollTitle: "📊 Опрос Недели",
+        pollTotal: "Всего голосов",
+        pollQuestion: "В какой IT-сфере зарплаты растут быстрее всего в 2026 году?",
+        communityTitle: "Сообщество и Новости",
+        liveFeed: "Живая Лента",
+        featuredTitle: "Избранные Вакансии Недели",
+        viewAll: "Смотреть все →",
+        likesSuffix: "лайков",
+        commentsSuffix: "коммент.",
+        salaryNegotiable: "По договорённости",
+
+        vacCatalogTitle: "Каталог Вакансий",
+        vacCountSuffix: "вакансий",
+        searchPlaceholder: "Профессия, стек или компания...",
+        regionLabel: "Регион:",
+        regionAll: "Все регионы",
+        applyBtn: "Откликнуться",
+
+        chatTitle: "WZone Real-Time Чат",
+        chatPartnerStatus: "HR Uzum Technologies • Онлайн",
+        chatPlaceholder: "Введите ваше сообщение...",
+        chatSendBtn: "Отправить",
+        chatAutoReply: "Ваше сообщение получено. Рекрутер свяжется с вами в ближайшее время.",
+
+        appTitle: "Мои Заявки",
+        appActiveSuffix: "активных",
+        appAppliedDate: "Подано",
+        appCancelBtn: "Отозвать заявку",
+        appStatusInterview: "Собеседование назначено",
+        appStatusReviewing: "На рассмотрении",
+        appStatusSubmitted: "Отправлено",
+
+        oneidVerifiedTitle: "Паспортная Верификация OneID",
+        oneidVerifiedDesc: "ПИНФЛ и биометрические данные подтверждены государственной системой.",
+        skillsTitle: "Мои Ключевые Навыки (Skills)",
+        atsMatchScore: "ATS Match: 92%",
+        newSkillPlaceholder: "Новый навык...",
+        appSettingsTitle: "Настройки Приложения",
+        appLangLabel: "Язык приложения",
+        appLangCurrent: "Русский (RU)",
+        darkModeLabel: "Тёмная тема (Dark Theme)",
+        activeStatus: "Включено ✓",
+        notificationsLabel: "Push-уведомления",
+        enabledStatus: "Включено ✓",
+
+        detailsTitle: "Детали Вакансии",
+        closeBtn: "Закрыть",
+        applySuccess: "✓ Ваша заявка успешно отправлена!",
+        cancelConfirm: "Вы уверены, что хотите отозвать заявку?"
+      },
+      en: {
+        syncTitle: "Real-time Android (Kotlin) & iOS (Swift) 100% Automatic Synchronization",
+        liveModeBtn: "Live Website (100% Sync)",
+        nativeModeBtn: "Native App UI",
+        dualView: "⚡ SIDE-BY-SIDE (Android + iOS)",
+        androidOnly: "🤖 Android Only (Pixel 8 Pro)",
+        iosOnly: "🍏 iOS Only (iPhone 16 Pro)",
+        refreshBtn: "Refresh",
+        siteOnline: "Site :3000 ✓ OK",
+        siteOffline: "Site :3000 Offline",
+        apiOnline: "API :8080 ✓ OK",
+        apiOffline: "API :8080 (Demo)",
+
+        tabFeed: "Feed",
+        tabHome: "Home",
+        tabVacancies: "Vacancies",
+        tabChat: "Chat",
+        tabApplications: "Applications",
+        tabProfile: "Profile",
+
+        heroTag: "✨ WZone 2026",
+        heroHeading: "Uzbekistan's Leading Career & Jobs Platform",
+        heroSub: "Verified vacancies, OneID digital ID verification, live chat, and salary indices.",
+        heroBtn: "Browse all vacancies →",
+        topCompanies: "Top Companies",
+        pollTitle: "📊 Poll of the Week",
+        pollTotal: "Total votes",
+        pollQuestion: "Which technology stack has the fastest growing salaries in 2026?",
+        communityTitle: "Community & Updates",
+        liveFeed: "Live Stream",
+        featuredTitle: "Featured Jobs of the Week",
+        viewAll: "View all →",
+        likesSuffix: "likes",
+        commentsSuffix: "comments",
+        salaryNegotiable: "Negotiable",
+
+        vacCatalogTitle: "Jobs Directory",
+        vacCountSuffix: "vacancies",
+        searchPlaceholder: "Job role, tech stack, or company...",
+        regionLabel: "Location:",
+        regionAll: "All locations",
+        applyBtn: "Apply Now",
+
+        chatTitle: "WZone Real-Time Chat",
+        chatPartnerStatus: "Uzum Technologies HR • Online",
+        chatPlaceholder: "Type your message here...",
+        chatSendBtn: "Send",
+        chatAutoReply: "Your message has been received. Our recruiter will contact you shortly.",
+
+        appTitle: "My Applications",
+        appActiveSuffix: "active",
+        appAppliedDate: "Submitted",
+        appCancelBtn: "Withdraw application",
+        appStatusInterview: "Interview Scheduled",
+        appStatusReviewing: "Under Review",
+        appStatusSubmitted: "Submitted",
+
+        oneidVerifiedTitle: "OneID Sovereign Verification",
+        oneidVerifiedDesc: "PINFL and biometric credentials certified by sovereign government portal.",
+        skillsTitle: "My Core Skills",
+        atsMatchScore: "ATS Match: 92%",
+        newSkillPlaceholder: "New skill...",
+        appSettingsTitle: "Application Preferences",
+        appLangLabel: "App Language",
+        appLangCurrent: "English (EN)",
+        darkModeLabel: "Dark Theme Mode",
+        activeStatus: "Active ✓",
+        notificationsLabel: "Push Notifications",
+        enabledStatus: "Enabled ✓",
+
+        detailsTitle: "Position Details",
+        closeBtn: "Close",
+        applySuccess: "✓ Your application has been submitted successfully!",
+        cancelConfirm: "Are you sure you want to withdraw this application?"
+      }
+    };
+
+    const POLL_DATA = {
+      uz: [
+        { text: 'Go & Yuqori yuklamali tizimlar (High-load)', votes: 142 },
+        { text: 'Sun’iy intellekt & LLM integratsiyasi', votes: 198 },
+        { text: 'Mobil Native (Kotlin & Swift)', votes: 94 },
+        { text: 'Fintech & Kiberxavfsizlik', votes: 112 }
+      ],
+      ru: [
+        { text: 'Go & Высоконагруженные микросервисы (High-load)', votes: 142 },
+        { text: 'Искусственный интеллект и интеграция LLM', votes: 198 },
+        { text: 'Мобильный Native (Kotlin Compose & Swift)', votes: 94 },
+        { text: 'Финтех и кибербезопасность', votes: 112 }
+      ],
+      en: [
+        { text: 'Go & High-load distributed microservices', votes: 142 },
+        { text: 'Artificial Intelligence & LLM integrations', votes: 198 },
+        { text: 'Mobile Native (Kotlin Compose & Swift)', votes: 94 },
+        { text: 'Fintech & Information Security', votes: 112 }
+      ]
+    };
+
+    const POSTS_DATA = {
+      uz: [
+        {
+          id: 'post-1',
+          author: 'WZone Platformasi',
+          role: 'Rasmiy e’lon',
+          avatar: 'W',
+          time: '12 daqiqa oldin',
+          badge: 'Rasmiy',
+          title: "2026-yilda O'zbekiston IT bozorida OneID orqali tasdiqlangan fuqarolarga ishga joylashishda ustuvorlik beriladi",
+          content: "Davlat raqamli xizmatlari bilan integratsiyalashgan WZone tizimi orqali 5,000 dan ziyod yangi vakansiyalar e'lon qilindi. Endi rezyumelaringiz davlat standarti bo'yicha avtomatik verifikatsiya qilinadi.",
+          likes: 312,
+          comments_count: 48,
+          liked: false
+        },
+        {
+          id: 'post-2',
+          author: 'Sardor Qodirov',
+          role: 'Tech Lead @ Payme',
+          avatar: 'SQ',
+          time: '1 soat oldin',
+          badge: 'Hamjamiyat',
+          title: "Microservices va Clean Architecture: 2026-yilgi standartlar",
+          content: "Katta yuklamali tizimlarda gRPC, Redis keshlash va event-driven arxitektura juda muhim. Bugun yangi arxitekturamizni 100% Go ga o'tkazdik.",
+          likes: 184,
+          comments_count: 26,
+          liked: false
+        }
+      ],
+      ru: [
+        {
+          id: 'post-1',
+          author: 'Платформа WZone',
+          role: 'Официальное объявление',
+          avatar: 'W',
+          time: '12 минут назад',
+          badge: 'Официально',
+          title: "В 2026 году на IT-рынке Узбекистана соискатели с OneID получают приоритет при трудоустройстве",
+          content: "На платформе WZone опубликовано свыше 5,000 вакансий с интеграцией государственных цифровых сервисов. Резюме верифицируются автоматически по государственному стандарту.",
+          likes: 312,
+          comments_count: 48,
+          liked: false
+        },
+        {
+          id: 'post-2',
+          author: 'Сардор Кадыров',
+          role: 'Tech Lead @ Payme',
+          avatar: 'SQ',
+          time: '1 час назад',
+          badge: 'Сообщество',
+          title: "Микросервисы и Clean Architecture: отраслевые стандарты 2026 года",
+          content: "В высоконагруженных системах критически важны gRPC, кэширование в Redis и event-driven архитектура. Сегодня мы завершили перевод ядра платформы на 100% Go.",
+          likes: 184,
+          comments_count: 26,
+          liked: false
+        }
+      ],
+      en: [
+        {
+          id: 'post-1',
+          author: 'WZone Platform',
+          role: 'Official Announcement',
+          avatar: 'W',
+          time: '12 minutes ago',
+          badge: 'Official',
+          title: "In 2026, OneID-verified candidates receive priority hiring across Uzbekistan's tech sector",
+          content: "Over 5,000 verified vacancies published on WZone with direct digital governance integration. Candidate resumes are certified with sovereign state verification.",
+          likes: 312,
+          comments_count: 48,
+          liked: false
+        },
+        {
+          id: 'post-2',
+          author: 'Sardor Kadyrov',
+          role: 'Tech Lead @ Payme',
+          avatar: 'SQ',
+          time: '1 hour ago',
+          badge: 'Community',
+          title: "Microservices & Clean Architecture: 2026 Industry Standards",
+          content: "In ultra-high concurrency systems, gRPC, Redis caching, and event-driven architectures are paramount. Our core was successfully transitioned to 100% Go.",
+          likes: 184,
+          comments_count: 26,
+          liked: false
+        }
+      ]
+    };
+
     // State
     let appEngine = 'live'; // 'live' (100% sayt bilan sinxron) or 'native' (API native interfeys)
     let currentTab = 'feed';
+    let currentLang = 'uz';
+
+    try {
+      const savedLang = localStorage.getItem('workhub_lang');
+      if (savedLang && ['uz', 'ru', 'en'].includes(savedLang)) {
+        currentLang = savedLang;
+      }
+    } catch (_) {}
+
     let currentUser = {
       id: 'usr-1',
       name: 'Farrux Zokirov',
@@ -332,12 +694,6 @@
 
     let vacancies = [];
     let pollVoted = false;
-    let pollOptions = [
-      { text: 'Go & Yuqori yuklamali tizimlar (High-load)', votes: 142 },
-      { text: 'Sun’iy intellekt & LLM integratsiyasi', votes: 198 },
-      { text: 'Mobil Native (Kotlin & Swift)', votes: 94 },
-      { text: 'Fintech & Kiberxavfsizlik', votes: 112 }
-    ];
 
     let chatMessages = [
       { id: '1', sender_name: 'Uzum Technologies Recruiter', content: 'Assalomu alaykum! WZone dagi rezyumengizni ko‘rib chiqdik. Senior pozitsiyasi bo‘yicha texnik suhbatga taklif qilamiz.', is_me: false, time: '10:30' },
@@ -350,34 +706,60 @@
       { id: 'app-2', company: 'Payme', title: 'Mobile iOS / Android Lead', status: 'Ko‘rib chiqilmoqda', date: '27-sentyabr, 2026', badge: 'bg-amber-500/20 text-amber-300' }
     ];
 
-    let feedPosts = [
-      {
-        id: 'post-1',
-        author: 'WZone Platformasi',
-        role: 'Rasmiy e’lon',
-        avatar: 'W',
-        time: '12 daqiqa oldin',
-        badge: 'Rasmiy',
-        title: "2026-yilda O'zbekiston IT bozorida OneID orqali tasdiqlangan fuqarolarga ishga joylashishda ustuvorlik beriladi",
-        content: "Davlat raqamli xizmatlari bilan integratsiyalashgan WZone tizimi orqali 5,000 dan ziyod yangi vakansiyalar e'lon qilindi. Endi rezyumelaringiz davlat standarti bo'yicha avtomatik verifikatsiya qilinadi.",
-        likes: 312,
-        comments_count: 48,
-        liked: false
-      },
-      {
-        id: 'post-2',
-        author: 'Sardor Qodirov',
-        role: 'Tech Lead @ Payme',
-        avatar: 'SQ',
-        time: '1 soat oldin',
-        badge: 'Hamjamiyat',
-        title: "Microservices va Clean Architecture: 2026-yilgi standartlar",
-        content: "Katta yuklamali tizimlarda gRPC, Redis keshlash va event-driven arxitektura juda muhim. Bugun yangi arxitekturamizni 100% Go ga o'tkazdik.",
-        likes: 184,
-        comments_count: 26,
-        liked: false
+    // Language Switching with Bi-directional Sync
+    function setLanguage(lang, broadcast = true) {
+      currentLang = lang;
+      try {
+        localStorage.setItem('workhub_lang', lang);
+      } catch (_) {}
+
+      // Update pills styling in top bar
+      ['uz', 'ru', 'en'].forEach(l => {
+        const btn = document.getElementById('langBtn' + l.charAt(0).toUpperCase() + l.slice(1));
+        if (btn) {
+          if (l === lang) {
+            btn.className = 'px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-blue-600 text-white shadow-md shadow-blue-500/25';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+          }
+        }
+      });
+
+      // Update top bar text labels
+      const t = I18N[currentLang] || I18N.uz;
+      const lblLive = document.getElementById('labelModeLive');
+      const lblNative = document.getElementById('labelModeNative');
+      const lblRefresh = document.getElementById('labelRefresh');
+      if (lblLive) lblLive.innerText = t.liveModeBtn;
+      if (lblNative) lblNative.innerText = t.nativeModeBtn;
+      if (lblRefresh) lblRefresh.innerText = t.refreshBtn;
+
+      // Broadcast to iframes in Live mode
+      if (broadcast) {
+        syncIframeLang('androidIframe');
+        syncIframeLang('iosIframe');
       }
-    ];
+
+      renderBothScreens();
+    }
+
+    function syncIframeLang(frameId) {
+      try {
+        const frame = document.getElementById(frameId);
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ type: 'WORKHUB_CHANGE_LANG', lang: currentLang }, '*');
+        }
+      } catch (_) {}
+    }
+
+    // Listen for language changes or auth updates sent from inside iframes
+    window.addEventListener('message', (event) => {
+      if (event.data?.type === 'WORKHUB_LANG_CHANGED' && event.data?.lang) {
+        if (['uz', 'ru', 'en'].includes(event.data.lang)) {
+          setLanguage(event.data.lang, false);
+        }
+      }
+    });
 
     // Real-time Dynamic Clocks for Devices
     function updateClocks() {
@@ -395,26 +777,25 @@
 
     // Health Checks
     async function checkHealth() {
-      // Check Backend (:8080)
+      const t = I18N[currentLang] || I18N.uz;
       try {
         const res = await fetch('http://localhost:8080/health');
         if (res.ok) {
           document.getElementById('backendDot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
-          document.getElementById('backendStatus').innerText = 'API :8080 ✓ OK';
+          document.getElementById('backendStatus').innerText = t.apiOnline;
         } else throw new Error();
       } catch (_) {
         document.getElementById('backendDot').className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
-        document.getElementById('backendStatus').innerText = 'API :8080 (Demo)';
+        document.getElementById('backendStatus').innerText = t.apiOffline;
       }
 
-      // Check Web (:3000)
       try {
-        const res = await fetch('http://localhost:3000', { mode: 'no-cors' });
+        await fetch('http://localhost:3000', { mode: 'no-cors' });
         document.getElementById('webDot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
-        document.getElementById('webStatus').innerText = 'Sayt :3000 ✓ OK';
+        document.getElementById('webStatus').innerText = t.siteOnline;
       } catch (_) {
         document.getElementById('webDot').className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
-        document.getElementById('webStatus').innerText = 'Sayt :3000 Offline';
+        document.getElementById('webStatus').innerText = t.siteOffline;
       }
     }
 
@@ -431,11 +812,10 @@
           throw new Error('No items');
         }
       } catch (_) {
-        // Fallback realistic dataset
         vacancies = [
-          { id: 'v-1', title: 'Senior Go Backend Architect', company: 'Uzum Technologies', location: 'Tashkent shahri', salary_min: 3000, salary_max: 5500, salary_currency: 'USD', description: 'Yuqori yuklamali mikroxizmatlar, gRPC, PostgreSQL, Redis, Kafka va Kubernetes infratuzilmasi.' },
-          { id: 'v-2', title: 'Mobile Android Lead (Kotlin Compose)', company: 'Click Uzbekistan', location: 'Tashkent shahri', salary_min: 2800, salary_max: 4500, salary_currency: 'USD', description: 'Clean Architecture, MVI/MVVM, Coroutines, Jetpack Compose, Material 3, Biometriya va xavfsizlik.' },
-          { id: 'v-3', title: 'iOS Software Engineer (Swift / SwiftUI)', company: 'Payme Fintech', location: 'Tashkent shahri', salary_min: 2600, salary_max: 4200, salary_currency: 'USD', description: 'Fintech to‘lov tizimlari, SwiftUI, Combine, FaceID / Biometriya, Clean Swift.' },
+          { id: 'v-1', title: 'Senior Go Backend Architect', company: 'Uzum Technologies', location: 'Toshkent shahri', salary_min: 3000, salary_max: 5500, salary_currency: 'USD', description: 'Yuqori yuklamali mikroxizmatlar, gRPC, PostgreSQL, Redis, Kafka va Kubernetes infratuzilmasi.' },
+          { id: 'v-2', title: 'Mobile Android Lead (Kotlin Compose)', company: 'Click Uzbekistan', location: 'Toshkent shahri', salary_min: 2800, salary_max: 4500, salary_currency: 'USD', description: 'Clean Architecture, MVI/MVVM, Coroutines, Jetpack Compose, Material 3, Biometriya va xavfsizlik.' },
+          { id: 'v-3', title: 'iOS Software Engineer (Swift / SwiftUI)', company: 'Payme Fintech', location: 'Toshkent shahri', salary_min: 2600, salary_max: 4200, salary_currency: 'USD', description: 'Fintech to‘lov tizimlari, SwiftUI, Combine, FaceID / Biometriya, Clean Swift.' },
           { id: 'v-4', title: 'Senior DevOps & Cloud Specialist', company: 'EPAM Systems', location: 'Masofaviy (Remote)', salary_min: 3500, salary_max: 5200, salary_currency: 'USD', description: 'CI/CD pipeline, Terraform, AWS/GCP, Docker, ArgoCD, Prometheus & Grafana monitoring.' },
           { id: 'v-5', title: 'Lead Product Designer (UI/UX)', company: 'Mohirdev Academy', location: 'Samarqand viloyati', salary_min: 1800, salary_max: 3000, salary_currency: 'USD', description: 'Mobil dizayn tizimlari, Figma, foydalanuvchi sinovlari, animatsiyalar va prototiplash.' }
         ];
@@ -458,13 +838,21 @@
       renderBothScreens();
     }
 
-    // Render Both Screens
+    // Render Both Screens with Smooth State Retention
     function renderBothScreens() {
       const androidView = document.getElementById('androidViewport');
       const iosView = document.getElementById('iosViewport');
 
       if (appEngine === 'live') {
-        // 🌐 100% SAYT BILAN JONLI VEB-ILOVA SINXRONIZATSIYASI
+        const existingAndroidIframe = document.getElementById('androidIframe');
+        const existingIosIframe = document.getElementById('iosIframe');
+
+        if (existingAndroidIframe && existingIosIframe) {
+          syncIframeLang('androidIframe');
+          syncIframeLang('iosIframe');
+          return;
+        }
+
         const androidHtml = `
           <div class="w-full h-full flex flex-col bg-slate-950">
             <!-- URL status bar for Android -->
@@ -475,7 +863,7 @@
               </div>
               <button onclick="refreshIframe('androidIframe')" class="hover:text-white"><i class="fa-solid fa-rotate-right"></i></button>
             </div>
-            <iframe id="androidIframe" src="http://localhost:3000" class="device-iframe flex-1" allow="geolocation; camera; microphone"></iframe>
+            <iframe id="androidIframe" src="http://localhost:3000" onload="syncIframeLang('androidIframe')" class="device-iframe flex-1" allow="geolocation; camera; microphone"></iframe>
           </div>
         `;
 
@@ -489,7 +877,7 @@
               </div>
               <button onclick="refreshIframe('iosIframe')" class="hover:text-white"><i class="fa-solid fa-arrow-rotate-right"></i></button>
             </div>
-            <iframe id="iosIframe" src="http://localhost:3000" class="device-iframe flex-1" allow="geolocation; camera; microphone"></iframe>
+            <iframe id="iosIframe" src="http://localhost:3000" onload="syncIframeLang('iosIframe')" class="device-iframe flex-1" allow="geolocation; camera; microphone"></iframe>
           </div>
         `;
 
@@ -513,69 +901,71 @@
       renderBothScreens();
     }
 
-    // 1. RENDER NATIVE ANDROID SCREEN (Material 3)
+    // 1. RENDER NATIVE ANDROID SCREEN (Material 3 + Bottom Safe Padding)
     function renderNativeAndroid(container) {
+      const t = I18N[currentLang] || I18N.uz;
       container.innerHTML = `
-        <div class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-16 bg-[#0b101d]">
+        <div class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-28 bg-[#0b101d]">
           ${buildCurrentTabBody('android')}
         </div>
 
-        <!-- Android Material 3 Bottom Nav Bar -->
-        <div class="absolute bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 flex items-center justify-around py-2 z-40 text-xs">
+        <!-- Android Material 3 Bottom Nav Bar (Labels strictly positioned above pill) -->
+        <div class="absolute bottom-0 inset-x-0 h-16 pt-2 pb-5 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex items-center justify-around z-40 text-xs shadow-2xl">
           <button onclick="setTab('feed')" class="flex flex-col items-center gap-1 ${currentTab === 'feed' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-house text-sm"></i>
-            <span class="text-[10px]">Lenta</span>
+            <span class="text-[10px] tracking-tight">${t.tabFeed}</span>
           </button>
           <button onclick="setTab('vacancies')" class="flex flex-col items-center gap-1 ${currentTab === 'vacancies' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-briefcase text-sm"></i>
-            <span class="text-[10px]">Vakansiyalar</span>
+            <span class="text-[10px] tracking-tight">${t.tabVacancies}</span>
           </button>
           <button onclick="setTab('chat')" class="flex flex-col items-center gap-1 relative ${currentTab === 'chat' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-comment-dots text-sm"></i>
             <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-[10px]">Chat</span>
+            <span class="text-[10px] tracking-tight">${t.tabChat}</span>
           </button>
           <button onclick="setTab('applications')" class="flex flex-col items-center gap-1 ${currentTab === 'applications' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-file-circle-check text-sm"></i>
-            <span class="text-[10px]">Arizalar</span>
+            <span class="text-[10px] tracking-tight">${t.tabApplications}</span>
           </button>
           <button onclick="setTab('profile')" class="flex flex-col items-center gap-1 ${currentTab === 'profile' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-user-gear text-sm"></i>
-            <span class="text-[10px]">Profil</span>
+            <span class="text-[10px] tracking-tight">${t.tabProfile}</span>
           </button>
         </div>
       `;
     }
 
-    // 2. RENDER NATIVE IOS SCREEN (SwiftUI Cupertino)
+    // 2. RENDER NATIVE IOS SCREEN (SwiftUI Cupertino + Bottom Safe Padding)
     function renderNativeIOS(container) {
+      const t = I18N[currentLang] || I18N.uz;
       container.innerHTML = `
-        <div class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-16 bg-[#080d1a]">
+        <div class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-28 bg-[#080d1a]">
           ${buildCurrentTabBody('ios')}
         </div>
 
-        <!-- iOS Cupertino Bottom Tab Bar -->
-        <div class="absolute bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur border-t border-slate-800/80 flex items-center justify-around py-2.5 z-40 text-xs">
+        <!-- iOS Cupertino Bottom Tab Bar (Labels strictly positioned above home indicator) -->
+        <div class="absolute bottom-0 inset-x-0 h-16 pt-2 pb-6 bg-slate-900/95 backdrop-blur-md border-t border-slate-800/80 flex items-center justify-around z-40 text-xs shadow-2xl">
           <button onclick="setTab('feed')" class="flex flex-col items-center gap-1 ${currentTab === 'feed' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-house text-sm"></i>
-            <span class="text-[9px]">Bosh sahifa</span>
+            <span class="text-[9px] tracking-tight">${t.tabHome}</span>
           </button>
           <button onclick="setTab('vacancies')" class="flex flex-col items-center gap-1 ${currentTab === 'vacancies' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-briefcase text-sm"></i>
-            <span class="text-[9px]">Vakansiyalar</span>
+            <span class="text-[9px] tracking-tight">${t.tabVacancies}</span>
           </button>
           <button onclick="setTab('chat')" class="flex flex-col items-center gap-1 relative ${currentTab === 'chat' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-message text-sm"></i>
             <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-[9px]">Chat</span>
+            <span class="text-[9px] tracking-tight">${t.tabChat}</span>
           </button>
           <button onclick="setTab('applications')" class="flex flex-col items-center gap-1 ${currentTab === 'applications' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-file-lines text-sm"></i>
-            <span class="text-[9px]">Arizalar</span>
+            <span class="text-[9px] tracking-tight">${t.tabApplications}</span>
           </button>
           <button onclick="setTab('profile')" class="flex flex-col items-center gap-1 ${currentTab === 'profile' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
             <i class="fa-solid fa-circle-user text-sm"></i>
-            <span class="text-[9px]">Profil</span>
+            <span class="text-[9px] tracking-tight">${t.tabProfile}</span>
           </button>
         </div>
       `;
@@ -601,24 +991,28 @@
 
     // FEED TAB
     function buildFeedTabContent(platform) {
+      const t = I18N[currentLang] || I18N.uz;
+      const pollOptions = POLL_DATA[currentLang] || POLL_DATA.uz;
+      const feedPosts = POSTS_DATA[currentLang] || POSTS_DATA.uz;
+
       return `
         <div class="p-4 space-y-4">
           <!-- Hero Banner -->
           <div class="rounded-2xl p-4 bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-900 text-white shadow-xl space-y-2 relative overflow-hidden">
             <div class="flex items-center justify-between">
-              <span class="text-[9px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">✨ WZone 2026</span>
-              <span class="text-[10px] font-bold text-emerald-300">● 5,291 Vakansiya</span>
+              <span class="text-[9px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">${t.heroTag}</span>
+              <span class="text-[10px] font-bold text-emerald-300">● 5,291 ${t.vacCountSuffix}</span>
             </div>
-            <h2 class="text-base font-black leading-tight">O‘zbekistondagi eng yirik ish platformasi</h2>
-            <p class="text-[11px] text-blue-100 leading-snug">Vakansiyalar, OneID davlat verifikatsiyasi, jonli chat va maoshlar indeksi.</p>
+            <h2 class="text-base font-black leading-tight">${t.heroHeading}</h2>
+            <p class="text-[11px] text-blue-100 leading-snug">${t.heroSub}</p>
             <div class="pt-1 flex gap-2">
-              <button onclick="setTab('vacancies')" class="px-3.5 py-1.5 rounded-xl bg-white text-blue-700 font-black text-xs shadow-md">Barcha vakansiyalar →</button>
+              <button onclick="setTab('vacancies')" class="px-3.5 py-1.5 rounded-xl bg-white text-blue-700 font-black text-xs shadow-md">${t.heroBtn}</button>
             </div>
           </div>
 
           <!-- Top Stories Carousel -->
           <div class="space-y-1.5">
-            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Top Kompaniyalar</span>
+            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">${t.topCompanies}</span>
             <div class="flex gap-2 overflow-x-auto pb-1 screen-scroll">
               <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
                 <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 to-rose-500">
@@ -656,10 +1050,10 @@
           <!-- Interactive Poll (So‘rovnoma) -->
           <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5">
             <div class="flex justify-between items-center text-[10px]">
-              <span class="font-black text-blue-400 uppercase tracking-wide">📊 Haftaning So‘rovnomasi</span>
-              <span class="text-slate-400 font-bold">Jami ovozlar: ${pollOptions.reduce((a, b) => a + b.votes, 0)}</span>
+              <span class="font-black text-blue-400 uppercase tracking-wide">${t.pollTitle}</span>
+              <span class="text-slate-400 font-bold">${t.pollTotal}: ${pollOptions.reduce((a, b) => a + b.votes, 0)}</span>
             </div>
-            <h3 class="text-xs font-bold text-white">2026-yilda qaysi texnologik sohada maoshlar eng tez o‘smoqda?</h3>
+            <h3 class="text-xs font-bold text-white">${t.pollQuestion}</h3>
             <div class="space-y-1.5 pt-1">
               ${pollOptions.map((opt, idx) => {
                 const total = pollOptions.reduce((a, b) => a + b.votes, 0);
@@ -680,8 +1074,8 @@
           <!-- Live Feed Posts -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-black uppercase tracking-wider text-slate-300">Hamjamiyat & Yangiliklar</h3>
-              <span class="text-[9px] font-bold text-blue-400">Jonli Lenta</span>
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-300">${t.communityTitle}</h3>
+              <span class="text-[9px] font-bold text-blue-400">${t.liveFeed}</span>
             </div>
             ${feedPosts.map(p => `
               <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 shadow-sm">
@@ -702,7 +1096,7 @@
                     <i class="fa-solid fa-heart"></i>
                     <span>${p.likes}</span>
                   </button>
-                  <span class="text-slate-400"><i class="fa-regular fa-comment"></i> ${p.comments_count} ta fikr</span>
+                  <span class="text-slate-400"><i class="fa-regular fa-comment"></i> ${p.comments_count} ${t.commentsSuffix}</span>
                 </div>
               </div>
             `).join('')}
@@ -711,8 +1105,8 @@
           <!-- Featured Vacancies Carousel -->
           <div class="space-y-2">
             <div class="flex justify-between items-center">
-              <h3 class="text-xs font-black uppercase tracking-wider text-slate-300">Haftaning Sara Vakansiyalari</h3>
-              <span onclick="setTab('vacancies')" class="text-[10px] text-blue-400 font-bold cursor-pointer">Barchasi →</span>
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-300">${t.featuredTitle}</h3>
+              <span onclick="setTab('vacancies')" class="text-[10px] text-blue-400 font-bold cursor-pointer">${t.viewAll}</span>
             </div>
             ${vacancies.slice(0, 3).map(v => `
               <div onclick="openVacancyModal('${v.id}')" class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-blue-500 cursor-pointer transition space-y-1">
@@ -722,7 +1116,7 @@
                 </div>
                 <h4 class="text-xs font-bold text-white">${v.title}</h4>
                 <div class="text-[11px] font-black text-emerald-400">
-                  ${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : 'Kelishilgan'}
+                  ${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : t.salaryNegotiable}
                 </div>
               </div>
             `).join('')}
@@ -733,21 +1127,22 @@
 
     // VACANCIES TAB
     function buildVacanciesTabContent(platform) {
+      const t = I18N[currentLang] || I18N.uz;
       return `
         <div class="p-4 space-y-3">
           <div class="flex justify-between items-center">
-            <h2 class="text-sm font-black text-white">Vakansiyalar Katalogi</h2>
-            <span class="text-[10px] font-bold text-blue-400">${vacancies.length} ta vakansiya</span>
+            <h2 class="text-sm font-black text-white">${t.vacCatalogTitle}</h2>
+            <span class="text-[10px] font-bold text-blue-400">${vacancies.length} ${t.vacCountSuffix}</span>
           </div>
 
           <!-- Search Input -->
-          <input id="vacSearchInput" onkeyup="filterVacancies(this.value)" type="text" placeholder="Kasb, texnologiya yoki kompaniya..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-400 outline-none focus:border-blue-500" />
+          <input id="vacSearchInput" onkeyup="filterVacancies(this.value)" type="text" placeholder="${t.searchPlaceholder}" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-400 outline-none focus:border-blue-500" />
 
           <!-- Region Filter -->
           <div class="flex items-center gap-2 text-xs">
-            <span class="text-slate-400 text-[10px] font-bold">Hudud:</span>
+            <span class="text-slate-400 text-[10px] font-bold">${t.regionLabel}</span>
             <select onchange="filterByRegion(this.value)" class="bg-slate-900 border border-slate-800 text-white text-[11px] rounded-lg px-2.5 py-1.5 font-bold outline-none">
-              <option value="all">Barcha hududlar</option>
+              <option value="all">${t.regionAll}</option>
               <option value="Tashkent">Toshkent shahri</option>
               <option value="Samarqand">Samarqand viloyati</option>
               <option value="Fargona">Farg‘ona viloyati</option>
@@ -768,8 +1163,8 @@
                 <h4 class="text-xs font-bold text-white">${v.title}</h4>
                 <p class="text-[10px] text-slate-400 line-clamp-2">${v.description || 'Kompaniyada ochiq bo‘sh ish o‘rni.'}</p>
                 <div class="flex justify-between items-center pt-1">
-                  <span class="text-[11px] font-black text-emerald-400">${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : 'Kelishilgan'}</span>
-                  <button class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]">Ariza topshirish</button>
+                  <span class="text-[11px] font-black text-emerald-400">${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : t.salaryNegotiable}</span>
+                  <button class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]">${t.applyBtn}</button>
                 </div>
               </div>
             `).join('')}
@@ -780,14 +1175,15 @@
 
     // CHAT TAB
     function buildChatTabContent(platform) {
+      const t = I18N[currentLang] || I18N.uz;
       return `
         <div class="p-4 h-full flex flex-col justify-between space-y-3">
           <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
             <div>
-              <h3 class="text-xs font-black text-white">WZone Real-Time Chat</h3>
+              <h3 class="text-xs font-black text-white">${t.chatTitle}</h3>
               <p class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                Uzum Technologies HR • Online
+                ${t.chatPartnerStatus}
               </p>
             </div>
             <span class="text-[10px] bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded-md">WebSocket</span>
@@ -807,8 +1203,8 @@
 
           <!-- Input bar -->
           <div class="pt-2 border-t border-slate-800 flex gap-2">
-            <input id="chatInputBox" onkeydown="if(event.key==='Enter') sendChatMessage()" type="text" placeholder="Xabaringizni yozing..." class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-400 outline-none focus:border-blue-500" />
-            <button onclick="sendChatMessage()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold active:scale-95 transition">Yuborish</button>
+            <input id="chatInputBox" onkeydown="if(event.key==='Enter') sendChatMessage()" type="text" placeholder="${t.chatPlaceholder}" class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-400 outline-none focus:border-blue-500" />
+            <button onclick="sendChatMessage()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold active:scale-95 transition">${t.chatSendBtn}</button>
           </div>
         </div>
       `;
@@ -816,11 +1212,12 @@
 
     // APPLICATIONS TAB
     function buildApplicationsTabContent(platform) {
+      const t = I18N[currentLang] || I18N.uz;
       return `
         <div class="p-4 space-y-3">
           <div class="flex justify-between items-center">
-            <h2 class="text-sm font-black text-white">Mening Arizalarim</h2>
-            <span class="text-[10px] font-bold text-emerald-400">${applications.length} ta faol</span>
+            <h2 class="text-sm font-black text-white">${t.appTitle}</h2>
+            <span class="text-[10px] font-bold text-emerald-400">${applications.length} ${t.appActiveSuffix}</span>
           </div>
 
           <div class="space-y-2.5">
@@ -832,8 +1229,8 @@
                 </div>
                 <h4 class="text-xs font-bold text-white">${app.title}</h4>
                 <div class="flex justify-between items-center text-[9px] text-slate-400 pt-1 border-t border-slate-800/60">
-                  <span>Topshirildi: ${app.date}</span>
-                  <button onclick="cancelApplication('${app.id}')" class="text-rose-400 hover:underline">Arizani bekor qilish</button>
+                  <span>${t.appAppliedDate}: ${app.date}</span>
+                  <button onclick="cancelApplication('${app.id}')" class="text-rose-400 hover:underline">${t.appCancelBtn}</button>
                 </div>
               </div>
             `).join('')}
@@ -844,6 +1241,7 @@
 
     // PROFILE TAB
     function buildProfileTabContent(platform) {
+      const t = I18N[currentLang] || I18N.uz;
       return `
         <div class="p-4 space-y-4">
           <!-- Profile Badge -->
@@ -853,7 +1251,7 @@
               <div>
                 <h3 class="text-xs font-bold text-white flex items-center gap-1.5">
                   ${currentUser.name}
-                  ${currentUser.oneid_verified ? '<i class="fa-solid fa-circle-check text-blue-400 text-[11px]" title="OneID Tasdiqlangan"></i>' : ''}
+                  ${currentUser.oneid_verified ? '<i class="fa-solid fa-circle-check text-blue-400 text-[11px]" title="OneID Verified"></i>' : ''}
                 </h3>
                 <p class="text-[10px] text-slate-400">${currentUser.email}</p>
                 <span class="text-[9px] text-blue-400 font-bold">Senior Go & Mobile Engineer</span>
@@ -867,18 +1265,18 @@
             <div class="flex items-center justify-between text-xs">
               <span class="font-bold text-blue-300 flex items-center gap-1.5">
                 <i class="fa-solid fa-shield-halved text-blue-400"></i>
-                OneID Pasport Verifikatsiyasi
+                ${t.oneidVerifiedTitle}
               </span>
               <span class="text-[9px] font-mono text-emerald-400 font-bold">AES-256-GCM</span>
             </div>
-            <p class="text-[10px] text-slate-300 leading-snug">JSHSHIR va biometrik ma’lumotlar davlat tizimi orqali to‘liq tasdiqlangan.</p>
+            <p class="text-[10px] text-slate-300 leading-snug">${t.oneidVerifiedDesc}</p>
           </div>
 
           <!-- 2. Rezyumelar va Ko‘nikmalar (Skills) -->
           <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5">
             <div class="flex justify-between items-center">
-              <h3 class="text-xs font-black text-blue-400">Mening Ko‘nikmalarim (Skills)</h3>
-              <span class="text-[9px] font-black text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">ATS Match: 92%</span>
+              <h3 class="text-xs font-black text-blue-400">${t.skillsTitle}</h3>
+              <span class="text-[9px] font-black text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">${t.atsMatchScore}</span>
             </div>
 
             <div class="flex flex-wrap gap-1.5" id="profileSkillsContainer">
@@ -891,31 +1289,31 @@
             </div>
 
             <div class="flex gap-1.5 pt-1">
-              <input id="newSkillInput" type="text" placeholder="Yangi ko‘nikma..." class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white outline-none focus:border-blue-500" />
+              <input id="newSkillInput" type="text" placeholder="${t.newSkillPlaceholder}" class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white outline-none focus:border-blue-500" />
               <button onclick="addSkill()" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs">+</button>
             </div>
           </div>
 
           <!-- 3. Ilova va Tizim Sozlamalari -->
           <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5">
-            <h3 class="text-xs font-black text-blue-400">Ilova Sozlamalari</h3>
+            <h3 class="text-xs font-black text-blue-400">${t.appSettingsTitle}</h3>
             
             <div class="flex justify-between items-center text-xs">
               <div>
-                <span class="font-bold text-white text-[11px] block">Ilova tili</span>
-                <span class="text-[9px] text-slate-400">O‘zbekcha, Ruscha, Inglizcha</span>
+                <span class="font-bold text-white text-[11px] block">${t.appLangLabel}</span>
+                <span class="text-[9px] text-slate-400">O‘zbekcha, Русский, English</span>
               </div>
-              <span class="text-[11px] font-bold text-blue-400">O‘zbekcha (UZ)</span>
+              <span class="text-[11px] font-bold text-blue-400">${t.appLangCurrent}</span>
             </div>
 
             <div class="flex justify-between items-center text-xs pt-1.5 border-t border-slate-800">
-              <span class="font-bold text-white text-[11px]">Tungi rejim (Dark Theme)</span>
-              <span class="text-emerald-400 font-bold text-[10px]">Faol ✓</span>
+              <span class="font-bold text-white text-[11px]">${t.darkModeLabel}</span>
+              <span class="text-emerald-400 font-bold text-[10px]">${t.activeStatus}</span>
             </div>
 
             <div class="flex justify-between items-center text-xs pt-1.5 border-t border-slate-800">
-              <span class="font-bold text-white text-[11px]">Push-bildirishnomalar</span>
-              <span class="text-emerald-400 font-bold text-[10px]">Yoqilgan ✓</span>
+              <span class="font-bold text-white text-[11px]">${t.notificationsLabel}</span>
+              <span class="text-emerald-400 font-bold text-[10px]">${t.enabledStatus}</span>
             </div>
           </div>
         </div>
@@ -924,6 +1322,7 @@
 
     // Modal Details & Actions
     function openVacancyModal(id) {
+      const t = I18N[currentLang] || I18N.uz;
       const vac = vacancies.find(v => v.id === id);
       if (!vac) return;
       document.getElementById('modalTitle').innerText = vac.title;
@@ -931,18 +1330,18 @@
         <div class="space-y-3">
           <div class="flex justify-between items-center">
             <span class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-400 font-bold text-xs">${vac.company || 'Kompaniya'}</span>
-            <span class="text-emerald-400 font-black text-sm">${vac.salary_min ? `${vac.salary_min} - ${vac.salary_max} ${vac.salary_currency || 'USD'}` : 'Kelishilgan maosh'}</span>
+            <span class="text-emerald-400 font-black text-sm">${vac.salary_min ? `${vac.salary_min} - ${vac.salary_max} ${vac.salary_currency || 'USD'}` : t.salaryNegotiable}</span>
           </div>
-          <p class="text-slate-400 text-xs">📍 Hudud: ${vac.location || 'Toshkent shahri'}</p>
+          <p class="text-slate-400 text-xs">📍 ${t.regionLabel} ${vac.location || 'Toshkent shahri'}</p>
           <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs space-y-1.5">
-            <h4 class="font-bold text-white">Vakansiya tavsifi:</h4>
+            <h4 class="font-bold text-white">${t.detailsTitle}:</h4>
             <p class="text-slate-300 leading-relaxed">${vac.description || 'Kompaniyamiz jamoasiga tajribali mutaxassis taklif qilamiz.'}</p>
           </div>
         </div>
       `;
       document.getElementById('modalFooter').innerHTML = `
-        <button onclick="closeModal()" class="px-3 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs">Yopish</button>
-        <button onclick="applyToVacancy('${vac.id}', '${vac.title.replace(/'/g, "\\'")}', '${(vac.company || 'Kompaniya').replace(/'/g, "\\'")}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs">Ariza topshirish</button>
+        <button onclick="closeModal()" class="px-3 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs">${t.closeBtn}</button>
+        <button onclick="applyToVacancy('${vac.id}', '${vac.title.replace(/'/g, "\\'")}', '${(vac.company || 'Kompaniya').replace(/'/g, "\\'")}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs">${t.applyBtn}</button>
       `;
       document.getElementById('detailModal').classList.remove('hidden');
     }
@@ -952,27 +1351,30 @@
     }
 
     function applyToVacancy(id, title, company) {
+      const t = I18N[currentLang] || I18N.uz;
       applications.unshift({
         id: 'app-' + Date.now(),
         company: company,
         title: title,
-        status: 'Yuborildi',
-        date: 'Bugun',
+        status: t.appStatusSubmitted,
+        date: t.appAppliedDate,
         badge: 'bg-blue-500/20 text-blue-400'
       });
       closeModal();
-      alert('✓ Arizangiz muvaffaqiyatli qabul qilindi!');
+      alert(t.applySuccess);
       setTab('applications');
     }
 
     function cancelApplication(id) {
-      if (confirm('Arizani bekor qilmoqchimisiz?')) {
+      const t = I18N[currentLang] || I18N.uz;
+      if (confirm(t.cancelConfirm)) {
         applications = applications.filter(a => a.id !== id);
         renderBothScreens();
       }
     }
 
     function sendChatMessage() {
+      const t = I18N[currentLang] || I18N.uz;
       const input = document.getElementById('chatInputBox');
       if (!input || !input.value.trim()) return;
       const text = input.value.trim();
@@ -991,7 +1393,7 @@
         chatMessages.push({
           id: 'm-' + (Date.now() + 1),
           sender_name: 'Uzum Technologies HR',
-          content: 'Xabaringiz qabul qilindi. Tez orada rekruterimiz siz bilan bog‘lanadi.',
+          content: t.chatAutoReply,
           is_me: false,
           time: 'Hozir'
         });
@@ -1013,18 +1415,70 @@
 
     function votePoll(idx) {
       if (pollVoted) return;
-      pollOptions[idx].votes += 1;
+      const list = POLL_DATA[currentLang] || POLL_DATA.uz;
+      list[idx].votes += 1;
       pollVoted = true;
       renderBothScreens();
     }
 
     function likeFeedPost(id) {
-      const p = feedPosts.find(x => x.id === id);
+      const posts = POSTS_DATA[currentLang] || POSTS_DATA.uz;
+      const p = posts.find(x => x.id === id);
       if (p) {
         p.liked = !p.liked;
         p.likes += p.liked ? 1 : -1;
         renderBothScreens();
       }
+    }
+
+    function filterVacancies(query) {
+      const q = (query || '').toLowerCase().trim();
+      const container = document.getElementById('vacanciesListContainer');
+      if (!container) return;
+      const filtered = vacancies.filter(v => 
+        (v.title && v.title.toLowerCase().includes(q)) ||
+        (v.company && v.company.toLowerCase().includes(q)) ||
+        (v.description && v.description.toLowerCase().includes(q))
+      );
+      const t = I18N[currentLang] || I18N.uz;
+      container.innerHTML = filtered.map(v => `
+        <div onclick="openVacancyModal('${v.id}')" class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-blue-500 cursor-pointer transition space-y-1.5 shadow-sm">
+          <div class="flex justify-between text-[10px]">
+            <span class="font-bold text-blue-400">${v.company || 'Kompaniya'}</span>
+            <span class="text-slate-400">📍 ${v.location || 'Toshkent'}</span>
+          </div>
+          <h4 class="text-xs font-bold text-white">${v.title}</h4>
+          <p class="text-[10px] text-slate-400 line-clamp-2">${v.description || 'Kompaniyada ochiq bo‘sh ish o‘rni.'}</p>
+          <div class="flex justify-between items-center pt-1">
+            <span class="text-[11px] font-black text-emerald-400">${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : t.salaryNegotiable}</span>
+            <button class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]">${t.applyBtn}</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterByRegion(region) {
+      const container = document.getElementById('vacanciesListContainer');
+      if (!container) return;
+      let filtered = vacancies;
+      if (region && region !== 'all') {
+        filtered = vacancies.filter(v => v.location && v.location.toLowerCase().includes(region.toLowerCase()));
+      }
+      const t = I18N[currentLang] || I18N.uz;
+      container.innerHTML = filtered.map(v => `
+        <div onclick="openVacancyModal('${v.id}')" class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-blue-500 cursor-pointer transition space-y-1.5 shadow-sm">
+          <div class="flex justify-between text-[10px]">
+            <span class="font-bold text-blue-400">${v.company || 'Kompaniya'}</span>
+            <span class="text-slate-400">📍 ${v.location || 'Toshkent'}</span>
+          </div>
+          <h4 class="text-xs font-bold text-white">${v.title}</h4>
+          <p class="text-[10px] text-slate-400 line-clamp-2">${v.description || 'Kompaniyada ochiq bo‘sh ish o‘rni.'}</p>
+          <div class="flex justify-between items-center pt-1">
+            <span class="text-[11px] font-black text-emerald-400">${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : t.salaryNegotiable}</span>
+            <button class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]">${t.applyBtn}</button>
+          </div>
+        </div>
+      `).join('');
     }
 
     function changeScale(val) {
@@ -1052,7 +1506,8 @@
       loadVacancies();
     }
 
-    // Init
+    // Initialize with preferred language
+    setLanguage(currentLang, false);
     checkHealth();
     loadVacancies();
     setInterval(checkHealth, 5000);

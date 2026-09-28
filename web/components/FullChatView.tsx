@@ -46,39 +46,107 @@ interface ChatRoom {
   icon: string;
 }
 
-const DEFAULT_ROOMS: ChatRoom[] = [
-  {
-    id: 'general',
-    name: 'Umumiy IT Muloqot',
-    description: 'Barcha IT mutaxassislar va qidiruvchilar uchun ochiq suhbat',
-    icon: 'hash',
-  },
-  {
-    id: 'ish-qidiruvchilar',
-    name: 'Nomzodlar & Dasturchilar',
-    description: 'Ish qidirayotgan dasturchilar va rezyume muhokamasi',
-    icon: 'users',
-  },
-  {
-    id: 'ish-beruvchilar',
-    name: 'Ish beruvchilar & HR',
-    description: 'HR menejerlar va kompaniya vakillari muloqoti',
-    icon: 'briefcase',
-  },
-  {
-    id: 'savol-javob',
-    name: 'Savol-Javob & Intervyu',
-    description: 'IT intervyulari, texnik savollar va maslahatlar',
-    icon: 'help-circle',
-  },
-];
+const ROOMS_BY_LANG: Record<Language, ChatRoom[]> = {
+  uz: [
+    {
+      id: 'general',
+      name: 'Umumiy IT Muloqot',
+      description: 'Barcha IT mutaxassislar va qidiruvchilar uchun ochiq suhbat',
+      icon: 'hash',
+    },
+    {
+      id: 'ish-qidiruvchilar',
+      name: 'Nomzodlar & Dasturchilar',
+      description: 'Ish qidirayotgan dasturchilar va rezyume muhokamasi',
+      icon: 'users',
+    },
+    {
+      id: 'ish-beruvchilar',
+      name: 'Ish beruvchilar & HR',
+      description: 'HR menejerlar va kompaniya vakillari muloqoti',
+      icon: 'briefcase',
+    },
+    {
+      id: 'savol-javob',
+      name: 'Savol-Javob & Intervyu',
+      description: 'IT intervyulari, texnik savollar va maslahatlar',
+      icon: 'help-circle',
+    },
+  ],
+  ru: [
+    {
+      id: 'general',
+      name: 'Общий IT Чат',
+      description: 'Открытое общение для всех IT специалистов и соискателей',
+      icon: 'hash',
+    },
+    {
+      id: 'ish-qidiruvchilar',
+      name: 'Кандидаты & Разработчики',
+      description: 'Обсуждение резюме, поиск работы и карьера разработчиков',
+      icon: 'users',
+    },
+    {
+      id: 'ish-beruvchilar',
+      name: 'Работодатели & HR',
+      description: 'Коммуникация HR-специалистов и рекрутеров компаний',
+      icon: 'briefcase',
+    },
+    {
+      id: 'savol-javob',
+      name: 'Вопросы & Собеседования',
+      description: 'Технические вопросы, подготовка к интервью и советы',
+      icon: 'help-circle',
+    },
+  ],
+  en: [
+    {
+      id: 'general',
+      name: 'General IT Lounge',
+      description: 'Open discussion for all tech professionals and job seekers',
+      icon: 'hash',
+    },
+    {
+      id: 'ish-qidiruvchilar',
+      name: 'Candidates & Engineers',
+      description: 'Resume review, job hunting, and developer discussions',
+      icon: 'users',
+    },
+    {
+      id: 'ish-beruvchilar',
+      name: 'Employers & Recruiters',
+      description: 'HR leaders, tech recruiters, and hiring managers',
+      icon: 'briefcase',
+    },
+    {
+      id: 'savol-javob',
+      name: 'Q&A & Interview Prep',
+      description: 'Technical interview questions, prep, and career advice',
+      icon: 'help-circle',
+    },
+  ],
+};
 
-const QUICK_PROMPTS = [
-  '👋 Salom hammaga!',
-  '🚀 Kimda yangi vakansiya bor?',
-  '📄 Rezyumeni ko‘rib bera olasizmi?',
-  '💡 Intervyu bo‘yicha maslahat kerak',
-];
+const PROMPTS_BY_LANG: Record<Language, string[]> = {
+  uz: [
+    '👋 Salom hammaga!',
+    '🚀 Kimda yangi vakansiya bor?',
+    '📄 Rezyumeni ko‘rib bera olasizmi?',
+    '💡 Intervyu bo‘yicha maslahat kerak',
+  ],
+  ru: [
+    '👋 Всем привет!',
+    '🚀 У кого есть свежие вакансии?',
+    '📄 Можете посмотреть резюме?',
+    '💡 Нужен совет по собеседованию',
+  ],
+  en: [
+    '👋 Hello everyone!',
+    '🚀 Any open vacancies right now?',
+    '📄 Could you review my resume?',
+    '💡 Need interview prep advice',
+  ],
+};
 
 function getWebSocketUrl(roomId: string, userId: string, userName: string, avatar: string): string {
   const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -108,7 +176,7 @@ export default function FullChatView({
   const t = translations[lang] || translations.uz;
 
   const [activeRoom, setActiveRoom] = useState<string>('general');
-  const [rooms, setRooms] = useState<ChatRoom[]>(DEFAULT_ROOMS);
+  const [rooms, setRooms] = useState<ChatRoom[]>(ROOMS_BY_LANG[lang] || ROOMS_BY_LANG.uz);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [guestName, setGuestName] = useState('');
@@ -121,20 +189,29 @@ export default function FullChatView({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Sync rooms when language changes
+  useEffect(() => {
+    setRooms(ROOMS_BY_LANG[lang] || ROOMS_BY_LANG.uz);
+  }, [lang]);
+
   // 1. Fetch available chat rooms
   useEffect(() => {
     async function loadRooms() {
       try {
         const res = await api.getChatRooms();
         if (res.success && res.data?.rooms && res.data.rooms.length > 0) {
-          setRooms(res.data.rooms);
+          const localized = ROOMS_BY_LANG[lang] || ROOMS_BY_LANG.uz;
+          setRooms(res.data.rooms.map((r: any) => {
+            const loc = localized.find(lr => lr.id === r.id);
+            return loc ? { ...r, name: loc.name, description: loc.description } : r;
+          }));
         }
       } catch (err) {
         console.error('Error fetching rooms', err);
       }
     }
     loadRooms();
-  }, []);
+  }, [lang]);
 
   // 2. Load historical messages via HTTP immediately upon room change (Zero-latency fallback)
   const fetchMessagesViaHTTP = useCallback(async (roomId: string) => {
@@ -367,7 +444,7 @@ export default function FullChatView({
                 {t.chat}
               </h3>
               <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                Jonli kanallar & muloqot
+                {lang === 'ru' ? 'Живые каналы и общение' : lang === 'en' ? 'Live channels & chat' : 'Jonli kanallar & muloqot'}
               </p>
             </div>
           </div>
@@ -378,7 +455,9 @@ export default function FullChatView({
               }`}
             />
             <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
-              {connected ? 'Onlayn' : 'Avto-rejim'}
+              {connected
+                ? (lang === 'ru' ? 'Онлайн' : lang === 'en' ? 'Online' : 'Onlayn')
+                : (lang === 'ru' ? 'Авто-режим' : lang === 'en' ? 'Auto-mode' : 'Avto-rejim')}
             </span>
           </div>
         </div>
@@ -386,7 +465,7 @@ export default function FullChatView({
         {/* Channels List */}
         <div className="flex-1 p-3 space-y-1.5 overflow-y-auto">
           <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-            Kanal va xonalar
+            {lang === 'ru' ? 'Каналы и комнаты' : lang === 'en' ? 'Channels & Rooms' : 'Kanal va xonalar'}
           </div>
           {rooms.map((room) => {
             const isActive = room.id === activeRoom;
@@ -462,14 +541,14 @@ export default function FullChatView({
           ) : (
             <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 flex items-center justify-between gap-2">
               <div className="text-[11px] font-semibold text-blue-900 dark:text-blue-200">
-                Ro‘yxatdan o‘tmagansiz
+                {lang === 'ru' ? 'Вы не авторизованы' : lang === 'en' ? 'Not signed in' : 'Ro‘yxatdan o‘tmagansiz'}
               </div>
               <button
                 type="button"
                 onClick={onOpenAuth}
                 className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-sm"
               >
-                Kirish
+                {t.loginBtn}
               </button>
             </div>
           )}
@@ -500,7 +579,7 @@ export default function FullChatView({
           <div className="flex items-center gap-2">
             <button
               onClick={() => fetchMessagesViaHTTP(activeRoom)}
-              title="Xabarlarni yangilash"
+              title={lang === 'ru' ? 'Обновить сообщения' : lang === 'en' ? 'Refresh messages' : 'Xabarlarni yangilash'}
               className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-600 transition"
             >
               <RefreshCw size={15} className={loadingHistory ? 'animate-spin text-blue-600' : ''} />
@@ -509,12 +588,12 @@ export default function FullChatView({
               {connected ? (
                 <>
                   <Wifi size={13} className="text-emerald-500" />
-                  <span>Real-vaqt</span>
+                  <span>{lang === 'ru' ? 'Реал-тайм' : lang === 'en' ? 'Real-time' : 'Real-vaqt'}</span>
                 </>
               ) : (
                 <>
                   <Radio size={13} className="text-blue-500 animate-pulse" />
-                  <span>Tezkor xabar</span>
+                  <span>{lang === 'ru' ? 'Экспресс' : lang === 'en' ? 'Instant' : 'Tezkor xabar'}</span>
                 </>
               )}
             </div>
@@ -526,7 +605,7 @@ export default function FullChatView({
           {loadingHistory && messages.length === 0 ? (
             <div className="h-full flex items-center justify-center text-xs font-semibold text-slate-400 gap-2">
               <RefreshCw size={16} className="animate-spin text-blue-600" />
-              <span>Xabarlar yuklanmoqda...</span>
+              <span>{lang === 'ru' ? 'Загрузка сообщений...' : lang === 'en' ? 'Loading messages...' : 'Xabarlar yuklanmoqda...'}</span>
             </div>
           ) : messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-2">
@@ -534,10 +613,10 @@ export default function FullChatView({
                 <MessageSquare size={24} />
               </div>
               <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                Bu xonada hali xabarlar yo‘q
+                {lang === 'ru' ? 'В этой комнате пока нет сообщений' : lang === 'en' ? 'No messages in this channel yet' : 'Bu xonada hali xabarlar yo‘q'}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-                Birinchi bo‘lib suhbatni boshlang yoki quyidagi tezkor xabarlardan birini tanlang.
+                {lang === 'ru' ? 'Начните беседу первым или выберите быструю подсказку ниже.' : lang === 'en' ? 'Start the conversation first or pick one of the quick prompts below.' : 'Birinchi bo‘lib suhbatni boshlang yoki quyidagi tezkor xabarlardan birini tanlang.'}
               </p>
             </div>
           ) : (
@@ -553,7 +632,7 @@ export default function FullChatView({
                       {msg.sender_avatar ? (
                         <img
                           src={msg.sender_avatar}
-                          alt={msg.sender_name || 'Foydalanuvchi'}
+                          alt={msg.sender_name || 'User'}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -566,7 +645,7 @@ export default function FullChatView({
                     {!isSelf && (
                       <div className="flex items-center gap-1.5 ml-1 mb-1">
                         <span className="text-[11px] font-extrabold text-slate-800 dark:text-slate-200">
-                          {msg.sender_name || 'WZone Foydalanuvchisi'}
+                          {msg.sender_name || (lang === 'ru' ? 'Пользователь WZone' : lang === 'en' ? 'WZone User' : 'WZone Foydalanuvchisi')}
                         </span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">
                           {formatMessageTime(msg.created_at)}
@@ -603,9 +682,9 @@ export default function FullChatView({
         {/* Quick Prompts Bar */}
         <div className="px-4 py-2 bg-white/70 dark:bg-slate-900/70 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2 overflow-x-auto no-scrollbar">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
-            <Sparkles size={12} className="text-amber-500" /> Tezkor:
+            <Sparkles size={12} className="text-amber-500" /> {lang === 'ru' ? 'Быстро:' : lang === 'en' ? 'Quick:' : 'Tezkor:'}
           </span>
-          {QUICK_PROMPTS.map((prompt, i) => (
+          {(PROMPTS_BY_LANG[lang] || PROMPTS_BY_LANG.uz).map((prompt, i) => (
             <button
               key={i}
               onClick={() => {
@@ -627,23 +706,23 @@ export default function FullChatView({
           {!currentUser && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                Ismingiz:
+                {lang === 'ru' ? 'Ваше имя:' : lang === 'en' ? 'Your name:' : 'Ismingiz:'}
               </span>
               <input
                 type="text"
-                placeholder="Ismingizni kiriting..."
+                placeholder={lang === 'ru' ? 'Введите ваше имя...' : lang === 'en' ? 'Enter your name...' : 'Ismingizni kiriting...'}
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
                 className="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                (yoki to‘liq imkoniyatlar uchun{' '}
+                ({lang === 'ru' ? 'или для полного доступа ' : lang === 'en' ? 'or for full access ' : 'yoki to‘liq imkoniyatlar uchun '}
                 <button
                   type="button"
                   onClick={onOpenAuth}
                   className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
                 >
-                  kirish
+                  {t.loginBtn.toLowerCase()}
                 </button>
                 )
               </span>
@@ -653,7 +732,7 @@ export default function FullChatView({
           <div className="flex items-center gap-2.5">
             <input
               type="text"
-              placeholder={`#${currentRoomObj.id} kanalida xabar yozing... (Enter orqali yuborish)`}
+              placeholder={lang === 'ru' ? `#${currentRoomObj.id}: напишите сообщение... (Enter для отправки)` : lang === 'en' ? `#${currentRoomObj.id}: type a message... (Press Enter to send)` : `#${currentRoomObj.id} kanalida xabar yozing... (Enter orqali yuborish)`}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               className="flex-1 px-4 py-3 text-xs sm:text-sm font-medium rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
@@ -663,7 +742,7 @@ export default function FullChatView({
               disabled={!inputMessage.trim() || isSending}
               className="px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm transition disabled:opacity-50 shadow-lg shadow-blue-500/25 flex items-center gap-2 shrink-0 cursor-pointer"
             >
-              <span>{isSending ? 'Yuborilmoqda...' : 'Yuborish'}</span>
+              <span>{isSending ? (lang === 'ru' ? 'Отправка...' : lang === 'en' ? 'Sending...' : 'Yuborilmoqda...') : (lang === 'ru' ? 'Отправить' : lang === 'en' ? 'Send' : 'Yuborish')}</span>
               <Send size={16} />
             </button>
           </div>

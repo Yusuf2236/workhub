@@ -380,7 +380,7 @@ export default function ProfileView({
               {user.auth_provider === 'oneid' && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-xs">
                   <ShieldCheck size={14} className="text-blue-600 dark:text-blue-400" />
-                  <span>OneID Tasdiqlangan</span>
+                  <span>{t.oneIdVerifiedBadge}</span>
                 </span>
               )}
               {user.auth_provider === 'google' && (
@@ -408,7 +408,7 @@ export default function ProfileView({
             <div className="mt-4 max-w-md">
               <div className="flex items-center justify-between text-xs font-bold mb-1">
                 <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                  <Sparkles size={14} className="text-amber-500" /> Profil to‘liqligi
+                  <Sparkles size={14} className="text-amber-500" /> {t.profileCompleteness}
                 </span>
                 <span className="text-blue-600 dark:text-blue-400 font-extrabold">
                   {completenessPercent}%
@@ -424,7 +424,7 @@ export default function ProfileView({
           </div>
         </div>
 
-        {/* Primary Sub-Nav: 1-chi bo'lib "Rezyumelar va Skillar", keyin "Sayt Sozlamalari" */}
+        {/* Primary Sub-Nav */}
         <div className="mt-8 pt-5 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
             <button
@@ -436,7 +436,7 @@ export default function ProfileView({
               }`}
             >
               <FileText size={16} />
-              <span>1. Rezyumelar & Skillar</span>
+              <span>{t.profileSubResumesSkills}</span>
               {userResumes.length > 0 && (
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                   activeSection === 'resumes-skills' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
@@ -455,7 +455,7 @@ export default function ProfileView({
               }`}
             >
               <Layers size={16} />
-              <span>2. Sayt va Profil Sozlamalari</span>
+              <span>{t.profileSubSettings}</span>
             </button>
           </div>
 
@@ -465,7 +465,7 @@ export default function ProfileView({
               className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-500/25 transition cursor-pointer"
             >
               <Plus size={16} />
-              <span>+ Yangi rezyume yaratish</span>
+              <span>{t.profileAddResumeBtn}</span>
             </button>
           )}
         </div>
@@ -475,14 +475,14 @@ export default function ProfileView({
       {savedSuccess && (
         <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 animate-fadeIn shadow-sm">
           <CheckCircle2 size={18} className="shrink-0 text-emerald-600" />
-          <span>Barcha sozlamalar muvaffaqiyatli saqlandi!</span>
+          <span>{t.profileSettingsSaved}</span>
         </div>
       )}
 
       {skillsSavedSuccess && (
         <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 animate-fadeIn shadow-sm">
           <CheckCircle2 size={18} className="shrink-0 text-emerald-600" />
-          <span>Ko‘nikmalar bazasi yangilandi!</span>
+          <span>{t.profileSkillsUpdated}</span>
         </div>
       )}
 
@@ -504,10 +504,10 @@ export default function ProfileView({
               <div>
                 <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <FileText className="text-blue-600" size={20} />
-                  <span>Mening Rezyumelarim</span>
+                  <span>{t.profileMyResumesTitle}</span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Platformadagi ish beruvchilar va HR mutaxassislar ko‘radigan faol rezyumelaringiz
+                  {t.profileMyResumesDesc}
                 </p>
               </div>
 
@@ -517,7 +517,7 @@ export default function ProfileView({
                   className="px-3.5 py-2 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
                 >
                   <Plus size={15} />
-                  <span>Rezyume qo‘shish</span>
+                  <span>{t.createResume}</span>
                 </button>
               )}
             </div>
@@ -529,10 +529,10 @@ export default function ProfileView({
                 </div>
                 <div>
                   <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
-                    Sizda hali yaratilgan rezyume yo‘q
+                    {t.profileNoResumesTitle}
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1">
-                    WZone AI generatori yordamida 30 soniyada professional rezyume shakllantiring yoki tayyor faylingizni yuklang.
+                    {t.profileNoResumesDesc}
                   </p>
                 </div>
                 {onOpenCreateResume && (
@@ -541,7 +541,7 @@ export default function ProfileView({
                     className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/25 transition cursor-pointer"
                   >
                     <Sparkles size={16} className="text-amber-300" />
-                    <span>AI bilan Rezyume yaratish</span>
+                    <span>{t.profileCreateResumeWithAI}</span>
                   </button>
                 )}
               </div>
@@ -587,11 +587,11 @@ export default function ProfileView({
                           className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1"
                         >
                           <ExternalLink size={13} />
-                          <span>Faylni yuklab olish</span>
+                          <span>{t.profileDownloadFile}</span>
                         </a>
                       ) : (
                         <span className="text-[11px] text-slate-400 font-medium">
-                          Onlayn format
+                          {t.onlineProfile}
                         </span>
                       )}
 
@@ -611,7 +611,7 @@ export default function ProfileView({
               <div>
                 <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <Code2 className="text-indigo-600" size={20} />
-                  <span>Ko‘nikmalar va Tajriba (Skills Management)</span>
+                  <span>{t.profileSkillsExpTitle}</span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Ko‘nikmalaringiz qanchalik to‘liq bo‘lsa, tizim sizga shunchalik mos vakansiyalarni tavsiya qiladi
@@ -619,16 +619,16 @@ export default function ProfileView({
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500">Tajriba darajasi:</span>
+                <span className="text-xs font-bold text-slate-500">{t.profileExpLevel}</span>
                 <select
                   value={experienceLevel}
                   onChange={(e) => setExperienceLevel(e.target.value)}
                   className="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="Junior (0-1 yil)">Junior (0-1 yil)</option>
-                  <option value="Middle (2-4 yil)">Middle (2-4 yil)</option>
-                  <option value="Senior (5+ yil)">Senior (5+ yil)</option>
-                  <option value="Lead / Architect (7+ yil)">Lead / Architect (7+ yil)</option>
+                  <option value="Junior (0-1 yil)">{t.expJunior}</option>
+                  <option value="Middle (2-4 yil)">{t.expMiddle}</option>
+                  <option value="Senior (5+ yil)">{t.expSenior}</option>
+                  <option value="Lead / Architect (7+ yil)">{t.expLead}</option>
                 </select>
               </div>
             </div>
@@ -685,14 +685,14 @@ export default function ProfileView({
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 transition flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus size={16} />
-                <span>Qo‘shish</span>
+                <span>+</span>
               </button>
             </div>
 
             {/* Popular Suggestions */}
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                Ommabop tavsiya etiladigan ko‘nikmalar:
+                {t.profilePopularSkillsTitle}
               </span>
               <div className="flex flex-wrap gap-2">
                 {POPULAR_SKILLS.map((item) => {
@@ -724,17 +724,12 @@ export default function ProfileView({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200 font-extrabold text-xs sm:text-sm">
                   <Sparkles size={16} className="text-amber-500" />
-                  <span>WZone AI Moslik Indeksi</span>
+                  <span>WZone AI Match</span>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-black text-xs">
-                  {skillsList.length >= 4 ? '94% Yuqori moslik' : '65% O‘rtacha moslik'}
+                  {skillsList.length >= 4 ? '94%' : '65%'}
                 </span>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                {skillsList.length >= 4
-                  ? 'Sizning ko‘nikmalaringiz platformadagi 500 dan ortiq eng yuqori maoshli IT vakansiyalarga to‘liq mos keladi.'
-                  : 'Yana kamida 2 ta ko‘nikma (masalan: Docker, PostgreSQL) qo‘shsangiz, vakansiyalar mosligi 90%+ ga oshadi.'}
-              </p>
             </div>
 
             {/* Save Skills Button */}
@@ -746,7 +741,7 @@ export default function ProfileView({
                 className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 <Save size={16} />
-                <span>{loading ? 'Saqlanmoqda...' : 'Ko‘nikmalarni saqlash'}</span>
+                <span>{loading ? '...' : t.profileSaveSkillsBtn}</span>
               </button>
             </div>
           </div>
@@ -784,23 +779,23 @@ export default function ProfileView({
                   </div>
                   <div className="flex items-center gap-1.5 text-xs font-bold text-blue-800 dark:text-blue-300 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-700 shadow-sm shrink-0">
                     <ShieldCheck size={16} className="text-emerald-500" />
-                    <span>Rasmiy Tasdiqlangan</span>
+                    <span>{t.profileOfficialVerified}</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-0.5 text-xs">
                   <div className="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">JShShIR (PINFL)</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">{t.profilePinfl}</span>
                     <span className="font-mono font-extrabold text-blue-600 dark:text-blue-400 text-sm tracking-wider">{user.pinfl || '—'}</span>
                   </div>
                   <div className="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Tug‘ilgan sana va jinsi</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">{t.profileBirthGender}</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">
                       {pinflData ? `${pinflData.birthDate} (${pinflData.gender})` : 'Davlat reestridan tasdiqlangan'}
                     </span>
                   </div>
                   <div className="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Doimiy hudud</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">{t.profileRegion}</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
                       {location || (pinflData ? pinflData.region : 'O‘zbekiston')}
                     </span>
@@ -814,7 +809,7 @@ export default function ProfileView({
           <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-4">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 mb-2">
               <User size={18} className="text-blue-600" />
-              <span>Shaxsiy Ma’lumotlar</span>
+              <span>{t.profilePersonalData}</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -923,7 +918,7 @@ export default function ProfileView({
           <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-5">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <Sun size={18} className="text-amber-500" />
-              <span>Sayt Interfeysi va Mavzusi</span>
+              <span>{t.profileSiteThemeTitle}</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -931,10 +926,10 @@ export default function ProfileView({
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
                 <div>
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                    Interfeys Tili:
+                    {t.profileInterfaceLangLabel}
                   </span>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Platformaning barcha sahifalari tanlangan tilda ko‘rsatiladi
+                    {t.profileInterfaceLangDesc}
                   </p>
                 </div>
                 <div className="flex gap-1.5">
@@ -959,10 +954,10 @@ export default function ProfileView({
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
                 <div>
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                    Tizim Ko‘rinishi (Mavzu):
+                    {t.profileThemeLabel}
                   </span>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Kunduzgi (yorug‘) yoki tungi (qorong‘i) interfeysni tanlang
+                    {t.profileThemeDesc}
                   </p>
                 </div>
                 <button
@@ -973,12 +968,12 @@ export default function ProfileView({
                   {darkMode ? (
                     <>
                       <Sun size={16} className="text-amber-400" />
-                      <span>Kunduzgi rejimga o‘tish (Light Mode)</span>
+                      <span>{t.profileLightModeBtn}</span>
                     </>
                   ) : (
                     <>
                       <Moon size={16} className="text-indigo-600" />
-                      <span>Tungi rejimga o‘tish (Dark Mode)</span>
+                      <span>{t.profileDarkModeBtn}</span>
                     </>
                   )}
                 </button>
@@ -990,17 +985,17 @@ export default function ProfileView({
           <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-4">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <Bell size={18} className="text-blue-600" />
-              <span>Bildirishnomalar va Ogohlantirishlar</span>
+              <span>{t.profileNotificationsTitle}</span>
             </h3>
 
             <div className="space-y-3 text-xs">
               <label className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
                 <div>
                   <span className="font-bold text-slate-800 dark:text-slate-200 block">
-                    Yangi mos vakansiyalar haqida xabar
+                    {t.profileNotifyJobsLabel}
                   </span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Sizning ko‘nikmalaringizga mos ish e’lonlari chiqqanda push-bildirishnoma
+                    {t.profileNotifyJobsDesc}
                   </span>
                 </div>
                 <input
@@ -1014,10 +1009,10 @@ export default function ProfileView({
               <label className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
                 <div>
                   <span className="font-bold text-slate-800 dark:text-slate-200 block">
-                    Topshirilgan arizalar holati
+                    {t.profileNotifyAppStatusLabel}
                   </span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Ish beruvchi arizangizni ko‘rib chiqqanda yoki suhbatga chaqirganda
+                    {t.profileNotifyAppStatusDesc}
                   </span>
                 </div>
                 <input
@@ -1031,10 +1026,10 @@ export default function ProfileView({
               <label className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
                 <div>
                   <span className="font-bold text-slate-800 dark:text-slate-200 block">
-                    Chatdagi yangi xabarlar
+                    {t.profileNotifyChatLabel}
                   </span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Kompaniyalar yoki nomzodlardan yangi xabar kelganda
+                    {t.profileNotifyChatDesc}
                   </span>
                 </div>
                 <input
@@ -1068,7 +1063,7 @@ export default function ProfileView({
           <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-4">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <Lock size={18} className="text-emerald-600" />
-              <span>Maxfiylik va Xavfsizlik</span>
+              <span>{t.profilePrivacySecurity}</span>
             </h3>
 
             <div className="space-y-3 text-xs">
@@ -1123,7 +1118,7 @@ export default function ProfileView({
                   className="px-4 py-2 bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 border border-red-200 dark:border-red-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <LogOut size={14} />
-                  <span>Chiqish</span>
+                  <span>{t.logoutBtn}</span>
                 </button>
               </div>
             )}
@@ -1137,7 +1132,7 @@ export default function ProfileView({
               className="px-7 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-xl shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               <Save size={17} />
-              <span>{loading ? 'Saqlanmoqda...' : 'Barcha sozlamalarni saqlash'}</span>
+              <span>{loading ? '...' : t.profileSaveGeneralBtn}</span>
             </button>
           </div>
         </form>
