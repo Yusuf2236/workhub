@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, MessageSquare, User, Radio, CheckCircle2 } from 'lucide-react';
-import { getAuthToken } from '../lib/api';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { X, Send, MessageSquare, User, Radio, CheckCircle2, RefreshCw, Wifi } from 'lucide-react';
+import { api } from '../lib/api';
 
 interface ChatModalProps {
   isOpen: boolean;
@@ -22,6 +22,26 @@ interface ChatMessage {
   isSelf?: boolean;
 }
 
+function getWebSocketUrl(roomId: string, userId: string, userName: string, avatar: string): string {
+  const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  let host = 'localhost:8080';
+  if (typeof window !== 'undefined') {
+    const hn = window.location.hostname;
+    if (hn === 'localhost' || hn === '127.0.0.1') {
+      host = `${hn}:8080`;
+    } else if (window.location.port === '3000') {
+      host = `${hn}:8080`;
+    } else {
+      host = window.location.host;
+    }
+  }
+  return `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
+    roomId
+  )}&user_id=${encodeURIComponent(userId)}&user_name=${encodeURIComponent(
+    userName
+  )}&avatar=${encodeURIComponent(avatar)}`;
+}
+
 export default function ChatModal({
   isOpen,
   onClose,
@@ -32,72 +52,153 @@ export default function ChatModal({
   const [inputMessage, setInputMessage] = useState('');
   const [guestName, setGuestName] = useState('');
   const [connected, setConnected] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const roomId = targetUser?.id ? `dm_${[currentUser?.id || 'guest', targetUser.id].sort().join('_')}` : 'general';
+  const roomId = targetUser?.id
+    ? `dm_${[currentUser?.id || 'guest', targetUser.id].sort().join('_')}`
+    : 'general';
 
+  // 1. Fetch initial message history via HTTP immediately on open
+  const fetchMessagesViaHTTP = useCallback(async (rId: string) => {
+    setLoadingHistory(true);
+    try {
+      const res = await api.getChatMessages(rId);
+      if (res.success && Array.isArray(res.data?.messages)) {
+        setMessages(
+          res.data.messages.map((m: any) => ({
+            ...m,
+            isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to load modal chat history via HTTP', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchMessagesViaHTTP(roomId);
+    }
+  }, [isOpen, roomId, fetchMessagesViaHTTP]);
+
+  // 2. WebSocket connection lifecycle
   useEffect(() => {
     if (!isOpen) return;
 
-    const userId = currentUser?.id || 'guest';
-    const userName = encodeURIComponent(currentUser?.name || guestName || 'Mehmon');
-    const userAvatar = encodeURIComponent(currentUser?.avatar_url || '');
+    let isSubscribed = true;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname === 'localhost' ? 'localhost:8080' : window.location.host;
-    const wsUrl = `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
-      roomId
-    )}&user_id=${userId}&user_name=${userName}&avatar=${userAvatar}`;
-
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setConnected(true);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'history' && Array.isArray(data.data)) {
-          setMessages(
-            data.data.map((m: any) => ({
-              ...m,
-              isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
-            }))
-          );
-          return;
-        }
-
-        if (data.type === 'message') {
-          setMessages((prev) => {
-            if (data.id && prev.some((p) => p.id === data.id)) return prev;
-            return [
-              ...prev,
-              {
-                ...data,
-                isSelf: Boolean(currentUser?.id && data.user_id === currentUser.id),
-              },
-            ];
-          });
-        }
-      } catch (err) {
-        console.error('Failed to parse WS message', err);
+    function connectWS() {
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch (_) {}
+        wsRef.current = null;
       }
-    };
 
-    ws.onclose = () => {
-      setConnected(false);
-    };
+      const userId = currentUser?.id || 'guest';
+      const userName = currentUser?.name || guestName || 'Mehmon';
+      const userAvatar = currentUser?.avatar_url || '';
 
-    ws.onerror = () => {
-      setConnected(false);
-    };
+      const wsUrl = getWebSocketUrl(roomId, userId, userName, userAvatar);
+
+      try {
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          if (!isSubscribed) return;
+          setConnected(true);
+
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+          }
+
+          if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'ping' }));
+            }
+          }, 25000);
+        };
+
+        ws.onmessage = (event) => {
+          if (!isSubscribed) return;
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'pong') return;
+
+            if (data.type === 'history' && Array.isArray(data.data)) {
+              setMessages(
+                data.data.map((m: any) => ({
+                  ...m,
+                  isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
+                }))
+              );
+              return;
+            }
+
+            if (data.type === 'message') {
+              setMessages((prev) => {
+                if (data.id && prev.some((p) => p.id === data.id)) return prev;
+                return [
+                  ...prev,
+                  {
+                    ...data,
+                    isSelf: Boolean(currentUser?.id && data.user_id === currentUser.id),
+                  },
+                ];
+              });
+            }
+          } catch (err) {
+            console.error('Failed to parse WS message in modal', err);
+          }
+        };
+
+        ws.onclose = () => {
+          if (!isSubscribed) return;
+          setConnected(false);
+          if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+
+          if (!reconnectTimeoutRef.current) {
+            reconnectTimeoutRef.current = setTimeout(() => {
+              reconnectTimeoutRef.current = null;
+              if (isSubscribed) connectWS();
+            }, 3000);
+          }
+        };
+
+        ws.onerror = () => {
+          if (!isSubscribed) return;
+          setConnected(false);
+        };
+      } catch (err) {
+        console.error('Error connecting modal WebSocket', err);
+        setConnected(false);
+      }
+    }
+
+    connectWS();
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      isSubscribed = false;
+      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch (_) {}
+        wsRef.current = null;
       }
     };
   }, [isOpen, currentUser, roomId, guestName]);
@@ -106,21 +207,53 @@ export default function ChatModal({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = (e: React.FormEvent) => {
+  // 3. Dual send
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+    const text = inputMessage.trim();
+    if (!text || isSending) return;
+
+    const senderName = currentUser?.name || guestName.trim() || 'WZone Mehmon';
+    const senderAvatar = currentUser?.avatar_url || '';
+
+    setInputMessage('');
+
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const payload = {
+        content: text,
+        sender_name: senderName,
+        sender_avatar: senderAvatar,
+        room_id: roomId,
+      };
+      wsRef.current.send(JSON.stringify(payload));
       return;
     }
 
-    const payload = {
-      content: inputMessage.trim(),
-      sender_name: currentUser?.name || guestName || 'Mehmon',
-      sender_avatar: currentUser?.avatar_url || '',
-      room_id: roomId,
-    };
+    // HTTP POST fallback
+    setIsSending(true);
+    try {
+      const res = await api.sendChatMessage({
+        room_id: roomId,
+        content: text,
+        sender_name: senderName,
+        sender_avatar: senderAvatar,
+      });
 
-    wsRef.current.send(JSON.stringify(payload));
-    setInputMessage('');
+      if (res.success && res.data?.message) {
+        const newMsg: ChatMessage = {
+          ...res.data.message,
+          isSelf: true,
+        };
+        setMessages((prev) => {
+          if (newMsg.id && prev.some((p) => p.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
+      }
+    } catch (err) {
+      console.error('Failed to send message in modal via HTTP', err);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const formatMessageTime = (dateStr?: string) => {
@@ -143,53 +276,70 @@ export default function ChatModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg h-[600px] shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col h-[600px] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-              <MessageSquare size={18} />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-blue-500/20">
+              {targetUser?.name ? getAvatarInitials(targetUser.name) : <MessageSquare size={18} />}
             </div>
             <div>
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <span>{targetUser?.name ? `Muloqot: ${targetUser.name}` : 'WZone Jonli Muloqot'}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800">
-                  {targetUser?.name ? 'To‘g‘ridan-to‘g‘ri' : '#general'}
+              <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+                <span>{targetUser?.name || 'WZone Jonli Muloqot'}</span>
+                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                  <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                  {connected ? 'Onlayn' : 'Avto-rejim'}
                 </span>
               </h3>
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold mt-0.5">
-                <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-                <span className={connected ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}>
-                  {connected ? 'WebSocket ulandi (PostgreSQL Jonli)' : 'Ulanmoqda...'}
-                </span>
-              </div>
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                {targetUser?.role ? `${targetUser.role} bilan suhbat` : 'Barcha foydalanuvchilar bilan muloqot'}
+              </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => fetchMessagesViaHTTP(roomId)}
+              title="Yangilash"
+              className="p-1.5 text-slate-400 hover:text-blue-600 transition rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <RefreshCw size={14} className={loadingHistory ? 'animate-spin text-blue-600' : ''} />
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
-        {/* Messages Body */}
-        <div className="flex-1 p-5 overflow-y-auto space-y-3.5 bg-slate-50/50 dark:bg-slate-950/40">
-          {messages.length === 0 ? (
-            <div className="text-center py-16 text-slate-500 dark:text-slate-400 text-xs font-medium space-y-2">
-              <MessageSquare size={32} className="mx-auto text-slate-400 opacity-60" />
-              <p>Muloqotni boshlang. Xabarlar server orqali real vaqtda yetkaziladi.</p>
+        {/* Message Feed */}
+        <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/30 dark:bg-slate-900/30">
+          {loadingHistory && messages.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-xs text-slate-400 gap-2">
+              <RefreshCw size={15} className="animate-spin text-blue-600" />
+              <span>Xabarlar yuklanmoqda...</span>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <MessageSquare size={22} />
+              </div>
+              <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-200">
+                Muloqotni boshlang
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
+                Ushbu suhbat xavfsiz va real-vaqt rejimida amalga oshiriladi.
+              </p>
             </div>
           ) : (
-            messages.map((msg, index) => {
-              const isSelf =
-                msg.isSelf || Boolean(currentUser?.id && msg.user_id === currentUser.id);
-
+            messages.map((msg, idx) => {
+              const isSelf = msg.isSelf;
               return (
                 <div
-                  key={msg.id || index}
+                  key={msg.id || idx}
                   className={`flex gap-2.5 items-end ${isSelf ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isSelf && (
@@ -237,6 +387,20 @@ export default function ChatModal({
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Guest Input Notice if not logged in */}
+        {!currentUser && (
+          <div className="px-4 py-2 bg-slate-100/80 dark:bg-slate-800/80 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-500">Ismingiz:</span>
+            <input
+              type="text"
+              placeholder="Mehmon..."
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              className="px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 flex-1"
+            />
+          </div>
+        )}
+
         {/* Input */}
         <form
           onSubmit={handleSend}
@@ -251,10 +415,10 @@ export default function ChatModal({
           />
           <button
             type="submit"
-            disabled={!inputMessage.trim() || !connected}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-bold text-xs transition disabled:opacity-50 shadow-md shadow-blue-500/25 flex items-center gap-1.5"
+            disabled={!inputMessage.trim() || isSending}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-bold text-xs transition disabled:opacity-50 shadow-md shadow-blue-500/25 flex items-center gap-1.5 cursor-pointer"
           >
-            <span>Yuborish</span>
+            <span>{isSending ? '...' : 'Yuborish'}</span>
             <Send size={15} />
           </button>
         </form>

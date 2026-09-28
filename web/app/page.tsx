@@ -12,6 +12,7 @@ import CreateResumeModal from '../components/CreateResumeModal';
 import ResumesView from '../components/ResumesView';
 import ApplicationsView from '../components/ApplicationsView';
 import ProfileView from '../components/ProfileView';
+import HomeFeedView from '../components/HomeFeedView';
 import FullChatView from '../components/FullChatView';
 import AuthModal from '../components/AuthModal';
 import ChatModal from '../components/ChatModal';
@@ -521,7 +522,12 @@ export default function WZonePortal() {
         onOpenNotifications={() => setNotificationsModalOpen(true)}
         unreadNotificationsCount={unreadCount}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={(q) => {
+          setSearchQuery(q);
+          if (q.trim() && currentTab === 'feed') {
+            setCurrentTab('vacancies');
+          }
+        }}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
         onUserLogout={() => setUser(null)}
@@ -599,6 +605,33 @@ export default function WZonePortal() {
               user={user}
               onUserUpdated={setUser}
               lang={lang}
+              onLanguageChange={(newLang) => {
+                setLang(newLang);
+                try {
+                  localStorage.setItem('workhub_lang', newLang);
+                } catch (_) {}
+              }}
+              darkMode={darkMode}
+              onToggleDarkMode={() => {
+                const next = !darkMode;
+                setDarkMode(next);
+                try {
+                  localStorage.setItem('workhub_theme', next ? 'dark' : 'light');
+                } catch (_) {}
+                if (next) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              }}
+              onOpenCreateResume={() => setCreateResumeModalOpen(true)}
+              resumes={resumes}
+              onRefreshResumes={fetchResumes}
+              onLogout={() => {
+                removeAuthToken();
+                setUser(null);
+                setCurrentTab('feed');
+              }}
             />
           ) : currentTab === 'saved' && displayedVacancies().length === 0 ? (
             <div className="p-14 text-center bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
@@ -635,6 +668,28 @@ export default function WZonePortal() {
                 + Vakansiya e’lon qilish
               </button>
             </div>
+          ) : currentTab === 'feed' ? (
+            <HomeFeedView
+              vacancies={vacancies}
+              onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
+              onNavigateToVacancies={() => setCurrentTab('vacancies')}
+              onOpenCreateResume={() => {
+                if (!user) setAuthModalOpen(true);
+                else setCreateResumeModalOpen(true);
+              }}
+              onOpenCreateVacancy={() => {
+                if (!user) setAuthModalOpen(true);
+                else setCreateVacancyModalOpen(true);
+              }}
+              onApplyVacancy={(v) => {
+                setSelectedVacancyForApply(v);
+                setApplyModalOpen(true);
+              }}
+              isSaved={(id) => savedIds.includes(id)}
+              onToggleSave={handleToggleSave}
+              currentUser={user}
+              lang={lang}
+            />
           ) : (
             <>
               {/* Category & Region Filter Chips Bar */}
@@ -752,7 +807,7 @@ export default function WZonePortal() {
                   ))}
 
                   {/* Infinite Scroll Trigger Sentinel & Loading Indicator */}
-                  {currentTab === 'feed' && (
+                  {currentTab === 'vacancies' && (
                     <div ref={observerRef} className="py-4 text-center">
                       {loadingMore && (
                         <div className="flex items-center justify-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 py-3 bg-white/60 dark:bg-slate-900/60 rounded-2xl border border-slate-200/60 dark:border-slate-800">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Send,
   MessageSquare,
@@ -12,12 +12,14 @@ import {
   Briefcase,
   HelpCircle,
   Sparkles,
-  Smile,
   ChevronRight,
   Radio,
-  Search,
+  RefreshCw,
+  AlertCircle,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
-import { api, getAuthToken } from '../lib/api';
+import { api } from '../lib/api';
 import { Language, translations } from '../lib/translations';
 
 interface FullChatViewProps {
@@ -78,6 +80,26 @@ const QUICK_PROMPTS = [
   '💡 Intervyu bo‘yicha maslahat kerak',
 ];
 
+function getWebSocketUrl(roomId: string, userId: string, userName: string, avatar: string): string {
+  const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  let host = 'localhost:8080';
+  if (typeof window !== 'undefined') {
+    const hn = window.location.hostname;
+    if (hn === 'localhost' || hn === '127.0.0.1') {
+      host = `${hn}:8080`;
+    } else if (window.location.port === '3000') {
+      host = `${hn}:8080`;
+    } else {
+      host = window.location.host;
+    }
+  }
+  return `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
+    roomId
+  )}&user_id=${encodeURIComponent(userId)}&user_name=${encodeURIComponent(
+    userName
+  )}&avatar=${encodeURIComponent(avatar)}`;
+}
+
 export default function FullChatView({
   currentUser,
   onOpenAuth,
@@ -91,12 +113,15 @@ export default function FullChatView({
   const [inputMessage, setInputMessage] = useState('');
   const [guestName, setGuestName] = useState('');
   const [connected, setConnected] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch rooms from backend
+  // 1. Fetch available chat rooms
   useEffect(() => {
     async function loadRooms() {
       try {
@@ -111,101 +136,201 @@ export default function FullChatView({
     loadRooms();
   }, []);
 
-  // Connect to WebSocket on room or user change
+  // 2. Load historical messages via HTTP immediately upon room change (Zero-latency fallback)
+  const fetchMessagesViaHTTP = useCallback(async (roomId: string) => {
+    setLoadingHistory(true);
+    try {
+      const res = await api.getChatMessages(roomId);
+      if (res.success && Array.isArray(res.data?.messages)) {
+        setMessages(
+          res.data.messages.map((m: any) => ({
+            ...m,
+            isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to load chat history via HTTP', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [currentUser?.id]);
+
   useEffect(() => {
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
+    fetchMessagesViaHTTP(activeRoom);
+  }, [activeRoom, fetchMessagesViaHTTP]);
+
+  // 3. Connect to WebSocket with auto-reconnect & ping/pong heartbeat
+  useEffect(() => {
+    let isSubscribed = true;
+
+    function connectWS() {
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch (_) {}
+        wsRef.current = null;
+      }
+
+      const userId = currentUser?.id || 'guest';
+      const userName = currentUser?.name || guestName || 'Mehmon';
+      const userAvatar = currentUser?.avatar_url || '';
+
+      const wsUrl = getWebSocketUrl(activeRoom, userId, userName, userAvatar);
+
+      try {
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          if (!isSubscribed) return;
+          setConnected(true);
+
+          // Clear any pending reconnect
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+          }
+
+          // Start heartbeat ping every 25 seconds
+          if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'ping' }));
+            }
+          }, 25000);
+        };
+
+        ws.onmessage = (event) => {
+          if (!isSubscribed) return;
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'pong') {
+              return;
+            }
+
+            if (data.type === 'history' && Array.isArray(data.data)) {
+              setMessages(
+                data.data.map((m: any) => ({
+                  ...m,
+                  isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
+                }))
+              );
+              return;
+            }
+
+            if (data.type === 'message') {
+              setMessages((prev) => {
+                if (data.id && prev.some((p) => p.id === data.id)) {
+                  return prev;
+                }
+                return [
+                  ...prev,
+                  {
+                    ...data,
+                    isSelf: Boolean(currentUser?.id && data.user_id === currentUser.id),
+                  },
+                ];
+              });
+            }
+          } catch (err) {
+            console.error('Failed to parse WS message', err);
+          }
+        };
+
+        ws.onclose = () => {
+          if (!isSubscribed) return;
+          setConnected(false);
+          if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+
+          // Try reconnecting in 3 seconds
+          if (!reconnectTimeoutRef.current) {
+            reconnectTimeoutRef.current = setTimeout(() => {
+              reconnectTimeoutRef.current = null;
+              if (isSubscribed) connectWS();
+            }, 3000);
+          }
+        };
+
+        ws.onerror = () => {
+          if (!isSubscribed) return;
+          setConnected(false);
+        };
+      } catch (err) {
+        console.error('WebSocket connection error', err);
+        setConnected(false);
+      }
     }
 
-    setConnected(false);
-
-    const userId = currentUser?.id || 'guest';
-    const userName = encodeURIComponent(currentUser?.name || guestName || 'Mehmon');
-    const userAvatar = encodeURIComponent(currentUser?.avatar_url || '');
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname === 'localhost' ? 'localhost:8080' : window.location.host;
-    const wsUrl = `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
-      activeRoom
-    )}&user_id=${userId}&user_name=${userName}&avatar=${userAvatar}`;
-
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setConnected(true);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        if (data.type === 'history' && Array.isArray(data.data)) {
-          setMessages(
-            data.data.map((m: any) => ({
-              ...m,
-              isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
-            }))
-          );
-          return;
-        }
-
-        if (data.type === 'message') {
-          setMessages((prev) => {
-            // Avoid duplicate message IDs
-            if (data.id && prev.some((p) => p.id === data.id)) {
-              return prev;
-            }
-            return [
-              ...prev,
-              {
-                ...data,
-                isSelf: Boolean(currentUser?.id && data.user_id === currentUser.id),
-              },
-            ];
-          });
-        }
-      } catch (err) {
-        console.error('Failed to parse WS message', err);
-      }
-    };
-
-    ws.onclose = () => {
-      setConnected(false);
-    };
-
-    ws.onerror = () => {
-      setConnected(false);
-    };
+    connectWS();
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      isSubscribed = false;
+      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch (_) {}
+        wsRef.current = null;
       }
     };
   }, [activeRoom, currentUser, guestName]);
 
-  // Scroll to bottom on messages update
+  // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = (e?: React.FormEvent) => {
+  // 4. Send message with dual transport: WebSocket if open, else HTTP POST
+  const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!inputMessage.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+    const text = inputMessage.trim();
+    if (!text || isSending) return;
+
+    const senderName = currentUser?.name || guestName.trim() || 'WZone Mehmon';
+    const senderAvatar = currentUser?.avatar_url || '';
+
+    setInputMessage('');
+
+    // If WebSocket is open, send through it
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const payload = {
+        content: text,
+        sender_name: senderName,
+        sender_avatar: senderAvatar,
+        room_id: activeRoom,
+      };
+      wsRef.current.send(JSON.stringify(payload));
       return;
     }
 
-    const payload = {
-      content: inputMessage.trim(),
-      sender_name: currentUser?.name || guestName || 'Mehmon',
-      sender_avatar: currentUser?.avatar_url || '',
-      room_id: activeRoom,
-    };
+    // Otherwise, send via HTTP REST fallback immediately
+    setIsSending(true);
+    try {
+      const res = await api.sendChatMessage({
+        room_id: activeRoom,
+        content: text,
+        sender_name: senderName,
+        sender_avatar: senderAvatar,
+      });
 
-    wsRef.current.send(JSON.stringify(payload));
-    setInputMessage('');
+      if (res.success && res.data?.message) {
+        const newMsg: ChatMessage = {
+          ...res.data.message,
+          isSelf: true,
+        };
+        setMessages((prev) => {
+          if (newMsg.id && prev.some((p) => p.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
+      }
+    } catch (err) {
+      console.error('Failed to send message via HTTP fallback', err);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const currentRoomObj = rooms.find((r) => r.id === activeRoom) || rooms[0];
@@ -227,23 +352,8 @@ export default function FullChatView({
     return name.slice(0, 2).toUpperCase();
   };
 
-  const getAvatarColor = (name?: string) => {
-    const colors = [
-      'bg-blue-600',
-      'bg-indigo-600',
-      'bg-purple-600',
-      'bg-emerald-600',
-      'bg-rose-600',
-      'bg-amber-600',
-    ];
-    if (!name) return colors[0];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
-    return colors[hash % colors.length];
-  };
-
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl flex flex-col md:flex-row h-[720px] overflow-hidden transition-all duration-300">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl flex flex-col md:flex-row h-[740px] overflow-hidden transition-all duration-300">
       {/* Left Sidebar: Channels & Rooms */}
       <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col shrink-0">
         {/* Rooms Header */}
@@ -262,9 +372,13 @@ export default function FullChatView({
             </div>
           </div>
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60">
-            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+              }`}
+            />
             <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
-              {connected ? 'Onlayn' : 'Ulanmoqda'}
+              {connected ? 'Onlayn' : 'Avto-rejim'}
             </span>
           </div>
         </div>
@@ -301,19 +415,16 @@ export default function FullChatView({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold truncate">
-                      #{room.id}
-                    </span>
-                    {isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                    )}
+                    <span className="text-xs font-bold truncate">{room.name}</span>
                   </div>
                   <p
                     className={`text-[11px] truncate mt-0.5 ${
-                      isActive ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'
+                      isActive
+                        ? 'text-blue-100'
+                        : 'text-slate-500 dark:text-slate-400'
                     }`}
                   >
-                    {room.name}
+                    {room.description}
                   </p>
                 </div>
               </button>
@@ -321,132 +432,140 @@ export default function FullChatView({
           })}
         </div>
 
-        {/* Current User Card at bottom of sidebar */}
-        <div className="p-3.5 border-t border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 flex items-center justify-between gap-3">
+        {/* User Card in Sidebar */}
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
           {currentUser ? (
-            <div className="flex items-center gap-2.5 min-w-0">
-              {currentUser.avatar_url ? (
-                <img
-                  src={currentUser.avatar_url}
-                  alt={currentUser.name}
-                  className="w-9 h-9 rounded-xl object-cover ring-2 ring-blue-500/20"
-                />
-              ) : (
-                <div
-                  className={`w-9 h-9 rounded-xl text-white font-bold flex items-center justify-center text-xs shadow-sm ${getAvatarColor(
-                    currentUser.name
-                  )}`}
-                >
-                  {getAvatarInitials(currentUser.name)}
+            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-100/80 dark:bg-slate-800/80">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-black overflow-hidden shrink-0">
+                {currentUser.avatar_url ? (
+                  <img
+                    src={currentUser.avatar_url}
+                    alt={currentUser.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  getAvatarInitials(currentUser.name)
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">
+                  <span>{currentUser.name}</span>
+                  {currentUser.auth_provider === 'oneid' && (
+                    <ShieldCheck size={13} className="text-blue-500 shrink-0" />
+                  )}
                 </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                  {currentUser.name}
-                </p>
-                <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                  Avtorizatsiyadan o‘tgan
-                </p>
+                <div className="text-[10px] text-slate-400 truncate">
+                  {currentUser.email}
+                </div>
               </div>
             </div>
           ) : (
-            <div className="w-full flex items-center justify-between gap-2">
-              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                Mehmon rejimi
+            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 flex items-center justify-between gap-2">
+              <div className="text-[11px] font-semibold text-blue-900 dark:text-blue-200">
+                Ro‘yxatdan o‘tmagansiz
               </div>
               <button
+                type="button"
                 onClick={onOpenAuth}
-                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm"
+                className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-sm"
               >
-                {t.loginBtn}
+                Kirish
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Right Column: Chat Feed & Active Conversation */}
-      <div className="flex-1 flex flex-col bg-slate-50/30 dark:bg-slate-900/40">
-        {/* Active Room Top Bar */}
-        <div className="px-6 py-3.5 border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center font-extrabold border border-blue-200 dark:border-blue-900/60">
-              <Hash size={20} />
+      {/* Right Area: Messages & Input */}
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-50/40 dark:bg-slate-900/40">
+        {/* Chat Room Header */}
+        <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              <Hash size={18} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+              <h4 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <span>{currentRoomObj.name}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase">
                   #{currentRoomObj.id}
-                </h3>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                  {currentRoomObj.name}
                 </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 {currentRoomObj.description}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-              <span className={`w-2.5 h-2.5 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-              <span>{connected ? 'PostgreSQL Jonli efir' : 'Qayta ulanmoqda...'}</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchMessagesViaHTTP(activeRoom)}
+              title="Xabarlarni yangilash"
+              className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-600 transition"
+            >
+              <RefreshCw size={15} className={loadingHistory ? 'animate-spin text-blue-600' : ''} />
+            </button>
+            <div className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+              {connected ? (
+                <>
+                  <Wifi size={13} className="text-emerald-500" />
+                  <span>Real-vaqt</span>
+                </>
+              ) : (
+                <>
+                  <Radio size={13} className="text-blue-500 animate-pulse" />
+                  <span>Tezkor xabar</span>
+                </>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Messages Feed */}
-        <div className="flex-1 p-5 overflow-y-auto space-y-4 bg-slate-100/40 dark:bg-slate-950/40">
-          {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
-              <div className="w-16 h-16 rounded-3xl bg-blue-100/70 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner">
-                <MessageSquare size={28} />
+        {/* Message Feed */}
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-4">
+          {loadingHistory && messages.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-xs font-semibold text-slate-400 gap-2">
+              <RefreshCw size={16} className="animate-spin text-blue-600" />
+              <span>Xabarlar yuklanmoqda...</span>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <MessageSquare size={24} />
               </div>
-              <h4 className="font-extrabold text-base text-slate-900 dark:text-white">
-                #{currentRoomObj.id} kanalida suhbatni boshlang
+              <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                Bu xonada hali xabarlar yo‘q
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
-                Ushbu kanalda xabarlar real vaqtda butun O‘zbekiston bo‘ylab barcha ishtirokchilarga ko‘rinadi.
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+                Birinchi bo‘lib suhbatni boshlang yoki quyidagi tezkor xabarlardan birini tanlang.
               </p>
             </div>
           ) : (
-            messages.map((msg, index) => {
-              const isSelf =
-                msg.isSelf || Boolean(currentUser?.id && msg.user_id === currentUser.id);
-
+            messages.map((msg, idx) => {
+              const isSelf = msg.isSelf;
               return (
                 <div
-                  key={msg.id || index}
+                  key={msg.id || idx}
                   className={`flex gap-3 items-end ${isSelf ? 'justify-end' : 'justify-start'}`}
                 >
-                  {/* Avatar for other users */}
                   {!isSelf && (
-                    <div className="shrink-0 mb-1">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
                       {msg.sender_avatar ? (
                         <img
                           src={msg.sender_avatar}
                           alt={msg.sender_name || 'Foydalanuvchi'}
-                          className="w-8 h-8 rounded-xl object-cover ring-2 ring-slate-200 dark:ring-slate-700 shadow-xs"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div
-                          className={`w-8 h-8 rounded-xl text-white font-bold flex items-center justify-center text-[11px] shadow-xs ${getAvatarColor(
-                            msg.sender_name
-                          )}`}
-                        >
-                          {getAvatarInitials(msg.sender_name)}
-                        </div>
+                        getAvatarInitials(msg.sender_name)
                       )}
                     </div>
                   )}
 
-                  {/* Message Bubble Container */}
-                  <div className={`max-w-[78%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}>
-                    {/* Sender Name & Role */}
+                  <div className={`max-w-[75%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}>
                     {!isSelf && (
                       <div className="flex items-center gap-1.5 ml-1 mb-1">
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        <span className="text-[11px] font-extrabold text-slate-800 dark:text-slate-200">
                           {msg.sender_name || 'WZone Foydalanuvchisi'}
                         </span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">
@@ -541,10 +660,10 @@ export default function FullChatView({
             />
             <button
               type="submit"
-              disabled={!inputMessage.trim() || !connected}
+              disabled={!inputMessage.trim() || isSending}
               className="px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm transition disabled:opacity-50 shadow-lg shadow-blue-500/25 flex items-center gap-2 shrink-0 cursor-pointer"
             >
-              <span>Yuborish</span>
+              <span>{isSending ? 'Yuborilmoqda...' : 'Yuborish'}</span>
               <Send size={16} />
             </button>
           </div>

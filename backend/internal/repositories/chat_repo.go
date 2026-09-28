@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
 )
 
@@ -23,15 +24,24 @@ func NewPostgresChatRepo(db *sql.DB) ChatRepo {
 func (r *postgresChatRepo) SaveMessage(msg models.ChatMessage) error {
 	var uid interface{}
 	if msg.UserID != "" && msg.UserID != "guest" {
-		uid = msg.UserID
+		if _, err := uuid.Parse(msg.UserID); err == nil {
+			uid = msg.UserID
+		} else {
+			uid = nil
+		}
 	} else {
 		uid = nil
+	}
+
+	senderName := msg.SenderName
+	if senderName == "" {
+		senderName = "WZone Foydalanuvchisi"
 	}
 
 	query := `
 		INSERT INTO chat_messages (id, room_id, user_id, sender_name, sender_avatar, content, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`
-	_, err := r.db.Exec(query, msg.ID, msg.RoomID, uid, msg.SenderName, msg.SenderAvatar, msg.Content, msg.CreatedAt)
+	_, err := r.db.Exec(query, msg.ID, msg.RoomID, uid, senderName, msg.SenderAvatar, msg.Content, msg.CreatedAt)
 	return err
 }
 

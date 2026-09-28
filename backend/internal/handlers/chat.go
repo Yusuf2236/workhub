@@ -139,14 +139,26 @@ func (c *WsClient) readPump(h *ChatHub) {
 		}
 
 		content := string(rawMsg)
+		if content == "ping" {
+			c.safeSend([]byte(`{"type":"pong"}`))
+			continue
+		}
+
 		var incoming struct {
+			Type         string `json:"type"`
 			Content      string `json:"content"`
 			SenderName   string `json:"sender_name"`
 			SenderAvatar string `json:"sender_avatar"`
 			RoomID       string `json:"room_id"`
 		}
-		if err := json.Unmarshal(rawMsg, &incoming); err == nil && incoming.Content != "" {
-			content = incoming.Content
+		if err := json.Unmarshal(rawMsg, &incoming); err == nil {
+			if incoming.Type == "ping" {
+				c.safeSend([]byte(`{"type":"pong"}`))
+				continue
+			}
+			if incoming.Content != "" {
+				content = incoming.Content
+			}
 			if incoming.SenderName != "" {
 				c.userName = incoming.SenderName
 			}

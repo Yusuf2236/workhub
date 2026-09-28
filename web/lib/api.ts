@@ -246,6 +246,28 @@ export const api = {
     });
   },
 
+  async uploadResumeFile(file: File) {
+    const token = getAuthToken();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/resumes/upload`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  },
+
   // Notifications
   async getNotifications() {
     return request<{ notifications: any[] }>('/notifications');
@@ -292,6 +314,17 @@ export const api = {
 
   async getChatMessages(room: string = 'general') {
     return request<{ room_id: string; messages: any[] }>(`/chat/messages?room=${encodeURIComponent(room)}`);
+  },
+
+  async sendChatMessage(payload: { room_id?: string; content: string; sender_name?: string; sender_avatar?: string }) {
+    return request<{ message: any }>('/chat/messages', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getChatHealth() {
+    return request<{ status: string; active_rooms: number; active_users: number }>('/chat/health');
   },
 
   // Billing & Subscriptions

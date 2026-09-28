@@ -9,6 +9,7 @@ This folder centralizes all system and product documentation for the WorkHub pla
 - `monetization.md` — business model and pricing
 - `design-system.md` — shared UI language and visual rules
 - `roadmap.md` — milestones and product evolution
+- `chat/README.md` — complete real-time chat architecture, WebSocket/REST protocols, and database schema
 
 ## Notes
 
