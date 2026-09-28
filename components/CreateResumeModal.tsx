@@ -36,6 +36,12 @@ interface CreateResumeModalProps {
   onClose: () => void;
   onSuccess: () => void;
   currentUser?: any;
+  initialResume?: {
+    id: string;
+    title?: string;
+    summary?: string;
+    file_url?: string;
+  } | null;
 }
 
 const SAMPLE_ROLES = [
@@ -54,8 +60,10 @@ export default function CreateResumeModal({
   onClose,
   onSuccess,
   currentUser,
+  initialResume = null,
 }: CreateResumeModalProps) {
   const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'ai-analyst'>('edit');
+  const isEdit = Boolean(initialResume?.id);
 
   // Form Fields
   const [title, setTitle] = useState('');
@@ -79,7 +87,23 @@ export default function CreateResumeModal({
   useEffect(() => {
     if (currentUser?.name) setFullName(currentUser.name);
     if (currentUser?.email) setEmail(currentUser.email);
-  }, [currentUser]);
+  }, [currentUser?.name, currentUser?.email]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveTab('edit');
+    setError(null);
+    setAiSuccessMessage(null);
+    if (initialResume?.id) {
+      setTitle(initialResume.title || '');
+      setSummary(initialResume.summary || '');
+      setFileUrl(initialResume.file_url || '');
+    } else {
+      setTitle('');
+      setSummary('');
+      setFileUrl('');
+    }
+  }, [isOpen, initialResume?.id, initialResume?.title, initialResume?.summary, initialResume?.file_url]);
 
   if (!isOpen) return null;
 
@@ -155,11 +179,14 @@ export default function CreateResumeModal({
     setLoading(true);
 
     try {
-      const res = await api.createResume({
+      const payload = {
         title: title.trim() || 'Malakali Mutaxassis',
         summary: summary.trim(),
         file_url: fileUrl.trim() || undefined,
-      });
+      };
+      const res = isEdit && initialResume?.id
+        ? await api.updateResume(initialResume.id, payload)
+        : await api.createResume(payload);
 
       if (res.success) {
         onSuccess();
@@ -191,13 +218,15 @@ export default function CreateResumeModal({
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-                Yangi rezyume joylashtirish
+                {isEdit ? 'Rezyumeni tahrirlash' : 'Yangi rezyume yaratish'}
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-950/60 dark:to-indigo-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                   AI Tahlilchi
                 </span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Ish beruvchilar sizning rezyumeingizni topishi uchun ma‘lumotlarni kiriting
+                {isEdit
+                  ? 'Mavjud rezyume ma’lumotlarini yangilang'
+                  : 'Bir nechta rezyume yaratib, har bir lavozim uchun alohida saqlashingiz mumkin'}
               </p>
             </div>
           </div>
@@ -654,7 +683,7 @@ export default function CreateResumeModal({
               className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50"
             >
               <Plus size={16} />
-              <span>{loading ? 'Saqlanmoqda...' : 'Rezyumeni saqlash va e‘lon qilish'}</span>
+              <span>{loading ? 'Saqlanmoqda...' : isEdit ? 'O‘zgarishlarni saqlash' : 'Rezyumeni saqlash'}</span>
             </button>
           </div>
         </form>

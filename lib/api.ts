@@ -239,10 +239,27 @@ export const api = {
     return request<{ resumes: any[] }>(`/resumes${all ? '?all=true' : ''}`);
   },
 
+  async getResume(id: string) {
+    return request<{ resume: any }>(`/resumes/${id}`);
+  },
+
   async createResume(payload: { title: string; summary: string; file_url?: string }) {
     return request<{ resume: any }>('/resumes', {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  },
+
+  async updateResume(id: string, payload: { title: string; summary: string; file_url?: string }) {
+    return request<{ resume: any }>(`/resumes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteResume(id: string) {
+    return request<{ deleted: boolean; id: string }>(`/resumes/${id}`, {
+      method: 'DELETE',
     });
   },
 
