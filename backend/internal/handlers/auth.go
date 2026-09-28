@@ -17,6 +17,7 @@ import (
 
 	"github.com/Yusuf2236/workhub/backend/internal/models"
 	"github.com/Yusuf2236/workhub/backend/internal/services"
+	"github.com/Yusuf2236/workhub/backend/pkg/crypto"
 	"github.com/Yusuf2236/workhub/backend/pkg/hash"
 	"github.com/Yusuf2236/workhub/backend/pkg/jwt"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
@@ -945,7 +946,8 @@ func saveBase64Avatar(pinfl, rawB64 string) string {
 	if cleanPinfl == "" {
 		cleanPinfl = uuid.NewString()[:8]
 	}
-	filename := fmt.Sprintf("oneid_%s.jpg", cleanPinfl)
+	anonHash := crypto.AnonymizeFilename(cleanPinfl)
+	filename := fmt.Sprintf("oneid_%s.jpg", anonHash)
 	filePath := filepath.Join(dir, filename)
 	if err := os.WriteFile(filePath, imgBytes, 0644); err != nil {
 		log.Printf("[OneID Photo Save Error]: %v", err)

@@ -54,6 +54,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET:-workhub_super_secret_jwt_key_2026}
+      - ONEID_ENCRYPTION_KEY=${ONEID_ENCRYPTION_KEY:-workhub_sovereign_aes_256_gcm_secret_key_2026}
       - ONEID_CLIENT_ID=${ONEID_CLIENT_ID:-workhub}
       - ONEID_CLIENT_SECRET=${ONEID_CLIENT_SECRET:-}
       - ONEID_REDIRECT_URI=${ONEID_REDIRECT_URI:-}
