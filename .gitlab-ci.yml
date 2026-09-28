@@ -95,7 +95,7 @@ deploy:test:
   script:
     - |
       set -e
-      rsync -az --delete --exclude '.git' --exclude '.gitlab-ci.yml' \
+      rsync -az --delete --exclude '.git' --exclude '.gitlab-ci.yml' --exclude '.env' --exclude '.env.local' --exclude '.env.prod' \
         ./ "${DEPLOY_USER}@${DEPLOY_HOST_TEST}:${DEPLOY_PATH}/src/"
       if [ -f scripts/deploy.sh ]; then
         rsync -az scripts/deploy.sh "${DEPLOY_USER}@${DEPLOY_HOST_TEST}:${DEPLOY_PATH}/scripts/deploy.sh"
@@ -117,7 +117,7 @@ deploy:production:
   script:
     - |
       set -e
-      rsync -az --delete --exclude '.git' --exclude '.gitlab-ci.yml' \
+      rsync -az --delete --exclude '.git' --exclude '.gitlab-ci.yml' --exclude '.env' --exclude '.env.local' --exclude '.env.prod' \
         ./ "${DEPLOY_USER}@${DEPLOY_HOST_PROD}:${DEPLOY_PATH}/src/"
       if [ -f scripts/deploy.sh ]; then
         rsync -az scripts/deploy.sh "${DEPLOY_USER}@${DEPLOY_HOST_PROD}:${DEPLOY_PATH}/scripts/deploy.sh"
