@@ -15,6 +15,7 @@ dist/
 backend/.env
 backend/bin/
 backend/api
+backend/workhub-api
 backend/*.out
 backend/uploads/
 uploads/

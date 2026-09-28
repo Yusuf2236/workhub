@@ -11,12 +11,14 @@
     
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #0b1120;
+      background-color: #070b14;
+      overflow-x: hidden;
     }
 
     /* Device Frames */
     .device-wrapper {
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: top center;
     }
 
     /* iPhone 16 Pro (iOS) */
@@ -24,7 +26,7 @@
       width: 395px;
       height: 840px;
       border-radius: 52px;
-      box-shadow: 0 0 0 11px #262626, 0 0 0 13px #404040, 0 25px 60px -15px rgba(0,0,0,0.9);
+      box-shadow: 0 0 0 11px #1e2024, 0 0 0 13px #383b42, 0 25px 65px -15px rgba(0,0,0,0.95);
       position: relative;
     }
 
@@ -32,18 +34,18 @@
     .device-pixel8 {
       width: 400px;
       height: 840px;
-      border-radius: 40px;
-      box-shadow: 0 0 0 10px #27272a, 0 0 0 12px #52525b, 0 25px 60px -15px rgba(0,0,0,0.85);
+      border-radius: 42px;
+      box-shadow: 0 0 0 10px #1f2430, 0 0 0 12px #3e4656, 0 25px 65px -15px rgba(0,0,0,0.95);
       position: relative;
     }
 
     /* Dynamic Island (iOS) */
     .dynamic-island {
       position: absolute;
-      top: 11px;
+      top: 12px;
       left: 50%;
       transform: translateX(-50%);
-      width: 120px;
+      width: 122px;
       height: 32px;
       background: #000;
       border-radius: 20px;
@@ -51,7 +53,14 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 10px;
+      padding: 0 11px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .dynamic-island:hover {
+      width: 220px;
+      height: 42px;
+      border-radius: 24px;
     }
 
     /* Punch Hole (Android) */
@@ -60,22 +69,23 @@
       top: 14px;
       left: 50%;
       transform: translateX(-50%);
-      width: 15px;
-      height: 15px;
+      width: 14px;
+      height: 14px;
       background: #000;
       border-radius: 50%;
       z-index: 50;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.06);
     }
 
-    /* Home indicator */
+    /* iOS Home indicator */
     .home-indicator {
       position: absolute;
       bottom: 8px;
       left: 50%;
       transform: translateX(-50%);
-      width: 130px;
+      width: 134px;
       height: 4.5px;
-      background: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.45);
       border-radius: 3px;
       z-index: 50;
       pointer-events: none;
@@ -87,9 +97,9 @@
       bottom: 6px;
       left: 50%;
       transform: translateX(-50%);
-      width: 90px;
+      width: 96px;
       height: 4px;
-      background: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.4);
       border-radius: 2px;
       z-index: 50;
       pointer-events: none;
@@ -102,50 +112,70 @@
       background: transparent;
     }
     .screen-scroll::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.16);
       border-radius: 4px;
+    }
+
+    /* Device Iframe Container */
+    .device-iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #090e1a;
     }
   </style>
 </head>
 <body class="text-slate-100 min-h-screen flex flex-col bg-[#070b14]">
 
   <!-- Top Control Bar -->
-  <header class="bg-[#0f172a] border-b border-slate-800 px-6 py-3 sticky top-0 z-50 shadow-xl">
+  <header class="bg-[#0c1220] border-b border-slate-800/80 px-6 py-3.5 sticky top-0 z-50 shadow-2xl backdrop-blur-md">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
       
       <!-- Brand & Status -->
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-          <i class="fa-solid fa-briefcase text-white text-lg"></i>
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
+          <i class="fa-solid fa-mobile-screen-button text-white text-lg"></i>
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="font-extrabold text-lg text-white tracking-tight">WZone Mobile</h1>
-            <span class="text-[10px] bg-blue-500/20 text-blue-400 font-black px-2.5 py-0.5 rounded-full border border-blue-500/30">
-              EMULATOR v2026
-            </span>
+            <h1 class="font-black text-lg text-white tracking-tight flex items-center">
+              W<span class="text-blue-500">Zone</span>
+              <span class="ml-2 text-[10px] bg-blue-500/20 text-blue-400 font-black px-2.5 py-0.5 rounded-full border border-blue-500/30">
+                PRO EMULATOR 2026
+              </span>
+            </h1>
           </div>
-          <p class="text-xs text-slate-400">Android (Kotlin) va iOS (Swift) Real-Vaqt Sinov Platformasi</p>
+          <p class="text-xs text-slate-400 font-medium">Real-vaqtda Android (Kotlin) & iOS (Swift) 100% Avtomatik Sinxronizatsiyasi</p>
         </div>
       </div>
 
       <!-- Controls -->
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         
+        <!-- Operating Mode (Jonli Sayt vs Native App) -->
+        <div class="bg-slate-900 border border-slate-700/80 p-1 rounded-2xl flex items-center shadow-inner">
+          <button id="btnModeLive" onclick="setAppEngine('live')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-blue-600 text-white shadow-md shadow-blue-500/25">
+            <i class="fa-solid fa-globe"></i>
+            <span>Jonli Sayt (100% Sinxron)</span>
+          </button>
+          <button id="btnModeNative" onclick="setAppEngine('native')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Native App UI</span>
+          </button>
+        </div>
+
         <!-- View Mode Selector -->
         <div>
-          <label class="text-[11px] text-slate-400 font-bold block mb-0.5">Ko‘rish Rejimi</label>
-          <select id="modeSelector" onchange="changeMode(this.value)" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-xl px-3 py-2 font-bold focus:ring-2 focus:ring-blue-500 cursor-pointer">
-            <option value="dual" selected>⚡ YONMA-YON (Android + iOS ikkalasi bir vaqtda)</option>
-            <option value="android">🤖 Faqat Android (Google Pixel 8 Pro)</option>
-            <option value="ios">🍏 Faqat iOS (Apple iPhone 16 Pro)</option>
+          <select id="modeSelector" onchange="changeMode(this.value)" class="bg-slate-900 border border-slate-700/80 text-white text-xs rounded-xl px-3 py-2 font-bold focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-sm">
+            <option value="dual" selected>⚡ YONMA-YON (Android + iOS ikkalasi)</option>
+            <option value="android">🤖 Faqat Android (Pixel 8 Pro)</option>
+            <option value="ios">🍏 Faqat iOS (iPhone 16 Pro)</option>
           </select>
         </div>
 
         <!-- Scale Selector -->
         <div>
-          <label class="text-[11px] text-slate-400 font-bold block mb-0.5">Masshtab</label>
-          <select id="scaleSelector" onchange="changeScale(this.value)" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-xl px-2.5 py-2 font-bold cursor-pointer">
+          <select id="scaleSelector" onchange="changeScale(this.value)" class="bg-slate-900 border border-slate-700/80 text-white text-xs rounded-xl px-2.5 py-2 font-bold cursor-pointer">
             <option value="0.75">75%</option>
             <option value="0.85" selected>85%</option>
             <option value="0.95">95%</option>
@@ -153,45 +183,47 @@
           </select>
         </div>
 
-        <!-- Demo Login Fast Button -->
-        <div class="pt-4">
-          <button onclick="quickDemoLogin()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/25 transition">
-            <i class="fa-solid fa-user-check"></i>
-            <span>Tezkor Demo Kirish</span>
-          </button>
-        </div>
-
         <!-- Refresh Button -->
-        <div class="pt-4">
-          <button onclick="refreshAllData()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-2 rounded-xl border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-rotate"></i>
-            <span>Yangilash</span>
-          </button>
-        </div>
+        <button onclick="refreshAllData()" title="Ikkala qurilmani yangilash" class="bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white px-3 py-2 rounded-xl border border-slate-700/80 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
+          <i class="fa-solid fa-rotate text-blue-400"></i>
+          <span>Yangilash</span>
+        </button>
 
       </div>
 
-      <!-- Backend Live Health Badge -->
-      <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3.5 py-2 rounded-xl">
-        <span id="backendDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="backendStatus" class="text-xs text-slate-300 font-mono font-bold">Backend: :8080 ✓ OK</span>
+      <!-- Health Badges -->
+      <div class="flex items-center gap-2">
+        <!-- Web Health -->
+        <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl">
+          <span id="webDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="webStatus" class="text-[11px] text-slate-300 font-mono font-bold">Sayt :3000 ✓</span>
+        </div>
+
+        <!-- Backend Health -->
+        <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl">
+          <span id="backendDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="backendStatus" class="text-[11px] text-slate-300 font-mono font-bold">API :8080 ✓</span>
+        </div>
       </div>
 
     </div>
   </header>
 
   <!-- Main Dual Simulator Arena -->
-  <main class="flex-1 flex flex-wrap items-center justify-center gap-10 p-6 overflow-auto">
+  <main class="flex-1 flex flex-wrap items-start justify-center gap-8 lg:gap-14 p-6 overflow-auto">
     
-    <!-- 1. ANDROID DEVICE FRAME (Pixel 8 Pro) -->
+    <!-- 1. ANDROID DEVICE FRAME (Google Pixel 8 Pro) -->
     <div id="androidContainer" class="flex flex-col items-center gap-3">
-      <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-xs font-black">
-        <i class="fa-brands fa-android"></i>
-        <span>ANDROID — Google Pixel 8 Pro (Kotlin + Compose)</span>
+      <div class="flex items-center justify-between w-full max-w-[400px] px-3 py-1.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-xs font-black shadow-sm">
+        <div class="flex items-center gap-2">
+          <i class="fa-brands fa-android text-base"></i>
+          <span>ANDROID — Google Pixel 8 Pro</span>
+        </div>
+        <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md">Material 3</span>
       </div>
 
       <div id="androidScale" class="device-wrapper">
-        <div class="device-pixel8 bg-slate-950 overflow-hidden select-none border border-slate-700/60">
+        <div class="device-pixel8 bg-slate-950 overflow-hidden select-none border border-slate-700/60 shadow-2xl">
           
           <!-- Punch Hole Camera -->
           <div class="punch-hole"></div>
@@ -200,45 +232,21 @@
           <div class="w-full h-full flex flex-col bg-[#0b101d] text-slate-100 overflow-hidden relative">
             
             <!-- Android Status Bar -->
-            <div class="h-10 px-6 pt-2 flex items-center justify-between text-xs font-semibold text-slate-300 z-40 bg-slate-900/60 backdrop-blur">
-              <span id="androidClock" class="font-mono text-[11px] font-bold">15:05</span>
+            <div class="h-10 px-6 pt-2 flex items-center justify-between text-xs font-semibold text-slate-300 z-40 bg-slate-900/75 backdrop-blur-md">
+              <span id="androidClock" class="font-mono text-[11px] font-bold">15:20</span>
               <div class="flex items-center gap-2 text-[11px]">
-                <span class="text-[10px] font-extrabold text-blue-400">5G</span>
+                <span class="text-[10px] font-black text-blue-400">5G</span>
                 <i class="fa-solid fa-wifi"></i>
                 <i class="fa-solid fa-battery-three-quarters text-emerald-400"></i>
               </div>
             </div>
 
-            <!-- Dynamic Viewport -->
-            <div id="androidViewport" class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-16">
-              <!-- Content rendered via JavaScript -->
+            <!-- Device Content Viewport -->
+            <div id="androidViewport" class="flex-1 flex flex-col overflow-hidden relative">
+              <!-- Rendered via JS (Live Iframe OR Native UI) -->
             </div>
 
-            <!-- Android Bottom Nav Bar (Material 3) -->
-            <div class="absolute bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 flex items-center justify-around py-2 z-40 text-xs">
-              <button onclick="setTab('feed')" class="tab-btn flex flex-col items-center gap-1 text-blue-500 font-bold" data-tab="feed">
-                <i class="fa-solid fa-house"></i>
-                <span class="text-[10px]">Bosh sahifa</span>
-              </button>
-              <button onclick="setTab('vacancies')" class="tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white" data-tab="vacancies">
-                <i class="fa-solid fa-briefcase"></i>
-                <span class="text-[10px]">Vakansiyalar</span>
-              </button>
-              <button onclick="setTab('chat')" class="tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white" data-tab="chat">
-                <i class="fa-solid fa-comment-dots"></i>
-                <span class="text-[10px]">Chat</span>
-              </button>
-              <button onclick="setTab('applications')" class="tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white" data-tab="applications">
-                <i class="fa-solid fa-file-circle-check"></i>
-                <span class="text-[10px]">Arizalar</span>
-              </button>
-              <button onclick="setTab('profile')" class="tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white" data-tab="profile">
-                <i class="fa-solid fa-user-gear"></i>
-                <span class="text-[10px]">Profil</span>
-              </button>
-            </div>
-
-            <!-- Android Nav Pill -->
+            <!-- Android Navigation Pill -->
             <div class="android-nav-bar"></div>
 
           </div>
@@ -246,31 +254,34 @@
       </div>
     </div>
 
-    <!-- 2. IOS DEVICE FRAME (iPhone 16 Pro) -->
+    <!-- 2. IOS DEVICE FRAME (Apple iPhone 16 Pro) -->
     <div id="iosContainer" class="flex flex-col items-center gap-3">
-      <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-950/60 border border-blue-500/30 text-blue-400 text-xs font-black">
-        <i class="fa-brands fa-apple"></i>
-        <span>iOS — Apple iPhone 16 Pro (Swift + SwiftUI)</span>
+      <div class="flex items-center justify-between w-full max-w-[395px] px-3 py-1.5 rounded-2xl bg-blue-950/40 border border-blue-500/30 text-blue-400 text-xs font-black shadow-sm">
+        <div class="flex items-center gap-2">
+          <i class="fa-brands fa-apple text-base"></i>
+          <span>iOS — Apple iPhone 16 Pro</span>
+        </div>
+        <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-md">SwiftUI Cupertino</span>
       </div>
 
       <div id="iosScale" class="device-wrapper">
-        <div class="device-iphone16pro bg-slate-950 overflow-hidden select-none border border-slate-700/60">
+        <div class="device-iphone16pro bg-slate-950 overflow-hidden select-none border border-slate-700/60 shadow-2xl">
           
           <!-- Dynamic Island -->
-          <div class="dynamic-island">
-            <span class="text-[9px] font-mono text-white opacity-80 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
-              WZone
+          <div class="dynamic-island group" title="WZone Live Activity">
+            <span class="text-[9px] font-mono text-white opacity-90 flex items-center gap-1.5 font-bold">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              WZone Live
             </span>
-            <div class="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-slate-800 border border-slate-700"></div>
           </div>
 
           <!-- Screen Wrapper -->
           <div class="w-full h-full flex flex-col bg-[#080d1a] text-slate-100 overflow-hidden relative">
             
             <!-- iOS Status Bar -->
-            <div class="h-11 px-7 pt-2 flex items-center justify-between text-xs font-semibold text-slate-200 z-40 bg-slate-900/60 backdrop-blur">
-              <span id="iosClock" class="font-mono text-[11px] font-bold">15:05</span>
+            <div class="h-11 px-7 pt-2 flex items-center justify-between text-xs font-semibold text-slate-200 z-40 bg-slate-900/75 backdrop-blur-md">
+              <span id="iosClock" class="font-mono text-[11px] font-bold">15:20</span>
               <div class="flex items-center gap-2 text-[11px]">
                 <i class="fa-solid fa-signal"></i>
                 <i class="fa-solid fa-wifi"></i>
@@ -278,33 +289,9 @@
               </div>
             </div>
 
-            <!-- Dynamic Viewport -->
-            <div id="iosViewport" class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-16">
-              <!-- Content rendered via JavaScript -->
-            </div>
-
-            <!-- iOS Bottom Tab Bar (SwiftUI) -->
-            <div class="absolute bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur border-t border-slate-800/80 flex items-center justify-around py-2.5 z-40 text-xs">
-              <button onclick="setTab('feed')" class="ios-tab-btn flex flex-col items-center gap-1 text-blue-500 font-bold" data-tab="feed">
-                <i class="fa-solid fa-house"></i>
-                <span class="text-[9px]">Bosh sahifa</span>
-              </button>
-              <button onclick="setTab('vacancies')" class="ios-tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white" data-tab="vacancies">
-                <i class="fa-solid fa-briefcase"></i>
-                <span class="text-[9px]">Vakansiyalar</span>
-              </button>
-              <button onclick="setTab('chat')" class="ios-tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white" data-tab="chat">
-                <i class="fa-solid fa-message"></i>
-                <span class="text-[9px]">Chat</span>
-              </button>
-              <button onclick="setTab('applications')" class="ios-tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white" data-tab="applications">
-                <i class="fa-solid fa-file-lines"></i>
-                <span class="text-[9px]">Arizalar</span>
-              </button>
-              <button onclick="setTab('profile')" class="ios-tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white" data-tab="profile">
-                <i class="fa-solid fa-circle-user"></i>
-                <span class="text-[9px]">Profil</span>
-              </button>
+            <!-- Device Content Viewport -->
+            <div id="iosViewport" class="flex-1 flex flex-col overflow-hidden relative">
+              <!-- Rendered via JS (Live Iframe OR Native UI) -->
             </div>
 
             <!-- iOS Home Indicator -->
@@ -317,12 +304,12 @@
 
   </main>
 
-  <!-- Modal for Article / Vacancy Detail -->
-  <div id="detailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+  <!-- Modal for Article / Vacancy Detail (Used in Native Mode) -->
+  <div id="detailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden animate-fadeIn">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
         <h3 id="modalTitle" class="text-base font-black text-white">Tafsilotlar</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm p-1">✕</button>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-sm p-1 rounded-lg hover:bg-slate-800">✕</button>
       </div>
       <div id="modalBody" class="text-xs text-slate-300 leading-relaxed space-y-3"></div>
       <div id="modalFooter" class="pt-3 border-t border-slate-800 flex justify-end gap-2"></div>
@@ -331,226 +318,421 @@
 
   <script>
     // State
+    let appEngine = 'live'; // 'live' (100% sayt bilan sinxron) or 'native' (API native interfeys)
     let currentTab = 'feed';
     let currentUser = {
-      id: 'usr-demo-1',
+      id: 'usr-1',
       name: 'Farrux Zokirov',
       role: 'candidate',
       email: 'farrux@wzone.uz',
-      skills: ['Go', 'Kotlin', 'Swift', 'PostgreSQL', 'Docker', 'REST API']
+      skills: ['Go (Golang)', 'Kotlin Compose', 'Swift / SwiftUI', 'PostgreSQL', 'Docker', 'REST API', 'Redis'],
+      avatar: 'FZ',
+      oneid_verified: true
     };
 
     let vacancies = [];
-    let chatMessages = [
-      { id: '1', sender_name: 'HR Nilufar', content: 'Assalomu alaykum! Rezyumengizni ko‘rib chiqdik. Suhbatga tayyormisiz?', is_me: false, time: '10:30' },
-      { id: '2', sender_name: 'Farrux Zokirov', content: 'Va alaykum assalom! Ha, albatta. Ertaga soat 15:00 da qulay.', is_me: true, time: '10:32' }
-    ];
-    let applications = [
-      { id: 'app-1', company: 'Uzum Technologies', title: 'Senior Go Backend Architect', status: 'Ko‘rib chiqilmoqda', date: '28-sentyabr, 2026' }
+    let pollVoted = false;
+    let pollOptions = [
+      { text: 'Go & Yuqori yuklamali tizimlar (High-load)', votes: 142 },
+      { text: 'Sun’iy intellekt & LLM integratsiyasi', votes: 198 },
+      { text: 'Mobil Native (Kotlin & Swift)', votes: 94 },
+      { text: 'Fintech & Kiberxavfsizlik', votes: 112 }
     ];
 
-    let newsArticles = [
+    let chatMessages = [
+      { id: '1', sender_name: 'Uzum Technologies Recruiter', content: 'Assalomu alaykum! WZone dagi rezyumengizni ko‘rib chiqdik. Senior pozitsiyasi bo‘yicha texnik suhbatga taklif qilamiz.', is_me: false, time: '10:30' },
+      { id: '2', sender_name: 'Farrux Zokirov', content: 'Va alaykum assalom! Katta rahmat. Hafta o‘rtasida soat 15:00 da qulay bo‘lardi.', is_me: true, time: '10:32' },
+      { id: '3', sender_name: 'Uzum Technologies Recruiter', content: 'Ajoyib! Chorshanba 15:00 ga taqvimingizga taklifnoma yubordim.', is_me: false, time: '10:35' }
+    ];
+
+    let applications = [
+      { id: 'app-1', company: 'Uzum Technologies', title: 'Senior Go Backend Architect', status: 'Suhbat belgilandi', date: '28-sentyabr, 2026', badge: 'bg-emerald-500/20 text-emerald-400' },
+      { id: 'app-2', company: 'Payme', title: 'Mobile iOS / Android Lead', status: 'Ko‘rib chiqilmoqda', date: '27-sentyabr, 2026', badge: 'bg-amber-500/20 text-amber-300' }
+    ];
+
+    let feedPosts = [
       {
-        id: 'news-1',
-        title: "O'zbekistonda 2026-yilda eng yuqori maosh to'lanadigan IT va Fintech yo'nalishlari",
-        excerpt: "Go backend, AI integratsiyalari va kiberxavfsizlik mutaxassislariga bo'lgan talab 45% ga oshdi. O'rtacha oylik maoshlar $1,500 dan $4,000 gacha.",
-        content: "O'zbekiston raqamli iqtisodiyoti tez sur'atlar bilan rivojlanmoqda. 2026-yilda Fintech, bank tizimlari va xalqaro autsorsing bozorida yuqori malakali mutaxassislarga bo'lgan ehtiyoj rekord darajaga yetdi.",
-        category: "Bozor tahlili",
-        image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
-        author: "Sanjar Rahimov",
-        date: "28-sentyabr, 2026",
-        likes: 89
+        id: 'post-1',
+        author: 'WZone Platformasi',
+        role: 'Rasmiy e’lon',
+        avatar: 'W',
+        time: '12 daqiqa oldin',
+        badge: 'Rasmiy',
+        title: "2026-yilda O'zbekiston IT bozorida OneID orqali tasdiqlangan fuqarolarga ishga joylashishda ustuvorlik beriladi",
+        content: "Davlat raqamli xizmatlari bilan integratsiyalashgan WZone tizimi orqali 5,000 dan ziyod yangi vakansiyalar e'lon qilindi. Endi rezyumelaringiz davlat standarti bo'yicha avtomatik verifikatsiya qilinadi.",
+        likes: 312,
+        comments_count: 48,
+        liked: false
       },
       {
-        id: 'news-2',
-        title: "Toshkentda 'Tech Careers Summit 2026' yirik xalqaro ish yarmarkasi start oldi",
-        excerpt: "50 dan ortiq yirik texnologik kompaniyalar 1,000 dan ziyod ochiq bo'sh ish o'rinlarini taqdim etmoqda.",
-        content: "Poytaxtimizda yilning eng yirik karyera forumi o'z ishini boshladi. Forumda Uzum, EPAM, Payme, Click va boshqa yetakchi kompaniyalar qatnashmoqda.",
-        category: "Tadbirlar",
-        image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
-        author: "Aziza Yo‘ldosheva",
-        date: "27-sentyabr, 2026",
-        likes: 142
+        id: 'post-2',
+        author: 'Sardor Qodirov',
+        role: 'Tech Lead @ Payme',
+        avatar: 'SQ',
+        time: '1 soat oldin',
+        badge: 'Hamjamiyat',
+        title: "Microservices va Clean Architecture: 2026-yilgi standartlar",
+        content: "Katta yuklamali tizimlarda gRPC, Redis keshlash va event-driven arxitektura juda muhim. Bugun yangi arxitekturamizni 100% Go ga o'tkazdik.",
+        likes: 184,
+        comments_count: 26,
+        liked: false
       }
     ];
 
-    let comments = [
-      { id: 'c-1', name: 'Jasur Alimov', role: 'Lead Designer', text: "WZone mobil ilovasi juda qulay va tez ishlayapti. Ayniqsa chat va viloyatlar bo'yicha qidiruv zo'r!", time: '15 daqiqa oldin', likes: 24, topic: '#platforma' },
-      { id: 'c-2', name: 'Nilufar Qosimova', role: 'HR Director', text: "Bizning kompaniyada hozirda 12 ta ochiq vakansiya bor. Rezyumelarni WZone orqali ko'rib chiqyapmiz!", time: '40 daqiqa oldin', likes: 38, topic: '#vakansiyalar' }
-    ];
+    // Real-time Dynamic Clocks for Devices
+    function updateClocks() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const timeStr = `${h}:${m}`;
+      const elA = document.getElementById('androidClock');
+      const elI = document.getElementById('iosClock');
+      if (elA) elA.innerText = timeStr;
+      if (elI) elI.innerText = timeStr;
+    }
+    setInterval(updateClocks, 1000);
+    updateClocks();
 
-    // Backend Ping
-    async function checkBackend() {
+    // Health Checks
+    async function checkHealth() {
+      // Check Backend (:8080)
       try {
         const res = await fetch('http://localhost:8080/health');
         if (res.ok) {
           document.getElementById('backendDot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
-          document.getElementById('backendStatus').innerText = 'Backend: :8080 ✓ ONLINE';
-        } else {
-          throw new Error();
-        }
+          document.getElementById('backendStatus').innerText = 'API :8080 ✓ OK';
+        } else throw new Error();
       } catch (_) {
         document.getElementById('backendDot').className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
-        document.getElementById('backendStatus').innerText = 'Backend: Offline (Demo rejim)';
+        document.getElementById('backendStatus').innerText = 'API :8080 (Demo)';
+      }
+
+      // Check Web (:3000)
+      try {
+        const res = await fetch('http://localhost:3000', { mode: 'no-cors' });
+        document.getElementById('webDot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+        document.getElementById('webStatus').innerText = 'Sayt :3000 ✓ OK';
+      } catch (_) {
+        document.getElementById('webDot').className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
+        document.getElementById('webStatus').innerText = 'Sayt :3000 Offline';
       }
     }
 
+    // Load Vacancies from Backend API
     async function loadVacancies() {
       try {
-        const res = await fetch('http://localhost:8080/api/v1/vacancies?limit=20');
+        const res = await fetch('http://localhost:8080/api/v1/vacancies?limit=30');
         const json = await res.json();
-        if (json.data && json.data.items) {
+        if (json.data && json.data.vacancies && json.data.vacancies.length > 0) {
+          vacancies = json.data.vacancies;
+        } else if (json.data && json.data.items) {
           vacancies = json.data.items;
+        } else {
+          throw new Error('No items');
         }
       } catch (_) {
-        // Fallback default sample vacancies
+        // Fallback realistic dataset
         vacancies = [
-          { id: 'v1', title: 'Senior Go Backend Architect', company: 'Uzum Technologies', location: 'Tashkent shahri', salary_min: 3000, salary_max: 5500, salary_currency: 'USD', description: 'Microservices, gRPC, high-load architecture.' },
-          { id: 'v2', title: 'Mobile iOS Engineer (SwiftUI)', company: 'Payme', location: 'Tashkent shahri', salary_min: 2500, salary_max: 4200, salary_currency: 'USD', description: 'Fintech mobile solutions, clean architecture.' },
-          { id: 'v3', title: 'Cloud DevOps Specialist', company: 'EPAM Systems', location: 'Masofaviy (Remote)', salary_min: 3200, salary_max: 5000, salary_currency: 'USD', description: 'Kubernetes, Terraform, AWS/GCP pipelines.' },
-          { id: 'v4', title: 'Lead Product Designer (UI/UX)', company: 'Mohirdev', location: 'Samarqand viloyati', salary_min: 1800, salary_max: 3000, salary_currency: 'USD', description: 'Design systems, mobile user journeys.' }
+          { id: 'v-1', title: 'Senior Go Backend Architect', company: 'Uzum Technologies', location: 'Tashkent shahri', salary_min: 3000, salary_max: 5500, salary_currency: 'USD', description: 'Yuqori yuklamali mikroxizmatlar, gRPC, PostgreSQL, Redis, Kafka va Kubernetes infratuzilmasi.' },
+          { id: 'v-2', title: 'Mobile Android Lead (Kotlin Compose)', company: 'Click Uzbekistan', location: 'Tashkent shahri', salary_min: 2800, salary_max: 4500, salary_currency: 'USD', description: 'Clean Architecture, MVI/MVVM, Coroutines, Jetpack Compose, Material 3, Biometriya va xavfsizlik.' },
+          { id: 'v-3', title: 'iOS Software Engineer (Swift / SwiftUI)', company: 'Payme Fintech', location: 'Tashkent shahri', salary_min: 2600, salary_max: 4200, salary_currency: 'USD', description: 'Fintech to‘lov tizimlari, SwiftUI, Combine, FaceID / Biometriya, Clean Swift.' },
+          { id: 'v-4', title: 'Senior DevOps & Cloud Specialist', company: 'EPAM Systems', location: 'Masofaviy (Remote)', salary_min: 3500, salary_max: 5200, salary_currency: 'USD', description: 'CI/CD pipeline, Terraform, AWS/GCP, Docker, ArgoCD, Prometheus & Grafana monitoring.' },
+          { id: 'v-5', title: 'Lead Product Designer (UI/UX)', company: 'Mohirdev Academy', location: 'Samarqand viloyati', salary_min: 1800, salary_max: 3000, salary_currency: 'USD', description: 'Mobil dizayn tizimlari, Figma, foydalanuvchi sinovlari, animatsiyalar va prototiplash.' }
         ];
       }
       renderBothScreens();
     }
 
-    // Set Active Tab
-    function setTab(tab) {
-      currentTab = tab;
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        const active = btn.dataset.tab === tab;
-        btn.className = active ? 'tab-btn flex flex-col items-center gap-1 text-blue-500 font-bold' : 'tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white';
-      });
-      document.querySelectorAll('.ios-tab-btn').forEach(btn => {
-        const active = btn.dataset.tab === tab;
-        btn.className = active ? 'ios-tab-btn flex flex-col items-center gap-1 text-blue-500 font-bold' : 'ios-tab-btn flex flex-col items-center gap-1 text-slate-400 hover:text-white';
-      });
+    // Toggle App Engine (Live Web vs Native App)
+    function setAppEngine(engine) {
+      appEngine = engine;
+      const btnLive = document.getElementById('btnModeLive');
+      const btnNat = document.getElementById('btnModeNative');
+      if (engine === 'live') {
+        btnLive.className = 'px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-blue-600 text-white shadow-md shadow-blue-500/25';
+        btnNat.className = 'px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+      } else {
+        btnNat.className = 'px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-blue-600 text-white shadow-md shadow-blue-500/25';
+        btnLive.className = 'px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+      }
       renderBothScreens();
     }
 
-    // Render Tab Views
+    // Render Both Screens
     function renderBothScreens() {
       const androidView = document.getElementById('androidViewport');
       const iosView = document.getElementById('iosViewport');
-      const content = buildTabContent();
-      androidView.innerHTML = content;
-      iosView.innerHTML = content;
-    }
 
-    function buildTabContent() {
-      switch(currentTab) {
-        case 'feed':
-          return buildFeedTab();
-        case 'vacancies':
-          return buildVacanciesTab();
-        case 'chat':
-          return buildChatTab();
-        case 'applications':
-          return buildApplicationsTab();
-        case 'profile':
-          return buildProfileTab();
-        default:
-          return buildFeedTab();
+      if (appEngine === 'live') {
+        // 🌐 100% SAYT BILAN JONLI VEB-ILOVA SINXRONIZATSIYASI
+        const androidHtml = `
+          <div class="w-full h-full flex flex-col bg-slate-950">
+            <!-- URL status bar for Android -->
+            <div class="px-4 py-1.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+              <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-lock text-emerald-400 text-[10px]"></i>
+                <span class="font-mono text-white text-[10px]">wzone.uz</span>
+              </div>
+              <button onclick="refreshIframe('androidIframe')" class="hover:text-white"><i class="fa-solid fa-rotate-right"></i></button>
+            </div>
+            <iframe id="androidIframe" src="http://localhost:3000" class="device-iframe flex-1" allow="geolocation; camera; microphone"></iframe>
+          </div>
+        `;
+
+        const iosHtml = `
+          <div class="w-full h-full flex flex-col bg-slate-950">
+            <!-- URL status bar for iOS -->
+            <div class="px-5 py-1.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+              <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-shield text-blue-400 text-[10px]"></i>
+                <span class="font-mono text-white text-[10px]">wzone.uz</span>
+              </div>
+              <button onclick="refreshIframe('iosIframe')" class="hover:text-white"><i class="fa-solid fa-arrow-rotate-right"></i></button>
+            </div>
+            <iframe id="iosIframe" src="http://localhost:3000" class="device-iframe flex-1" allow="geolocation; camera; microphone"></iframe>
+          </div>
+        `;
+
+        androidView.innerHTML = androidHtml;
+        iosView.innerHTML = iosHtml;
+      } else {
+        // ⚡ NATIVE DUAL APP ENGINE (Material 3 & Cupertino)
+        renderNativeAndroid(androidView);
+        renderNativeIOS(iosView);
       }
     }
 
-    // 1. HOME FEED TAB
-    function buildFeedTab() {
+    function refreshIframe(id) {
+      const el = document.getElementById(id);
+      if (el) el.src = el.src;
+    }
+
+    // Set Active Tab (Native Mode)
+    function setTab(tab) {
+      currentTab = tab;
+      renderBothScreens();
+    }
+
+    // 1. RENDER NATIVE ANDROID SCREEN (Material 3)
+    function renderNativeAndroid(container) {
+      container.innerHTML = `
+        <div class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-16 bg-[#0b101d]">
+          ${buildCurrentTabBody('android')}
+        </div>
+
+        <!-- Android Material 3 Bottom Nav Bar -->
+        <div class="absolute bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 flex items-center justify-around py-2 z-40 text-xs">
+          <button onclick="setTab('feed')" class="flex flex-col items-center gap-1 ${currentTab === 'feed' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-house text-sm"></i>
+            <span class="text-[10px]">Lenta</span>
+          </button>
+          <button onclick="setTab('vacancies')" class="flex flex-col items-center gap-1 ${currentTab === 'vacancies' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-briefcase text-sm"></i>
+            <span class="text-[10px]">Vakansiyalar</span>
+          </button>
+          <button onclick="setTab('chat')" class="flex flex-col items-center gap-1 relative ${currentTab === 'chat' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-comment-dots text-sm"></i>
+            <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[10px]">Chat</span>
+          </button>
+          <button onclick="setTab('applications')" class="flex flex-col items-center gap-1 ${currentTab === 'applications' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-file-circle-check text-sm"></i>
+            <span class="text-[10px]">Arizalar</span>
+          </button>
+          <button onclick="setTab('profile')" class="flex flex-col items-center gap-1 ${currentTab === 'profile' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-user-gear text-sm"></i>
+            <span class="text-[10px]">Profil</span>
+          </button>
+        </div>
+      `;
+    }
+
+    // 2. RENDER NATIVE IOS SCREEN (SwiftUI Cupertino)
+    function renderNativeIOS(container) {
+      container.innerHTML = `
+        <div class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-16 bg-[#080d1a]">
+          ${buildCurrentTabBody('ios')}
+        </div>
+
+        <!-- iOS Cupertino Bottom Tab Bar -->
+        <div class="absolute bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur border-t border-slate-800/80 flex items-center justify-around py-2.5 z-40 text-xs">
+          <button onclick="setTab('feed')" class="flex flex-col items-center gap-1 ${currentTab === 'feed' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-house text-sm"></i>
+            <span class="text-[9px]">Bosh sahifa</span>
+          </button>
+          <button onclick="setTab('vacancies')" class="flex flex-col items-center gap-1 ${currentTab === 'vacancies' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-briefcase text-sm"></i>
+            <span class="text-[9px]">Vakansiyalar</span>
+          </button>
+          <button onclick="setTab('chat')" class="flex flex-col items-center gap-1 relative ${currentTab === 'chat' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-message text-sm"></i>
+            <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[9px]">Chat</span>
+          </button>
+          <button onclick="setTab('applications')" class="flex flex-col items-center gap-1 ${currentTab === 'applications' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-file-lines text-sm"></i>
+            <span class="text-[9px]">Arizalar</span>
+          </button>
+          <button onclick="setTab('profile')" class="flex flex-col items-center gap-1 ${currentTab === 'profile' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+            <i class="fa-solid fa-circle-user text-sm"></i>
+            <span class="text-[9px]">Profil</span>
+          </button>
+        </div>
+      `;
+    }
+
+    // Build Current Tab Content (For Native View)
+    function buildCurrentTabBody(platform) {
+      switch (currentTab) {
+        case 'feed':
+          return buildFeedTabContent(platform);
+        case 'vacancies':
+          return buildVacanciesTabContent(platform);
+        case 'chat':
+          return buildChatTabContent(platform);
+        case 'applications':
+          return buildApplicationsTabContent(platform);
+        case 'profile':
+          return buildProfileTabContent(platform);
+        default:
+          return buildFeedTabContent(platform);
+      }
+    }
+
+    // FEED TAB
+    function buildFeedTabContent(platform) {
       return `
         <div class="p-4 space-y-4">
           <!-- Hero Banner -->
-          <div class="rounded-2xl p-4 bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-900 text-white shadow-lg space-y-2.5">
-            <span class="text-[9px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">✨ WZone 2026 Mobil</span>
-            <h2 class="text-base font-black leading-tight">Karyerangizni yangi bosqichga olib chiqing</h2>
-            <p class="text-[11px] text-blue-100 leading-snug">Vakansiyalar, soha yangiliklari, maoshlar indeksi va jonli muloqot.</p>
-            <div class="pt-1 flex gap-2">
-              <button onclick="setTab('vacancies')" class="px-3 py-1.5 rounded-xl bg-white text-blue-700 font-black text-[11px]">Vakansiyalar →</button>
-            </div>
-          </div>
-
-          <!-- Sanoat Yangiliklari & Tahlillar -->
-          <div class="space-y-2.5">
+          <div class="rounded-2xl p-4 bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-900 text-white shadow-xl space-y-2 relative overflow-hidden">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-black uppercase tracking-wider text-slate-200">Yangiliklar & Tahlillar</h3>
-              <span class="text-[9px] font-bold text-blue-400">REAL-TIME</span>
+              <span class="text-[9px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">✨ WZone 2026</span>
+              <span class="text-[10px] font-bold text-emerald-300">● 5,291 Vakansiya</span>
             </div>
-            ${newsArticles.map(art => `
-              <div onclick="openArticleModal('${art.id}')" class="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-blue-500 cursor-pointer transition space-y-2 shadow-sm">
-                <img src="${art.image}" class="w-full h-28 object-cover rounded-xl" />
-                <div class="flex items-center justify-between text-[10px] text-slate-400">
-                  <span class="font-bold text-blue-400">${art.category}</span>
-                  <span>${art.date}</span>
-                </div>
-                <h4 class="text-xs font-bold text-white leading-snug">${art.title}</h4>
-                <p class="text-[11px] text-slate-300 line-clamp-2">${art.excerpt}</p>
-                <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1">
-                  <span>Muallif: ${art.author}</span>
-                  <span class="text-blue-400 font-bold">To‘liq o‘qish →</span>
-                </div>
-              </div>
-            `).join('')}
+            <h2 class="text-base font-black leading-tight">O‘zbekistondagi eng yirik ish platformasi</h2>
+            <p class="text-[11px] text-blue-100 leading-snug">Vakansiyalar, OneID davlat verifikatsiyasi, jonli chat va maoshlar indeksi.</p>
+            <div class="pt-1 flex gap-2">
+              <button onclick="setTab('vacancies')" class="px-3.5 py-1.5 rounded-xl bg-white text-blue-700 font-black text-xs shadow-md">Barcha vakansiyalar →</button>
+            </div>
           </div>
 
-          <!-- Jonli Kommentariyalar & Muhokamalar -->
-          <div class="space-y-2.5">
-            <h3 class="text-xs font-black uppercase tracking-wider text-slate-200">Jonli Muhokamalar & Izohlar</h3>
-            <div class="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-              <input id="commentBoxInput" type="text" placeholder="Fikringiz yoki maslahatingizni yozing..." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-400 outline-none" />
-              <div class="flex justify-between items-center">
-                <span class="text-[10px] text-blue-400 font-bold">#fikr</span>
-                <button onclick="submitComment()" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold">Yuborish</button>
+          <!-- Top Stories Carousel -->
+          <div class="space-y-1.5">
+            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Top Kompaniyalar</span>
+            <div class="flex gap-2 overflow-x-auto pb-1 screen-scroll">
+              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
+                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 to-rose-500">
+                  <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center font-black text-white text-xs">Uzum</div>
+                </div>
+                <span class="text-[9px] text-slate-300 font-bold">Uzum</span>
+              </div>
+              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
+                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-cyan-400 to-blue-600">
+                  <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center font-black text-white text-xs">Payme</div>
+                </div>
+                <span class="text-[9px] text-slate-300 font-bold">Payme</span>
+              </div>
+              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
+                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-emerald-400 to-teal-500">
+                  <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center font-black text-white text-xs">Click</div>
+                </div>
+                <span class="text-[9px] text-slate-300 font-bold">Click</span>
+              </div>
+              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
+                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-blue-400 to-indigo-600">
+                  <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center font-black text-white text-xs">EPAM</div>
+                </div>
+                <span class="text-[9px] text-slate-300 font-bold">EPAM</span>
+              </div>
+              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
+                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-purple-400 to-pink-500">
+                  <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center font-black text-white text-xs">Mohir</div>
+                </div>
+                <span class="text-[9px] text-slate-300 font-bold">Mohirdev</span>
               </div>
             </div>
-            ${comments.map(c => `
-              <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1.5 text-xs">
+          </div>
+
+          <!-- Interactive Poll (So‘rovnoma) -->
+          <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+            <div class="flex justify-between items-center text-[10px]">
+              <span class="font-black text-blue-400 uppercase tracking-wide">📊 Haftaning So‘rovnomasi</span>
+              <span class="text-slate-400 font-bold">Jami ovozlar: ${pollOptions.reduce((a, b) => a + b.votes, 0)}</span>
+            </div>
+            <h3 class="text-xs font-bold text-white">2026-yilda qaysi texnologik sohada maoshlar eng tez o‘smoqda?</h3>
+            <div class="space-y-1.5 pt-1">
+              ${pollOptions.map((opt, idx) => {
+                const total = pollOptions.reduce((a, b) => a + b.votes, 0);
+                const pct = Math.round((opt.votes / total) * 100);
+                return `
+                  <div onclick="votePoll(${idx})" class="p-2.5 rounded-xl border border-slate-800 hover:border-blue-500 bg-slate-800/60 cursor-pointer transition relative overflow-hidden">
+                    <div class="absolute inset-y-0 left-0 bg-blue-600/20" style="width: ${pct}%"></div>
+                    <div class="relative flex justify-between items-center text-[11px] font-bold">
+                      <span class="text-white">${opt.text}</span>
+                      <span class="text-blue-400">${pct}%</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Live Feed Posts -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-300">Hamjamiyat & Yangiliklar</h3>
+              <span class="text-[9px] font-bold text-blue-400">Jonli Lenta</span>
+            </div>
+            ${feedPosts.map(p => `
+              <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 shadow-sm">
                 <div class="flex justify-between items-center">
-                  <span class="font-bold text-white text-[11px]">${c.name} <span class="text-[9px] text-slate-400">(${c.role})</span></span>
-                  <span class="text-[9px] text-blue-400 font-bold">${c.topic}</span>
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-xs">${p.avatar}</div>
+                    <div>
+                      <h4 class="text-xs font-bold text-white leading-none">${p.author}</h4>
+                      <span class="text-[9px] text-slate-400">${p.role} • ${p.time}</span>
+                    </div>
+                  </div>
+                  <span class="text-[9px] px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 font-bold">${p.badge}</span>
                 </div>
-                <p class="text-[11px] text-slate-300 leading-snug">${c.text}</p>
-                <div class="flex justify-between text-[10px] text-slate-400 pt-1">
-                  <span>${c.time}</span>
-                  <span class="cursor-pointer text-rose-400 font-bold" onclick="likeComment('${c.id}')">❤️ ${c.likes}</span>
+                <h5 class="text-xs font-bold text-slate-100">${p.title}</h5>
+                <p class="text-[11px] text-slate-300 leading-relaxed">${p.content}</p>
+                <div class="flex justify-between items-center pt-2 border-t border-slate-800 text-[11px]">
+                  <button onclick="likeFeedPost('${p.id}')" class="flex items-center gap-1.5 ${p.liked ? 'text-rose-400 font-bold' : 'text-slate-400 hover:text-white'}">
+                    <i class="fa-solid fa-heart"></i>
+                    <span>${p.likes}</span>
+                  </button>
+                  <span class="text-slate-400"><i class="fa-regular fa-comment"></i> ${p.comments_count} ta fikr</span>
                 </div>
               </div>
             `).join('')}
           </div>
 
-          <!-- Sara Vakansiyalar Preview -->
-          <div class="space-y-2.5">
+          <!-- Featured Vacancies Carousel -->
+          <div class="space-y-2">
             <div class="flex justify-between items-center">
-              <h3 class="text-xs font-black uppercase tracking-wider text-slate-200">Haftaning Sara Vakansiyalari</h3>
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-300">Haftaning Sara Vakansiyalari</h3>
               <span onclick="setTab('vacancies')" class="text-[10px] text-blue-400 font-bold cursor-pointer">Barchasi →</span>
             </div>
             ${vacancies.slice(0, 3).map(v => `
-              <div onclick="openVacancyModal('${v.id}')" class="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-blue-500 cursor-pointer transition space-y-1">
+              <div onclick="openVacancyModal('${v.id}')" class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-blue-500 cursor-pointer transition space-y-1">
                 <div class="flex justify-between text-[10px]">
                   <span class="font-bold text-blue-400">${v.company || 'Kompaniya'}</span>
                   <span class="text-slate-400">${v.location || 'Toshkent'}</span>
                 </div>
                 <h4 class="text-xs font-bold text-white">${v.title}</h4>
                 <div class="text-[11px] font-black text-emerald-400">
-                  ${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : 'Kelishilgan maosh'}
+                  ${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : 'Kelishilgan'}
                 </div>
               </div>
             `).join('')}
-          </div>
-
-          <!-- Maoshlar Indeksi -->
-          <div class="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 to-black border border-slate-800 space-y-2">
-            <h3 class="text-xs font-black text-white">📈 2026-yil IT Maoshlar Indeksi</h3>
-            <div class="space-y-1.5 text-[10px]">
-              <div class="flex justify-between text-slate-300"><span>Backend (Go, Java)</span><span class="font-bold text-cyan-400">$900 - $3,800</span></div>
-              <div class="flex justify-between text-slate-300"><span>Mobile (Kotlin, Swift)</span><span class="font-bold text-cyan-400">$800 - $3,200</span></div>
-              <div class="flex justify-between text-slate-300"><span>DevOps & Kiberxavfsizlik</span><span class="font-bold text-cyan-400">$1,200 - $4,200</span></div>
-            </div>
           </div>
         </div>
       `;
     }
 
-    // 2. VACANCIES CATALOG TAB
-    function buildVacanciesTab() {
+    // VACANCIES TAB
+    function buildVacanciesTabContent(platform) {
       return `
         <div class="p-4 space-y-3">
           <div class="flex justify-between items-center">
@@ -559,16 +741,18 @@
           </div>
 
           <!-- Search Input -->
-          <input id="vacSearchInput" onkeyup="filterVacancies(this.value)" type="text" placeholder="Kasb yoki kompaniya bo‘yicha qidiring..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-400 outline-none" />
+          <input id="vacSearchInput" onkeyup="filterVacancies(this.value)" type="text" placeholder="Kasb, texnologiya yoki kompaniya..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-400 outline-none focus:border-blue-500" />
 
           <!-- Region Filter -->
           <div class="flex items-center gap-2 text-xs">
-            <span class="text-slate-400 text-[10px]">Hudud:</span>
-            <select onchange="filterByRegion(this.value)" class="bg-slate-900 border border-slate-800 text-white text-[11px] rounded-lg px-2 py-1 font-bold">
+            <span class="text-slate-400 text-[10px] font-bold">Hudud:</span>
+            <select onchange="filterByRegion(this.value)" class="bg-slate-900 border border-slate-800 text-white text-[11px] rounded-lg px-2.5 py-1.5 font-bold outline-none">
               <option value="all">Barcha hududlar</option>
               <option value="Tashkent">Toshkent shahri</option>
               <option value="Samarqand">Samarqand viloyati</option>
               <option value="Fargona">Farg‘ona viloyati</option>
+              <option value="Andijon">Andijon viloyati</option>
+              <option value="Buxoro">Buxoro viloyati</option>
               <option value="Remote">Masofaviy (Remote)</option>
             </select>
           </div>
@@ -576,16 +760,16 @@
           <!-- Cards List -->
           <div id="vacanciesListContainer" class="space-y-2.5 pt-1">
             ${vacancies.map(v => `
-              <div onclick="openVacancyModal('${v.id}')" class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-blue-500 cursor-pointer transition space-y-1.5">
+              <div onclick="openVacancyModal('${v.id}')" class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-blue-500 cursor-pointer transition space-y-1.5 shadow-sm">
                 <div class="flex justify-between text-[10px]">
                   <span class="font-bold text-blue-400">${v.company || 'Kompaniya'}</span>
                   <span class="text-slate-400">📍 ${v.location || 'Toshkent'}</span>
                 </div>
                 <h4 class="text-xs font-bold text-white">${v.title}</h4>
-                <p class="text-[10px] text-slate-400 line-clamp-2">${v.description || 'Kompaniyada ochiq vakansiya.'}</p>
+                <p class="text-[10px] text-slate-400 line-clamp-2">${v.description || 'Kompaniyada ochiq bo‘sh ish o‘rni.'}</p>
                 <div class="flex justify-between items-center pt-1">
                   <span class="text-[11px] font-black text-emerald-400">${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : 'Kelishilgan'}</span>
-                  <button class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]">Batafsil</button>
+                  <button class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]">Ariza topshirish</button>
                 </div>
               </div>
             `).join('')}
@@ -594,22 +778,25 @@
       `;
     }
 
-    // 3. CHAT TAB
-    function buildChatTab() {
+    // CHAT TAB
+    function buildChatTabContent(platform) {
       return `
         <div class="p-4 h-full flex flex-col justify-between space-y-3">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
             <div>
-              <h3 class="text-xs font-black text-white">WZone Jonli Muloqot</h3>
-              <p class="text-[10px] text-emerald-400 font-bold">● Online • Umumiy xona</p>
+              <h3 class="text-xs font-black text-white">WZone Real-Time Chat</h3>
+              <p class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Uzum Technologies HR • Online
+              </p>
             </div>
-            <button onclick="refreshChat()" class="text-[10px] text-blue-400">Yangilash</button>
+            <span class="text-[10px] bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded-md">WebSocket</span>
           </div>
 
           <div id="chatMessagesContainer" class="flex-1 space-y-2.5 overflow-y-auto screen-scroll pr-1 max-h-[460px]">
             ${chatMessages.map(m => `
               <div class="flex ${m.is_me ? 'justify-end' : 'justify-start'}">
-                <div class="max-w-[80%] rounded-2xl p-2.5 ${m.is_me ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'} space-y-0.5">
+                <div class="max-w-[82%] rounded-2xl p-2.5 ${m.is_me ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'} space-y-0.5 shadow-sm">
                   ${!m.is_me ? `<span class="text-[9px] font-bold text-blue-400 block">${m.sender_name}</span>` : ''}
                   <p class="text-xs leading-snug">${m.content}</p>
                   <span class="text-[8px] text-right block opacity-70">${m.time || 'Hozir'}</span>
@@ -620,27 +807,34 @@
 
           <!-- Input bar -->
           <div class="pt-2 border-t border-slate-800 flex gap-2">
-            <input id="chatInputBox" onkeydown="if(event.key==='Enter') sendChatMessage()" type="text" placeholder="Xabaringizni yozing..." class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-400 outline-none" />
-            <button onclick="sendChatMessage()" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">Yuborish</button>
+            <input id="chatInputBox" onkeydown="if(event.key==='Enter') sendChatMessage()" type="text" placeholder="Xabaringizni yozing..." class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-400 outline-none focus:border-blue-500" />
+            <button onclick="sendChatMessage()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold active:scale-95 transition">Yuborish</button>
           </div>
         </div>
       `;
     }
 
-    // 4. APPLICATIONS TAB
-    function buildApplicationsTab() {
+    // APPLICATIONS TAB
+    function buildApplicationsTabContent(platform) {
       return `
         <div class="p-4 space-y-3">
-          <h2 class="text-sm font-black text-white">Mening Arizalarim</h2>
+          <div class="flex justify-between items-center">
+            <h2 class="text-sm font-black text-white">Mening Arizalarim</h2>
+            <span class="text-[10px] font-bold text-emerald-400">${applications.length} ta faol</span>
+          </div>
+
           <div class="space-y-2.5">
             ${applications.map(app => `
-              <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+              <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 shadow-sm">
                 <div class="flex justify-between items-center text-[10px]">
                   <span class="font-bold text-blue-400">${app.company}</span>
-                  <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold">${app.status}</span>
+                  <span class="px-2 py-0.5 rounded-md font-bold ${app.badge || 'bg-amber-500/20 text-amber-300'}">${app.status}</span>
                 </div>
                 <h4 class="text-xs font-bold text-white">${app.title}</h4>
-                <p class="text-[9px] text-slate-400">Sana: ${app.date}</p>
+                <div class="flex justify-between items-center text-[9px] text-slate-400 pt-1 border-t border-slate-800/60">
+                  <span>Topshirildi: ${app.date}</span>
+                  <button onclick="cancelApplication('${app.id}')" class="text-rose-400 hover:underline">Arizani bekor qilish</button>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -648,43 +842,63 @@
       `;
     }
 
-    // 5. PROFILE TAB (1st: Resumes & Skills, 2nd: Settings)
-    function buildProfileTab() {
+    // PROFILE TAB
+    function buildProfileTabContent(platform) {
       return `
         <div class="p-4 space-y-4">
           <!-- Profile Badge -->
-          <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-white text-base">FZ</div>
-            <div>
-              <h3 class="text-xs font-bold text-white">${currentUser.name}</h3>
-              <p class="text-[10px] text-slate-400">${currentUser.email}</p>
-              <span class="text-[9px] text-blue-400 font-bold">Senior Go & Mobile Engineer</span>
+          <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-white text-base">FZ</div>
+              <div>
+                <h3 class="text-xs font-bold text-white flex items-center gap-1.5">
+                  ${currentUser.name}
+                  ${currentUser.oneid_verified ? '<i class="fa-solid fa-circle-check text-blue-400 text-[11px]" title="OneID Tasdiqlangan"></i>' : ''}
+                </h3>
+                <p class="text-[10px] text-slate-400">${currentUser.email}</p>
+                <span class="text-[9px] text-blue-400 font-bold">Senior Go & Mobile Engineer</span>
+              </div>
             </div>
+            <span class="text-[9px] font-black text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">OneID ✓</span>
           </div>
 
-          <!-- 1-O'RIN: REZYUMELAR VA KO'NIKMALAR (SKILLS) -->
+          <!-- 1. OneID Sovereign Verification Banner -->
+          <div class="p-3.5 rounded-2xl bg-gradient-to-br from-blue-900/40 to-slate-900 border border-blue-500/30 space-y-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-blue-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-shield-halved text-blue-400"></i>
+                OneID Pasport Verifikatsiyasi
+              </span>
+              <span class="text-[9px] font-mono text-emerald-400 font-bold">AES-256-GCM</span>
+            </div>
+            <p class="text-[10px] text-slate-300 leading-snug">JSHSHIR va biometrik ma’lumotlar davlat tizimi orqali to‘liq tasdiqlangan.</p>
+          </div>
+
+          <!-- 2. Rezyumelar va Ko‘nikmalar (Skills) -->
           <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5">
             <div class="flex justify-between items-center">
-              <h3 class="text-xs font-black text-blue-400">1. Rezyumelar & Skillar</h3>
-              <span class="text-[9px] font-black text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">AI Match: 88%</span>
+              <h3 class="text-xs font-black text-blue-400">Mening Ko‘nikmalarim (Skills)</h3>
+              <span class="text-[9px] font-black text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">ATS Match: 92%</span>
             </div>
 
-            <p class="text-[10px] text-slate-400 font-semibold">Mening Ko‘nikmalarim (Skills):</p>
             <div class="flex flex-wrap gap-1.5" id="profileSkillsContainer">
-              ${currentUser.skills.map(s => `
-                <span class="text-[10px] font-bold px-2 py-1 rounded-lg bg-blue-600/20 text-blue-300 border border-blue-500/30">${s} ✕</span>
+              ${currentUser.skills.map((s, idx) => `
+                <span class="text-[10px] font-bold px-2 py-1 rounded-lg bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
+                  ${s}
+                  <button onclick="removeSkill(${idx})" class="text-blue-400 hover:text-white ml-0.5">✕</button>
+                </span>
               `).join('')}
             </div>
 
             <div class="flex gap-1.5 pt-1">
-              <input id="newSkillInput" type="text" placeholder="Yangi ko‘nikma..." class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white outline-none" />
+              <input id="newSkillInput" type="text" placeholder="Yangi ko‘nikma..." class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white outline-none focus:border-blue-500" />
               <button onclick="addSkill()" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs">+</button>
             </div>
           </div>
 
-          <!-- 2-O'RIN: SAYT VA PROFIL SOZLAMALARI -->
-          <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
-            <h3 class="text-xs font-black text-blue-400">2. Ilova va Tizim Sozlamalari</h3>
+          <!-- 3. Ilova va Tizim Sozlamalari -->
+          <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+            <h3 class="text-xs font-black text-blue-400">Ilova Sozlamalari</h3>
             
             <div class="flex justify-between items-center text-xs">
               <div>
@@ -694,59 +908,41 @@
               <span class="text-[11px] font-bold text-blue-400">O‘zbekcha (UZ)</span>
             </div>
 
-            <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-800">
-              <span class="font-bold text-white text-[11px]">Tungi rejim (Dark theme)</span>
-              <span class="text-emerald-400 font-bold text-[10px]">Yoqilgan</span>
+            <div class="flex justify-between items-center text-xs pt-1.5 border-t border-slate-800">
+              <span class="font-bold text-white text-[11px]">Tungi rejim (Dark Theme)</span>
+              <span class="text-emerald-400 font-bold text-[10px]">Faol ✓</span>
             </div>
 
-            <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-800">
-              <span class="font-bold text-white text-[11px]">Bildirishnomalar</span>
-              <span class="text-emerald-400 font-bold text-[10px]">Faol</span>
+            <div class="flex justify-between items-center text-xs pt-1.5 border-t border-slate-800">
+              <span class="font-bold text-white text-[11px]">Push-bildirishnomalar</span>
+              <span class="text-emerald-400 font-bold text-[10px]">Yoqilgan ✓</span>
             </div>
-
-            <button onclick="quickDemoLogin()" class="w-full py-2 rounded-xl bg-rose-600/20 text-rose-400 font-bold text-xs mt-2 border border-rose-500/30">Chiqish (Logout)</button>
           </div>
         </div>
       `;
     }
 
-    // Modal Actions
-    function openArticleModal(id) {
-      const art = newsArticles.find(a => a.id === id);
-      if (!art) return;
-      document.getElementById('modalTitle').innerText = art.title;
-      document.getElementById('modalBody').innerHTML = `
-        <img src="${art.image}" class="w-full h-44 object-cover rounded-xl" />
-        <div class="flex justify-between text-slate-400 text-[10px]">
-          <span>Muallif: ${art.author}</span>
-          <span>${art.date}</span>
-        </div>
-        <p class="text-slate-200 text-xs leading-relaxed whitespace-pre-line">${art.content}</p>
-      `;
-      document.getElementById('modalFooter').innerHTML = `
-        <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs">Yopish</button>
-      `;
-      document.getElementById('detailModal').classList.remove('hidden');
-    }
-
+    // Modal Details & Actions
     function openVacancyModal(id) {
       const vac = vacancies.find(v => v.id === id);
       if (!vac) return;
       document.getElementById('modalTitle').innerText = vac.title;
       document.getElementById('modalBody').innerHTML = `
-        <div class="space-y-2">
-          <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold text-[10px]">${vac.company || 'Kompaniya'}</span>
-          <p class="text-emerald-400 font-black text-sm">${vac.salary_min ? `${vac.salary_min} - ${vac.salary_max} ${vac.salary_currency || 'USD'}` : 'Kelishilgan maosh'}</p>
-          <p class="text-slate-400 text-xs">📍 Hudud: ${vac.location || 'Toshkent'}</p>
-          <div class="pt-2 border-t border-slate-800">
-            <h4 class="font-bold text-white text-xs mb-1">Vakansiya haqida:</h4>
-            <p class="text-slate-300 text-xs">${vac.description || 'Kompaniya jamoasiga tajribali mutaxassis qidirilmoqda.'}</p>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-400 font-bold text-xs">${vac.company || 'Kompaniya'}</span>
+            <span class="text-emerald-400 font-black text-sm">${vac.salary_min ? `${vac.salary_min} - ${vac.salary_max} ${vac.salary_currency || 'USD'}` : 'Kelishilgan maosh'}</span>
+          </div>
+          <p class="text-slate-400 text-xs">📍 Hudud: ${vac.location || 'Toshkent shahri'}</p>
+          <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs space-y-1.5">
+            <h4 class="font-bold text-white">Vakansiya tavsifi:</h4>
+            <p class="text-slate-300 leading-relaxed">${vac.description || 'Kompaniyamiz jamoasiga tajribali mutaxassis taklif qilamiz.'}</p>
           </div>
         </div>
       `;
       document.getElementById('modalFooter').innerHTML = `
         <button onclick="closeModal()" class="px-3 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs">Yopish</button>
-        <button onclick="applyToVacancy('${vac.id}', '${vac.title}', '${vac.company}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs">Ariza topshirish</button>
+        <button onclick="applyToVacancy('${vac.id}', '${vac.title.replace(/'/g, "\\'")}', '${(vac.company || 'Kompaniya').replace(/'/g, "\\'")}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs">Ariza topshirish</button>
       `;
       document.getElementById('detailModal').classList.remove('hidden');
     }
@@ -761,32 +957,17 @@
         company: company,
         title: title,
         status: 'Yuborildi',
-        date: 'Bugun'
+        date: 'Bugun',
+        badge: 'bg-blue-500/20 text-blue-400'
       });
       closeModal();
-      alert('✓ Arizangiz muvaffaqiyatli topshirildi!');
+      alert('✓ Arizangiz muvaffaqiyatli qabul qilindi!');
       setTab('applications');
     }
 
-    function submitComment() {
-      const input = document.getElementById('commentBoxInput');
-      if (!input || !input.value.trim()) return;
-      comments.unshift({
-        id: 'c-' + Date.now(),
-        name: currentUser.name,
-        role: 'Nomzod',
-        text: input.value.trim(),
-        time: 'Hozirgina',
-        likes: 1,
-        topic: '#fikr'
-      });
-      renderBothScreens();
-    }
-
-    function likeComment(id) {
-      const c = comments.find(x => x.id === id);
-      if (c) {
-        c.likes += 1;
+    function cancelApplication(id) {
+      if (confirm('Arizani bekor qilmoqchimisiz?')) {
+        applications = applications.filter(a => a.id !== id);
         renderBothScreens();
       }
     }
@@ -804,17 +985,18 @@
       });
       input.value = '';
       renderBothScreens();
-      // Auto reply simulation
+
+      // Auto Reply from Recruiter
       setTimeout(() => {
         chatMessages.push({
           id: 'm-' + (Date.now() + 1),
-          sender_name: 'HR Menejer',
+          sender_name: 'Uzum Technologies HR',
           content: 'Xabaringiz qabul qilindi. Tez orada rekruterimiz siz bilan bog‘lanadi.',
           is_me: false,
           time: 'Hozir'
         });
         renderBothScreens();
-      }, 1200);
+      }, 1000);
     }
 
     function addSkill() {
@@ -822,6 +1004,27 @@
       if (!input || !input.value.trim()) return;
       currentUser.skills.push(input.value.trim());
       renderBothScreens();
+    }
+
+    function removeSkill(idx) {
+      currentUser.skills.splice(idx, 1);
+      renderBothScreens();
+    }
+
+    function votePoll(idx) {
+      if (pollVoted) return;
+      pollOptions[idx].votes += 1;
+      pollVoted = true;
+      renderBothScreens();
+    }
+
+    function likeFeedPost(id) {
+      const p = feedPosts.find(x => x.id === id);
+      if (p) {
+        p.liked = !p.liked;
+        p.likes += p.liked ? 1 : -1;
+        renderBothScreens();
+      }
     }
 
     function changeScale(val) {
@@ -844,21 +1047,15 @@
       }
     }
 
-    function quickDemoLogin() {
-      currentUser.name = "Farrux Zokirov (Kirilgan)";
-      renderBothScreens();
-      alert("✓ Tizimga muvaffaqiyatli kirildi!");
-    }
-
     function refreshAllData() {
-      checkBackend();
+      checkHealth();
       loadVacancies();
     }
 
     // Init
-    checkBackend();
+    checkHealth();
     loadVacancies();
-    setInterval(checkBackend, 10000);
+    setInterval(checkHealth, 5000);
   </script>
 </body>
 </html>

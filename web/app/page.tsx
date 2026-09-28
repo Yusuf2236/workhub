@@ -19,7 +19,7 @@ import ChatModal from '../components/ChatModal';
 import NotificationsModal from '../components/NotificationsModal';
 import { api, getAuthToken, setAuthToken, getCurrentUser, removeAuthToken, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
-import { Search, Filter, RefreshCw, Briefcase, Sparkles, MapPin, Bookmark, ShieldCheck } from 'lucide-react';
+import { Search, Filter, RefreshCw, Briefcase, Sparkles, MapPin, Bookmark, ShieldCheck, Home, MessageSquare, FileCheck, User as UserIcon } from 'lucide-react';
 
 const CATEGORIES = [
   'Barchasi',
@@ -550,7 +550,7 @@ export default function WZonePortal() {
       )}
 
       {/* Main 3-Column Layout */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6 pb-24 lg:pb-6">
         {/* Left Navigation Sidebar */}
         <LeftSidebar
           currentTab={currentTab}
@@ -831,6 +831,98 @@ export default function WZonePortal() {
         {/* Right Info & Widgets Sidebar */}
         <RightSidebar vacanciesCount={totalVacancies || vacancies.length} lang={lang} />
       </div>
+
+      {/* Mobile Responsive Bottom Navigation Bar (Visible on screens < 1024px) */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-40 px-2 py-2 flex items-center justify-around shadow-2xl safe-area-bottom transition-colors">
+        <button
+          onClick={() => {
+            setCurrentTab('feed');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`flex flex-col items-center gap-1 transition ${
+            currentTab === 'feed'
+              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
+              : 'text-slate-500 dark:text-slate-400 font-medium'
+          }`}
+        >
+          <Home size={20} className={currentTab === 'feed' ? 'stroke-[2.5]' : ''} />
+          <span className="text-[10px] tracking-tight">{t.navFeed}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setCurrentTab('vacancies');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`flex flex-col items-center gap-1 transition ${
+            currentTab === 'vacancies'
+              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
+              : 'text-slate-500 dark:text-slate-400 font-medium'
+          }`}
+        >
+          <Briefcase size={20} className={currentTab === 'vacancies' ? 'stroke-[2.5]' : ''} />
+          <span className="text-[10px] tracking-tight">{t.navVacancies}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setCurrentTab('chat');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`flex flex-col items-center gap-1 transition relative ${
+            currentTab === 'chat'
+              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
+              : 'text-slate-500 dark:text-slate-400 font-medium'
+          }`}
+        >
+          <div className="relative">
+            <MessageSquare size={20} className={currentTab === 'chat' ? 'stroke-[2.5]' : ''} />
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          </div>
+          <span className="text-[10px] tracking-tight">{t.navChat}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setCurrentTab('applications');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`flex flex-col items-center gap-1 transition relative ${
+            currentTab === 'applications'
+              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
+              : 'text-slate-500 dark:text-slate-400 font-medium'
+          }`}
+        >
+          <div className="relative">
+            <FileCheck size={20} className={currentTab === 'applications' ? 'stroke-[2.5]' : ''} />
+            {applications.length > 0 && (
+              <span className="absolute -top-1.5 -right-2 px-1.5 py-0.2 rounded-full bg-blue-600 text-white text-[9px] font-bold">
+                {applications.length}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] tracking-tight">{t.navApplications}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (!user) {
+              setAuthModalOpen(true);
+            } else {
+              setCurrentTab('profile');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          className={`flex flex-col items-center gap-1 transition ${
+            currentTab === 'profile'
+              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
+              : 'text-slate-500 dark:text-slate-400 font-medium'
+          }`}
+        >
+          <UserIcon size={20} className={currentTab === 'profile' ? 'stroke-[2.5]' : ''} />
+          <span className="text-[10px] tracking-tight">{user ? t.navProfile : t.loginBtn}</span>
+        </button>
+      </nav>
 
       {/* Modals */}
       <AuthModal
