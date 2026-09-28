@@ -1,16 +1,20 @@
 FROM golang:1.22-alpine AS builder
 
 WORKDIR /src
-COPY go.mod ./
+
+RUN apk add --no-cache git ca-certificates
+
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/api ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /out/api ./cmd/api
 
 FROM alpine:3.20
 
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /out/api /app/api
+
 EXPOSE 8080
 CMD ["/app/api"]

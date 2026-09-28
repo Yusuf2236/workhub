@@ -38,6 +38,9 @@ func main() {
     } else {
         defer db.Close()
         log.Println("[DB] PostgreSQL connected successfully")
+        if err := database.AutoMigrate(db); err != nil {
+            log.Printf("[DB] migration warning: %v", err)
+        }
     }
 
     // Connect to Redis
