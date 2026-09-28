@@ -1,30 +1,14 @@
 package com.workhub.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,130 +16,189 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.workhub.app.ui.theme.WorkHubBackground
-import com.workhub.app.ui.theme.WorkHubMuted
-import com.workhub.app.ui.theme.WorkHubPrimary
-import com.workhub.app.ui.theme.WorkHubSurface
-import com.workhub.app.ui.theme.WorkHubText
-
-data class ChatUiMessage(
-    val id: String,
-    val sender: String,
-    val text: String,
-    val isMe: Boolean,
-    val time: String
-)
+import com.workhub.app.data.models.ChatMessage
+import com.workhub.app.data.repository.JobRepository
+import kotlinx.coroutines.launch
 
 @Composable
 fun ChatScreen(
+    repository: JobRepository,
     onBack: () -> Unit = {}
 ) {
+    val messages by repository.chatMessages.collectAsState()
+    val currentUser by repository.currentUser.collectAsState()
+    val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+
     var inputMessage by remember { mutableStateOf("") }
-    val messages = remember {
-        mutableStateListOf(
-            ChatUiMessage("1", "Recruiter", "Hello! We reviewed your Go Backend resume. Are you available for an interview?", false, "10:30 AM"),
-            ChatUiMessage("2", "Me", "Hello! Yes, absolutely. I am available anytime tomorrow afternoon.", true, "10:32 AM"),
-            ChatUiMessage("3", "Recruiter", "Great, I will send an invitation for 3:00 PM Tashkent time.", false, "10:35 AM")
-        )
+    var isSending by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        repository.fetchChatMessages("general")
     }
 
-    Scaffold(containerColor = WorkHubBackground) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = onBack) {
-                    Text("← Back", color = WorkHubPrimary)
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Recruiter (WorkHub)", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = WorkHubText)
-                    Text("Online", fontSize = 12.sp, color = Color(0xFF10B981))
-                }
-            }
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+    Scaffold(
+        topBar = {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
             ) {
-                items(messages) { msg ->
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = if (msg.isMe) Alignment.CenterEnd else Alignment.CenterStart
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onBack) {
+                        Text("← Orqaga", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(
+                        Box(
                             modifier = Modifier
-                                .clip(
-                                    RoundedCornerShape(
-                                        topStart = 14.dp,
-                                        topEnd = 14.dp,
-                                        bottomStart = if (msg.isMe) 14.dp else 2.dp,
-                                        bottomEnd = if (msg.isMe) 2.dp else 14.dp
-                                    )
-                                )
-                                .background(if (msg.isMe) WorkHubPrimary else WorkHubSurface)
-                                .padding(horizontal = 14.dp, vertical = 10.dp)
-                        ) {
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF10B981))
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column {
                             Text(
-                                text = msg.text,
-                                color = if (msg.isMe) Color.White else WorkHubText,
-                                fontSize = 14.sp
+                                text = "WZone Jonli Muloqot",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black
                             )
                             Text(
-                                text = msg.time,
-                                color = if (msg.isMe) Color.White.copy(alpha = 0.7f) else WorkHubMuted,
+                                text = "Online • Umumiy xona",
                                 fontSize = 10.sp,
-                                modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.width(48.dp))
                 }
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+        },
+        bottomBar = {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 8.dp
             ) {
-                OutlinedTextField(
-                    value = inputMessage,
-                    onValueChange = { inputMessage = it },
-                    placeholder = { Text("Type your message...") },
-                    shape = RoundedCornerShape(24.dp),
-                    modifier = Modifier.weight(1f)
-                )
-
-                Button(
-                    onClick = {
-                        if (inputMessage.isNotBlank()) {
-                            messages.add(
-                                ChatUiMessage(
-                                    id = System.currentTimeMillis().toString(),
-                                    sender = "Me",
-                                    text = inputMessage.trim(),
-                                    isMe = true,
-                                    time = "Just now"
-                                )
-                            )
-                            inputMessage = ""
-                        }
-                    },
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = WorkHubPrimary)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Send", color = Color.White)
+                    OutlinedTextField(
+                        value = inputMessage,
+                        onValueChange = { inputMessage = it },
+                        placeholder = { Text("Xabaringizni yozing...", fontSize = 12.sp) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        maxLines = 3
+                    )
+
+                    Button(
+                        onClick = {
+                            if (inputMessage.isNotBlank() && !isSending) {
+                                val text = inputMessage.trim()
+                                inputMessage = ""
+                                isSending = true
+                                scope.launch {
+                                    repository.sendChatMessage("general", text)
+                                    isSending = false
+                                }
+                            }
+                        },
+                        enabled = inputMessage.isNotBlank() && !isSending,
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Text("Yuborish", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            if (messages.isEmpty()) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Xabarlar yo‘q", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("Birinchi bo‘lib suhbatni boshlang!", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(messages) { msg ->
+                        val isMe = msg.isMe || (currentUser != null && msg.userId == currentUser?.id)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
+                        ) {
+                            Card(
+                                shape = RoundedCornerShape(
+                                    topStart = 16.dp,
+                                    topEnd = 16.dp,
+                                    bottomStart = if (isMe) 16.dp else 4.dp,
+                                    bottomEnd = if (isMe) 4.dp else 16.dp
+                                ),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                modifier = Modifier.widthIn(max = 280.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    if (!isMe && msg.senderName.isNotBlank()) {
+                                        Text(
+                                            text = msg.senderName,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    Text(
+                                        text = msg.content,
+                                        fontSize = 13.sp,
+                                        color = if (isMe) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (msg.createdAt.isNotBlank()) {
+                                        Text(
+                                            text = msg.createdAt,
+                                            fontSize = 9.sp,
+                                            color = if (isMe) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.align(Alignment.End)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

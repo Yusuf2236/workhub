@@ -1,173 +1,249 @@
 package com.workhub.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.workhub.app.ui.theme.WorkHubBackground
-import com.workhub.app.ui.theme.WorkHubMuted
-import com.workhub.app.ui.theme.WorkHubPrimary
-import com.workhub.app.ui.theme.WorkHubSuccess
-import com.workhub.app.ui.theme.WorkHubSurface
-import com.workhub.app.ui.theme.WorkHubText
+import com.workhub.app.data.models.Vacancy
+import com.workhub.app.data.repository.JobRepository
+import kotlinx.coroutines.launch
 
 @Composable
 fun VacancyDetailScreen(
     vacancyId: String,
+    repository: JobRepository,
     onBack: () -> Unit,
-    onApplySuccess: () -> Unit
+    onApplySuccess: () -> Unit = {}
 ) {
-    var isApplied by remember { mutableStateOf(false) }
+    val vacancies by repository.vacancies.collectAsState()
+    val scope = rememberCoroutineScope()
+
+    var vacancy by remember {
+        mutableStateOf(vacancies.find { it.id == vacancyId } ?: Vacancy(id = vacancyId, title = "Vakansiya", company = "WZone"))
+    }
+    var showApplyDialog by remember { mutableStateOf(false) }
+    var coverLetter by remember { mutableStateOf("Assalomu alaykum! Ushbu vakansiyaga o‘z nomzodimni taqdim etmoqchiman.") }
+    var isApplying by remember { mutableStateOf(false) }
+    var applicationDone by remember { mutableStateOf(false) }
+
+    LaunchedEffect(vacancyId) {
+        val found = vacancies.find { it.id == vacancyId }
+        if (found != null) {
+            vacancy = found
+        }
+    }
 
     Scaffold(
-        containerColor = WorkHubBackground
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(20.dp)
-        ) {
-            TextButton(
-                onClick = onBack,
-                modifier = Modifier.align(Alignment.Start)
-            ) {
-                Text("← Back to listings", color = WorkHubPrimary)
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = WorkHubSurface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+        topBar = {
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onBack) {
+                        Text("← Orqaga", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
                     Text(
-                        text = "Senior Go Backend Architect",
-                        fontSize = 22.sp,
+                        text = "Vakansiya Tafsilotlari",
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = WorkHubText
+                        modifier = Modifier.padding(start = 8.dp)
                     )
-                    Text(
-                        text = "WorkHub Global • Tashkent / Remote",
-                        fontSize = 14.sp,
-                        color = WorkHubMuted,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(WorkHubSuccess.copy(alpha = 0.12f))
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
+                }
+            }
+        },
+        bottomBar = {
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
                         Text(
-                            text = "Compensation: $4000 - $6000 / month",
-                            color = WorkHubSuccess,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
+                            text = "Maosh:",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = if (vacancy.salaryMin > 0) "${vacancy.salaryMin} - ${vacancy.salaryMax} ${vacancy.salaryCurrency}" else "Kelishilgan",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF059669)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Text(
-                        text = "About the Role",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = WorkHubText
-                    )
-                    Text(
-                        text = "We are seeking a high-caliber Go Backend Architect to design distributed systems, manage PostgreSQL partitioning, Redis cache layers, and real-time WebSocket communication pipelines.",
-                        fontSize = 14.sp,
-                        color = WorkHubMuted,
-                        lineHeight = 22.sp,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Requirements",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = WorkHubText
-                    )
-                    Text(
-                        text = "• 5+ years with Golang and distributed architecture\n• Deep expertise in PostgreSQL and Redis\n• Experience with Docker and Kubernetes infrastructure\n• High commitment to code quality and testing",
-                        fontSize = 14.sp,
-                        color = WorkHubMuted,
-                        lineHeight = 22.sp,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            if (isApplied) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(WorkHubSuccess.copy(alpha = 0.15f))
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "✓ Application submitted successfully!",
-                        color = WorkHubSuccess,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            } else {
-                Button(
-                    onClick = {
-                        isApplied = true
-                        onApplySuccess()
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = WorkHubPrimary),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                ) {
-                    Text(
-                        text = "Apply Now",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Button(
+                        onClick = {
+                            if (!applicationDone) {
+                                showApplyDialog = true
+                            }
+                        },
+                        enabled = !applicationDone,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (applicationDone) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                    ) {
+                        Text(
+                            text = if (applicationDone) "✓ Ariza yuborildi" else "Ariza topshirish",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
                 }
             }
         }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = vacancy.company,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    Text(
+                        text = vacancy.title,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            text = "📍 ${vacancy.location}",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "💼 ${vacancy.employmentType}",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Description card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Vakansiya haqida",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = vacancy.description.ifBlank { "Kompaniya jamoasiga tajribali mutaxassis qidirilmoqda. Yuqori oylik maosh va zamonaviy ofis muhiti kafolatlanadi." },
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 18.sp
+                    )
+
+                    if (vacancy.requirements.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Talablar",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = vacancy.requirements,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 17.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Apply Confirmation Dialog
+    if (showApplyDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isApplying) showApplyDialog = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isApplying = true
+                        scope.launch {
+                            val res = repository.apply(vacancy, coverLetter)
+                            isApplying = false
+                            showApplyDialog = false
+                            if (res.isSuccess) {
+                                applicationDone = true
+                                onApplySuccess()
+                            }
+                        }
+                    },
+                    enabled = !isApplying
+                ) {
+                    Text(if (isApplying) "Yuborilmoqda..." else "Tasdiqlash va yuborish")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showApplyDialog = false }, enabled = !isApplying) {
+                    Text("Bekor qilish")
+                }
+            },
+            title = { Text("Arizani tasdiqlang", fontSize = 16.sp, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "${vacancy.title} (${vacancy.company})",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    OutlinedTextField(
+                        value = coverLetter,
+                        onValueChange = { coverLetter = it },
+                        label = { Text("Qo‘shimcha xabar / Xat") },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 4
+                    )
+                }
+            }
+        )
     }
 }

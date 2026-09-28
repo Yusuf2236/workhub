@@ -3,17 +3,23 @@ import SwiftUI
 struct VacancyDetailView: View {
     let vacancy: Vacancy
     @State private var isApplied = false
+    @State private var showConfirmDialog = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 VStack(alignment: .leading, spacing: 6) {
+                    Text(vacancy.company)
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.blue)
+
                     Text(vacancy.title)
                         .font(.title2)
-                        .bold()
+                        .fontWeight(.black)
                         .foregroundColor(.primary)
 
-                    Text("\(vacancy.company) • \(vacancy.location)")
+                    Text("📍 \(vacancy.location)")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -21,7 +27,7 @@ struct VacancyDetailView: View {
                 HStack {
                     Text(vacancy.salary)
                         .font(.caption)
-                        .bold()
+                        .fontWeight(.black)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(Color.green.opacity(0.15))
@@ -32,12 +38,14 @@ struct VacancyDetailView: View {
                 Divider()
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Job Description")
+                    Text("Vakansiya haqida")
                         .font(.headline)
+                        .fontWeight(.bold)
 
                     Text(vacancy.description)
                         .font(.body)
                         .foregroundColor(.secondary)
+                        .lineSpacing(4)
                 }
 
                 Spacer()
@@ -45,8 +53,9 @@ struct VacancyDetailView: View {
                 if isApplied {
                     HStack {
                         Spacer()
-                        Text("✓ Application Submitted")
+                        Text("✓ Ariza muvaffaqiyatli topshirildi")
                             .font(.headline)
+                            .fontWeight(.bold)
                             .foregroundColor(.green)
                         Spacer()
                     }
@@ -55,10 +64,11 @@ struct VacancyDetailView: View {
                     .cornerRadius(12)
                 } else {
                     Button(action: {
-                        isApplied = true
+                        showConfirmDialog = true
                     }) {
-                        Text("Apply Now")
+                        Text("Ariza topshirish")
                             .font(.headline)
+                            .fontWeight(.bold)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -69,7 +79,15 @@ struct VacancyDetailView: View {
             }
             .padding()
         }
-        .navigationTitle("Job Details")
+        .navigationTitle("Vakansiya")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Arizani tasdiqlang", isPresented: $showConfirmDialog) {
+            Button("Tasdiqlash va topshirish") {
+                isApplied = true
+            }
+            Button("Bekor qilish", role: .cancel) {}
+        } message: {
+            Text("\(vacancy.title) lavozimiga o‘z rezyumengiz bilan ariza topshirmoqchimisiz?")
+        }
     }
 }

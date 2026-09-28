@@ -1,132 +1,149 @@
 package com.workhub.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.workhub.app.ui.theme.WorkHubBackground
-import com.workhub.app.ui.theme.WorkHubMuted
-import com.workhub.app.ui.theme.WorkHubPrimary
-import com.workhub.app.ui.theme.WorkHubSuccess
-import com.workhub.app.ui.theme.WorkHubSurface
-import com.workhub.app.ui.theme.WorkHubText
-import com.workhub.app.ui.theme.WorkHubWarning
-
-data class ApplicationUiModel(
-    val id: String,
-    val title: String,
-    val company: String,
-    val status: String,
-    val appliedDate: String
-)
+import com.workhub.app.data.models.Application
+import com.workhub.app.data.repository.JobRepository
 
 @Composable
 fun ApplicationScreen(
+    repository: JobRepository,
     onBack: () -> Unit = {}
 ) {
-    val applications = listOf(
-        ApplicationUiModel("1", "Senior Go Backend Architect", "WorkHub Global", "in_review", "2026-09-24"),
-        ApplicationUiModel("2", "Android Lead Engineer", "FinTech Labs", "submitted", "2026-09-22"),
-        ApplicationUiModel("3", "Staff Cloud Architect", "TechCorp", "interview", "2026-09-20")
-    )
+    val applications by repository.applications.collectAsState()
 
-    Scaffold(containerColor = WorkHubBackground) { innerPadding ->
-        LazyColumn(
+    LaunchedEffect(Unit) {
+        repository.fetchApplications()
+    }
+
+    Scaffold(
+        topBar = {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onBack) {
+                        Text("← Orqaga", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        text = "Mening Arizalarim",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
+        }
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            item {
-                TextButton(onClick = onBack) {
-                    Text("← Back to jobs", color = WorkHubPrimary)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "My Applications",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = WorkHubText
-                )
-                Text(
-                    text = "Track the status of all your submitted jobs",
-                    fontSize = 14.sp,
-                    color = WorkHubMuted,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-            }
-
-            items(applications) { app ->
-                Card(
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = WorkHubSurface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier.fillMaxWidth()
+            if (applications.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = app.title,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = WorkHubText
-                            )
-                            Text(
-                                text = "${app.company} • Applied on ${app.appliedDate}",
-                                fontSize = 13.sp,
-                                color = WorkHubMuted,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-
-                        val (statusColor, statusText) = when (app.status) {
-                            "accepted" -> WorkHubSuccess to "Accepted"
-                            "interview" -> WorkHubPrimary to "Interview"
-                            "in_review" -> WorkHubWarning to "In Review"
-                            else -> WorkHubMuted to "Submitted"
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(statusColor.copy(alpha = 0.12f))
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                    Text(
+                        text = "Arizalar mavjud emas",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Siz hali hech qanday vakansiyaga ariza topshirmagansiz. Vakansiyalar bo‘limidan o‘zingizga mos ish toping.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 16.sp
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(applications) { app ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                         ) {
-                            Text(
-                                text = statusText,
-                                color = statusColor,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = app.company.ifBlank { "Kompaniya" },
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+
+                                    val (statusText, statusBg, statusColor) = when (app.status) {
+                                        "accepted" -> Triple("Qabul qilindi", Color(0xFFD1FAE5), Color(0xFF065F46))
+                                        "rejected" -> Triple("Rad etildi", Color(0xFFFEE2E2), Color(0xFF991B1B))
+                                        "in_review" -> Triple("Ko‘rib chiqilmoqda", Color(0xFFFEF3C7), Color(0xFF92400E))
+                                        else -> Triple("Yuborildi", Color(0xFFDBEAFE), Color(0xFF1E40AF))
+                                    }
+
+                                    Surface(
+                                        color = statusBg,
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(
+                                            text = statusText,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = statusColor,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                }
+
+                                Text(
+                                    text = app.vacancyTitle.ifBlank { "Vakansiya arizasi" },
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+
+                                if (app.createdAt.isNotBlank()) {
+                                    Text(
+                                        text = "Topshirilgan sana: ${app.createdAt}",
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
                 }
