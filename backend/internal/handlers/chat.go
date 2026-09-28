@@ -20,6 +20,29 @@ type WsClient struct {
 	userName  string
 	avatarURL string
 	send      chan []byte
+	isClosed  bool
+	mu        sync.Mutex
+}
+
+func (c *WsClient) safeSend(data []byte) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.isClosed {
+		return
+	}
+	select {
+	case c.send <- data:
+	default:
+	}
+}
+
+func (c *WsClient) safeClose() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.isClosed {
+		c.isClosed = true
+		close(c.send)
+	}
 }
 
 type ChatHub struct {
@@ -59,7 +82,7 @@ func (h *ChatHub) run() {
 			if clients, ok := h.rooms[client.roomID]; ok {
 				if _, exists := clients[client]; exists {
 					delete(clients, client)
-					close(client.send)
+					client.safeClose()
 					if len(clients) == 0 {
 						delete(h.rooms, client.roomID)
 					}
@@ -82,10 +105,7 @@ func (h *ChatHub) run() {
 			})
 			if err == nil {
 				for client := range clients {
-					select {
-					case client.send <- data:
-					default:
-					}
+					client.safeSend(data)
 				}
 			}
 			h.mu.RUnlock()
@@ -198,6 +218,74 @@ func ListChatMessages(c *gin.Context) {
 	response.Success(c, http.StatusOK, gin.H{
 		"room_id":  roomID,
 		"messages": []models.ChatMessage{},
+	})
+}
+
+func SendChatMessage(c *gin.Context) {
+	var payload struct {
+		RoomID       string `json:"room_id"`
+		Content      string `json:"content" binding:"required"`
+		SenderName   string `json:"sender_name"`
+		SenderAvatar string `json:"sender_avatar"`
+	}
+
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, http.StatusBadRequest, "Xabar matni kiritilishi shart")
+		return
+	}
+
+	if payload.RoomID == "" {
+		payload.RoomID = "general"
+	}
+
+	userID := "guest"
+	if uid, exists := c.Get("user_id"); exists && uid != nil {
+		userID = uid.(string)
+	}
+
+	senderName := payload.SenderName
+	senderAvatar := payload.SenderAvatar
+
+	if userID != "" && userID != "guest" {
+		if userRepo != nil {
+			if u, _ := userRepo.GetByID(userID); u != nil {
+				if senderName == "" {
+					senderName = u.Name
+				}
+				if senderAvatar == "" {
+					senderAvatar = u.AvatarURL
+				}
+			}
+		}
+		if profileRepo != nil && senderAvatar == "" {
+			if p, _ := profileRepo.GetByUserID(userID); p != nil && p.AvatarURL != "" {
+				senderAvatar = p.AvatarURL
+			}
+		}
+	}
+
+	if senderName == "" {
+		senderName = "WZone Mehmon"
+	}
+
+	chatMsg := models.ChatMessage{
+		ID:           uuid.NewString(),
+		RoomID:       payload.RoomID,
+		UserID:       userID,
+		SenderName:   senderName,
+		SenderAvatar: senderAvatar,
+		Content:      payload.Content,
+		CreatedAt:    time.Now().UTC(),
+	}
+
+	if chatRepo != nil {
+		_ = chatRepo.SaveMessage(chatMsg)
+	}
+
+	globalHub.broadcast <- chatMsg
+
+	response.Success(c, http.StatusOK, gin.H{
+		"message": chatMsg,
 	})
 }
 

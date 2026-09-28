@@ -160,6 +160,7 @@ func setupRoutes(r *gin.Engine) {
         api.GET("/chat/health", handlers.ChatHealth)
         api.GET("/chat/rooms", handlers.ListChatRooms)
         api.GET("/chat/messages", handlers.ListChatMessages)
+        api.POST("/chat/messages", middleware.OptionalAuth(), handlers.SendChatMessage)
         api.GET("/ws", handlers.HandleChatSocket)
 
         api.GET("/admin/users", middleware.AuthRequired(), handlers.ListUsers)
