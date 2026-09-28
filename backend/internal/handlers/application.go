@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
+	"github.com/Yusuf2236/workhub/backend/internal/services"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
 )
 
@@ -74,11 +75,30 @@ func ApplyToVacancy(c *gin.Context) {
 			_ = notificationRepo.Create(models.Notification{
 				ID:        uuid.NewString(),
 				UserID:    userID.(string),
-				Title:     "Application Submitted",
-				Body:      "Your application was received and delivered to the hiring team.",
+				Title:     "Ariza topshirildi",
+				Body:      "Vakansiyaga arizangiz muvaffaqiyatli qabul qilindi.",
 				CreatedAt: time.Now().UTC(),
 			})
 		}
+
+		// Trigger telegram notification
+		go func() {
+			candidateName := "Nomzod"
+			if userRepo != nil {
+				if u, _ := userRepo.GetByID(userID.(string)); u != nil && u.Name != "" {
+					candidateName = u.Name
+				}
+			}
+			vacTitle := "Vakansiya"
+			compName := "WorkHub Ish beruvchi"
+			if vacancyRepo != nil {
+				if v, _ := vacancyRepo.Get(vacancyID); v != nil {
+					vacTitle = v.Title
+					compName = v.Company
+				}
+			}
+			services.GetTelegramService().NotifyNewApplication(candidateName, vacTitle, compName)
+		}()
 	} else {
 		applications[app.ID] = app
 	}

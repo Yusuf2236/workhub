@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,41 +16,45 @@ import (
 var plans = []gin.H{
 	{
 		"id":          "free",
-		"name":        "Free Starter",
+		"name":        "Boshlang‘ich (Free)",
 		"price":       0.00,
-		"currency":    "USD",
-		"description": "Basic job search and up to 3 active vacancy listings",
+		"price_uzs":   0,
+		"currency":    "UZS",
+		"description": "Boshlang‘ich qidiruv va 3 tagacha bepul vakansiya joylashtirish",
 		"features": []string{
-			"Standard job search",
-			"Up to 3 active vacancy postings",
-			"Standard applicant tracking",
+			"Barcha vakansiyalarni ko‘rish va qidirish",
+			"3 tagacha faol vakansiya e’lon qilish",
+			"Nomzodlar arizalarini ko‘rish",
 		},
 	},
 	{
 		"id":          "pro",
-		"name":        "Pro Employer",
-		"price":       49.00,
-		"currency":    "USD",
-		"description": "Enhanced visibility with featured job placement and candidate messaging",
+		"name":        "Pro Ish beruvchi",
+		"price":       250000.00,
+		"price_uzs":   250000,
+		"currency":    "UZS",
+		"description": "VIP vakansiyalar, yuqori o‘rinlar va nomzodlar bilan to‘g‘ridan-to‘g‘ri chat",
 		"features": []string{
-			"Featured vacancy placement",
-			"Unlimited active job postings",
-			"Direct candidate chat",
-			"Advanced candidate filters",
-			"Analytics dashboard",
+			"VIP belgisi va qidiruvda eng yuqorida turish",
+			"Cheksiz faol vakansiyalar e’lon qilish",
+			"Nomzodlar bilan to‘g‘ridan-to‘g‘ri onlayn chat",
+			"Barcha rezyumelarni filtrlash va yuklab olish",
+			"Kompaniya analitikasi",
 		},
 	},
 	{
 		"id":          "enterprise",
-		"name":        "Enterprise Suite",
-		"price":       199.00,
-		"currency":    "USD",
-		"description": "Full platform access for high-volume recruitment agencies and enterprises",
+		"name":        "Korporativ (Enterprise)",
+		"price":       750000.00,
+		"price_uzs":   750000,
+		"currency":    "UZS",
+		"description": "Yirik kompaniyalar, HR agentliklar va xoldinglar uchun to‘liq paket",
 		"features": []string{
-			"All Pro features included",
-			"AI-powered candidate skill matching",
-			"Dedicated API & ATS integration",
-			"Custom reporting & SLA support",
+			"Barcha Pro imkoniyatlari kiritilgan",
+			"WorkHub Telegram kanaliga avtomatik e’lon chiqarish",
+			"Nomzodlarga sun’iy intellekt (AI) orqali tavsiya qilish",
+			"Shaxsiy HR menejer va 24/7 qo‘llab-quvvatlash",
+			"To‘liq rasmiy shartnoma va hisob-faktura (1C integratsiya)",
 		},
 	},
 }
@@ -66,7 +72,7 @@ func Subscribe(c *gin.Context) {
 
 	var payload struct {
 		Plan     string `json:"plan"`
-		Provider string `json:"provider"` // stripe, payme, click
+		Provider string `json:"provider"` // click, payme, stripe
 	}
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
@@ -83,7 +89,7 @@ func Subscribe(c *gin.Context) {
 	}
 
 	if selectedPlan == nil {
-		response.Error(c, http.StatusBadRequest, "invalid plan selected")
+		response.Error(c, http.StatusBadRequest, "Noto‘g‘ri tarif tanlandi")
 		return
 	}
 
@@ -107,14 +113,14 @@ func Subscribe(c *gin.Context) {
 
 	if subscriptionRepo != nil {
 		if err := subscriptionRepo.Create(sub); err != nil {
-			response.Error(c, http.StatusInternalServerError, "failed to activate subscription")
+			response.Error(c, http.StatusInternalServerError, "Obunani faollashtirishda xatolik yuz berdi")
 			return
 		}
 	}
 
 	provider := payload.Provider
 	if provider == "" {
-		provider = "stripe"
+		provider = "click"
 	}
 
 	response.Success(c, http.StatusOK, gin.H{
@@ -122,7 +128,7 @@ func Subscribe(c *gin.Context) {
 		"payment": gin.H{
 			"provider":    provider,
 			"status":      "paid",
-			"checkout_id": fmtSprintf("chk_%s", uuid.NewString()[:8]),
+			"checkout_id": "wh_" + uuid.NewString()[:8],
 		},
 	})
 }
@@ -155,6 +161,141 @@ func GetMySubscription(c *gin.Context) {
 	})
 }
 
+// ClickWebhook handles official Click payments
+func ClickWebhook(c *gin.Context) {
+	clickTransID := c.PostForm("click_trans_id")
+	serviceID := c.PostForm("service_id")
+	merchantTransID := c.PostForm("merchant_trans_id")
+	amountStr := c.PostForm("amount")
+	actionStr := c.PostForm("action")
+	signTime := c.PostForm("sign_time")
+	signString := c.PostForm("sign_string")
+
+	log.Printf("[Click Webhook]: click_trans_id=%s, merchant_trans_id=%s, amount=%s, action=%s, sign_time=%s, sign_string=%s, service_id=%s",
+		clickTransID, merchantTransID, amountStr, actionStr, signTime, signString, serviceID)
+
+	action, _ := strconv.Atoi(actionStr)
+	amount, _ := strconv.ParseFloat(amountStr, 64)
+
+	// Action 0 = Prepare, Action 1 = Complete
+	if action == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"click_trans_id":      clickTransID,
+			"merchant_trans_id":   merchantTransID,
+			"merchant_prepare_id": 1,
+			"error":               0,
+			"error_note":          "Success",
+		})
+		return
+	}
+
+	// Complete: Activate subscription for merchantTransID (which is userID)
+	if merchantTransID != "" {
+		now := time.Now().UTC()
+		expiresAt := now.Add(30 * 24 * time.Hour)
+		plan := "pro"
+		if amount >= 700000 {
+			plan = "enterprise"
+		}
+
+		if subscriptionRepo != nil {
+			_ = subscriptionRepo.Create(models.Subscription{
+				ID:        uuid.NewString(),
+				UserID:    merchantTransID,
+				Plan:      plan,
+				Status:    "active",
+				Amount:    amount,
+				Currency:  "UZS",
+				ExpiresAt: &expiresAt,
+				CreatedAt: now,
+				UpdatedAt: now,
+			})
+		}
+
+		if notificationRepo != nil {
+			_ = notificationRepo.Create(models.Notification{
+				ID:        uuid.NewString(),
+				UserID:    merchantTransID,
+				Title:     "To‘lov qabul qilindi (Click)",
+				Body:      "WorkHub " + strings.ToUpper(plan) + " obunangiz Click orqali 30 kunga faollashtirildi.",
+				CreatedAt: now,
+			})
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"click_trans_id":      clickTransID,
+		"merchant_trans_id":   merchantTransID,
+		"merchant_confirm_id": 1,
+		"error":               0,
+		"error_note":          "Success",
+	})
+}
+
+// PaymeWebhook handles official Payme JSON-RPC merchant transactions
+func PaymeWebhook(c *gin.Context) {
+	var rpcReq struct {
+		Method string                 `json:"method"`
+		Params map[string]interface{} `json:"params"`
+		ID     interface{}            `json:"id"`
+	}
+
+	if err := c.ShouldBindJSON(&rpcReq); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"error": gin.H{"code": -32700, "message": "Parse error"},
+			"id":    rpcReq.ID,
+		})
+		return
+	}
+
+	log.Printf("[Payme Webhook]: method=%s, params=%v", rpcReq.Method, rpcReq.Params)
+
+	nowMs := time.Now().UnixNano() / int64(time.Millisecond)
+
+	switch rpcReq.Method {
+	case "CheckPerformTransaction":
+		c.JSON(http.StatusOK, gin.H{
+			"result": gin.H{"allow": true},
+			"id":     rpcReq.ID,
+		})
+	case "CreateTransaction":
+		c.JSON(http.StatusOK, gin.H{
+			"result": gin.H{
+				"create_time": nowMs,
+				"transaction": "payme_" + uuid.NewString()[:8],
+				"state":       1,
+			},
+			"id": rpcReq.ID,
+		})
+	case "PerformTransaction":
+		c.JSON(http.StatusOK, gin.H{
+			"result": gin.H{
+				"transaction":  "payme_" + uuid.NewString()[:8],
+				"perform_time": nowMs,
+				"state":        2,
+			},
+			"id": rpcReq.ID,
+		})
+	case "CheckTransaction":
+		c.JSON(http.StatusOK, gin.H{
+			"result": gin.H{
+				"create_time":  nowMs - 60000,
+				"perform_time": nowMs,
+				"cancel_time":  0,
+				"transaction":  "payme_" + uuid.NewString()[:8],
+				"state":        2,
+				"reason":       nil,
+			},
+			"id": rpcReq.ID,
+		})
+	default:
+		c.JSON(http.StatusOK, gin.H{
+			"result": gin.H{"success": true},
+			"id":     rpcReq.ID,
+		})
+	}
+}
+
 func HandlePaymentWebhook(c *gin.Context) {
 	var payload struct {
 		Event    string  `json:"event"`
@@ -179,7 +320,7 @@ func HandlePaymentWebhook(c *gin.Context) {
 		payload.Plan = "pro"
 	}
 	if payload.Currency == "" {
-		payload.Currency = "USD"
+		payload.Currency = "UZS"
 	}
 
 	now := time.Now().UTC()
@@ -204,13 +345,13 @@ func HandlePaymentWebhook(c *gin.Context) {
 	if notificationRepo != nil {
 		providerName := payload.Provider
 		if providerName == "" {
-			providerName = "Payment Provider"
+			providerName = "Click / Payme"
 		}
 		_ = notificationRepo.Create(models.Notification{
 			ID:        uuid.NewString(),
 			UserID:    payload.UserID,
-			Title:     "Payment Succeeded",
-			Body:      "Your " + strings.ToUpper(payload.Plan) + " subscription has been activated successfully via " + providerName + ".",
+			Title:     "To‘lov muvaffaqiyatli amalga oshirildi",
+			Body:      "WorkHub " + strings.ToUpper(payload.Plan) + " obunangiz " + providerName + " orqali faollashtirildi.",
 			CreatedAt: now,
 		})
 	}
@@ -220,8 +361,3 @@ func HandlePaymentWebhook(c *gin.Context) {
 		"subscription": sub,
 	})
 }
-
-func fmtSprintf(format string, a ...any) string {
-	return uuid.NewString()[:8]
-}
-

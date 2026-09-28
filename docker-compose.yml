@@ -80,6 +80,21 @@ services:
     ports:
       - "3000:3000"
 
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: workhub_admin
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - NEXT_PUBLIC_API_URL=http://backend:8080/api/v1
+    ports:
+      - "3001:3001"
+
   nginx:
     image: nginx:alpine
     container_name: workhub_nginx

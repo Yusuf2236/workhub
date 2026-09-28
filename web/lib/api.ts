@@ -293,4 +293,20 @@ export const api = {
   async getChatMessages(room: string = 'general') {
     return request<{ room_id: string; messages: any[] }>(`/chat/messages?room=${encodeURIComponent(room)}`);
   },
+
+  // Billing & Subscriptions
+  async getBillingPlans() {
+    return request<{ plans: any[] }>('/billing/plans');
+  },
+
+  async subscribe(plan: string, provider: string = 'click') {
+    return request<{ subscription: any; payment: any }>('/billing/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ plan, provider }),
+    });
+  },
+
+  async getMySubscription() {
+    return request<{ subscription: any }>('/billing/my-subscription');
+  },
 };

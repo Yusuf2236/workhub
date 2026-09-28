@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
+	"github.com/Yusuf2236/workhub/backend/internal/services"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
 )
 
@@ -175,6 +176,9 @@ func CreateVacancy(c *gin.Context) {
 	} else {
 		vacancies[payload.ID] = payload
 	}
+
+	// Broadcast newly created vacancy to Telegram channel
+	services.GetTelegramService().BroadcastVacancy(&payload)
 
 	response.Success(c, http.StatusCreated, gin.H{"vacancy": payload})
 }

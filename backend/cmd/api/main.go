@@ -15,6 +15,7 @@ import (
     "github.com/Yusuf2236/workhub/backend/internal/database"
     "github.com/Yusuf2236/workhub/backend/internal/handlers"
     "github.com/Yusuf2236/workhub/backend/internal/middleware"
+    "github.com/Yusuf2236/workhub/backend/internal/services"
 )
 
 func main() {
@@ -65,6 +66,10 @@ func main() {
 
     // Initialize handlers with database and redis
     handlers.Init(db, rdb)
+
+    // Initialize background services
+    services.InitTelegramService()
+    services.StartBackgroundAggregator(24 * time.Hour)
 
     if cfg.Server.Env == "production" {
         gin.SetMode(gin.ReleaseMode)
@@ -149,6 +154,8 @@ func setupRoutes(r *gin.Engine) {
         api.POST("/billing/subscribe", middleware.AuthRequired(), handlers.Subscribe)
         api.GET("/billing/my-subscription", middleware.AuthRequired(), handlers.GetMySubscription)
         api.POST("/billing/webhook", handlers.HandlePaymentWebhook)
+        api.POST("/billing/click", handlers.ClickWebhook)
+        api.POST("/billing/payme", handlers.PaymeWebhook)
 
         api.GET("/chat/health", handlers.ChatHealth)
         api.GET("/chat/rooms", handlers.ListChatRooms)

@@ -16,6 +16,7 @@ import (
 	"unicode"
 
 	"github.com/Yusuf2236/workhub/backend/internal/models"
+	"github.com/Yusuf2236/workhub/backend/internal/services"
 	"github.com/Yusuf2236/workhub/backend/pkg/hash"
 	"github.com/Yusuf2236/workhub/backend/pkg/jwt"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
@@ -1335,6 +1336,9 @@ func OneIDQRCheck(c *gin.Context) {
 		if profileRepo != nil {
 			userProfile, _ = profileRepo.GetByUserID(user.ID)
 		}
+
+		// Notify Telegram admin/channel about verified citizen
+		services.GetTelegramService().NotifyOneIDVerified(fullName, pinfl, location)
 
 		response.Success(c, http.StatusOK, gin.H{
 			"status":      "approved",
