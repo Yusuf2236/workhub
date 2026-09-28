@@ -33,6 +33,9 @@ services:
       dockerfile: Dockerfile
     container_name: wzone_backend
     restart: unless-stopped
+    env_file:
+      - path: .env.prod
+        required: false
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,6 +58,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-wzone_jwt_prod_secret_change_me_2026}
       ONEID_ENCRYPTION_KEY: ${ONEID_ENCRYPTION_KEY:-wzone_aes_256_gcm_secret_key_2026!!}
       CORS_ALLOWED_ORIGINS: https://wzone.uz,https://www.wzone.uz,https://admin.wzone.uz,https://api.wzone.uz
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     volumes:
       - wzone_uploads:/app/uploads
     networks: [wzone]
