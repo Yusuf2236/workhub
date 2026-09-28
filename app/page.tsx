@@ -96,6 +96,7 @@ export default function WZonePortal() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [createVacancyModalOpen, setCreateVacancyModalOpen] = useState(false);
   const [createResumeModalOpen, setCreateResumeModalOpen] = useState(false);
+  const [profileSection, setProfileSection] = useState<'settings' | 'resumes'>('settings');
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [chatTargetUser, setChatTargetUser] = useState<any | null>(null);
@@ -550,6 +551,7 @@ export default function WZonePortal() {
           currentTab={currentTab}
           onSelectTab={(tab) => {
             setCurrentTab(tab);
+            if (tab === 'profile') setProfileSection('settings');
           }}
           user={user}
           savedCount={savedIds.length}
@@ -599,6 +601,7 @@ export default function WZonePortal() {
               user={user}
               onUserUpdated={setUser}
               lang={lang}
+              initialSection={profileSection}
             />
           ) : currentTab === 'saved' && displayedVacancies().length === 0 ? (
             <div className="p-14 text-center bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
@@ -829,7 +832,8 @@ export default function WZonePortal() {
         onClose={() => setCreateResumeModalOpen(false)}
         onSuccess={() => {
           fetchResumes();
-          setCurrentTab('resumes');
+          setProfileSection('resumes');
+          setCurrentTab('profile');
         }}
         currentUser={user}
       />
