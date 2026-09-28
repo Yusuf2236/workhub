@@ -14,6 +14,7 @@ variables:
   GO_VERSION: "1.23.6"
   APP_NAME: backend
   DEPLOY_PATH: /opt/wzone/backend
+  PORT_BIND: "18090"
 
 guard:main-source:
   stage: validate
