@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: "WorkHub — O'zbekistondagi zamonaviy ish va vakansiyalar platformasi",
-  description: "WorkHub — ish qidiruvchilar va ish beruvchilar uchun zamonaviy, real-vaqt platformasi. OneID va Google orqali tezkor kirish.",
+  title: "WZone — O'zbekistondagi zamonaviy ish va vakansiyalar platformasi",
+  description: "WZone — ish qidiruvchilar va ish beruvchilar uchun zamonaviy, real-vaqt platformasi. OneID va Google orqali tezkor kirish.",
 };
 
 export default function RootLayout({

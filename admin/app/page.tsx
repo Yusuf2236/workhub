@@ -84,7 +84,7 @@ export default function DashboardPage() {
               {vacancies.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-6 text-center text-slate-400">
-                    {loading ? 'Loading vacancies...' : 'Principal Go Architect • WorkHub Global • $6000 - $8000 (Active)'}
+                    {loading ? 'Loading vacancies...' : 'Principal Go Architect • WZone Global • $6000 - $8000 (Active)'}
                   </td>
                 </tr>
               ) : (

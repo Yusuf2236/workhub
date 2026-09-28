@@ -90,7 +90,7 @@ func ApplyToVacancy(c *gin.Context) {
 				}
 			}
 			vacTitle := "Vakansiya"
-			compName := "WorkHub Ish beruvchi"
+			compName := "WZone Ish beruvchi"
 			if vacancyRepo != nil {
 				if v, _ := vacancyRepo.Get(vacancyID); v != nil {
 					vacTitle = v.Title

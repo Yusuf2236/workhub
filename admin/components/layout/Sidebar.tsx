@@ -17,7 +17,7 @@ export function Sidebar() {
           W
         </div>
         <div>
-          <h1 className="text-lg font-bold tracking-tight">WorkHub</h1>
+          <h1 className="text-lg font-bold tracking-tight">WZone</h1>
           <p className="text-xs text-slate-400">Admin Control Panel</p>
         </div>
       </div>

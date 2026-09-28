@@ -1,5 +1,5 @@
 /**
- * WorkHub AI Vacancy Generation Engine
+ * WZone AI Vacancy Generation Engine
  * Intelligent semantic generator for Uzbekistan and international job markets.
  * Generates tailored categories, salaries, experience, tags, and detailed requirements
  * for any profession entered in Uzbek, Russian, or English.
@@ -58,7 +58,7 @@ function formatTitle(title: string): string {
 export function generateVacancyWithAI(input: AIVacancyInput): AIVacancyOutput {
   const rawTitle = input.title || '';
   const norm = normalizeText(rawTitle);
-  const companyName = input.company?.trim() || 'WorkHub Hamkori';
+  const companyName = input.company?.trim() || 'WZone Hamkori';
   const defaultLoc = input.location?.trim() || 'Toshkent shahri';
 
   // 1. TEACHING & EDUCATION (Ta'lim & Fan)

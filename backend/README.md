@@ -1,6 +1,6 @@
-# WorkHub backend
+# WZone backend
 
-The backend is the core service for the WorkHub platform. It exposes the main APIs for authentication, jobs, applications, resumes, and realtime chat.
+The backend is the core service for the WZone platform. It exposes the main APIs for authentication, jobs, applications, resumes, and realtime chat.
 
 ## Stack
 

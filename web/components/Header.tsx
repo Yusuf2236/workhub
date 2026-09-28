@@ -59,7 +59,7 @@ export default function Header({
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Animated WorkHub Logo */}
+        {/* Animated WZone Logo */}
         <div className="flex items-center gap-3 shrink-0 group cursor-pointer">
           <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-blue-500/50 group-hover:rotate-3 overflow-hidden">
             <span className="relative z-10 tracking-tighter">W</span>
@@ -67,7 +67,7 @@ export default function Header({
           </div>
           <div>
             <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white flex items-center">
-              Work<span className="text-blue-600 dark:text-blue-400">Hub</span>
+              W<span className="text-blue-600 dark:text-blue-400">Zone</span>
             </span>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 -mt-0.5 font-medium hidden sm:block">
               {t.appTagline}

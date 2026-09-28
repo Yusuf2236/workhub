@@ -88,7 +88,7 @@ func CreateVacancyComment(c *gin.Context) {
 	}
 
 	if authorName == "" {
-		authorName = "WorkHub Nomzod"
+		authorName = "WZone Nomzod"
 	}
 
 	comment := models.VacancyComment{

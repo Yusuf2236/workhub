@@ -5,7 +5,7 @@ export async function GET(request: Request) {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>OneID Autentifikatsiyasi - WorkHub</title>
+  <title>OneID Autentifikatsiyasi - WZone</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;

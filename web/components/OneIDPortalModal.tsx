@@ -387,7 +387,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                     W
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">WorkHub Axborot Tizimi</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">WZone Axborot Tizimi</span>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">OneID orqali xavfsiz autentifikatsiya so‘rovi</p>
                   </div>
                 </div>
@@ -595,7 +595,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                           JShShIR: {approvedCitizen?.pinfl || ''}
                         </p>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
-                          WorkHub tizimiga kirilmoqda...
+                          WZone tizimiga kirilmoqda...
                         </span>
                       </div>
                     ) : qrDataUrl ? (
@@ -849,7 +849,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
                   Shaxsiy ma’lumotlarni uzatishga rozilik
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  <b>WorkHub</b> portali OneID tizimidan quyidagi shaxsiy ma’lumotlaringizni so‘ramoqda:
+                  <b>WZone</b> portali OneID tizimidan quyidagi shaxsiy ma’lumotlaringizni so‘ramoqda:
                 </p>
               </div>
 
@@ -893,7 +893,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess }: OneIDPo
 
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-[11px] text-emerald-800 dark:text-emerald-300">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                <span>Ushbu ma’lumotlar avtomatik tarzda WorkHub profilingizga ko‘chiriladi va tasdiqlanadi.</span>
+                <span>Ushbu ma’lumotlar avtomatik tarzda WZone profilingizga ko‘chiriladi va tasdiqlanadi.</span>
               </div>
 
               {/* Action Buttons */}

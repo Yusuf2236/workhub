@@ -2,7 +2,7 @@ export type Language = 'uz' | 'ru' | 'en';
 
 export const translations = {
   uz: {
-    appName: 'WorkHub',
+    appName: 'WZone',
     appTagline: 'Ish va faoliyat portali',
     searchPlaceholder: 'Kasb, lavozim, ko‘nikma yoki kompaniya bo‘yicha qidiring...',
     addListing: '+ E’lon berish',
@@ -14,7 +14,7 @@ export const translations = {
     logoutBtn: 'Tizimdan chiqish',
     notifications: 'Bildirishnomalar',
     chat: 'Xabarlar & Muloqot',
-    liveChat: 'WorkHub Jonli Muloqot',
+    liveChat: 'WZone Jonli Muloqot',
 
     // Nav
     navFeed: 'Bosh sahifa',
@@ -65,10 +65,10 @@ export const translations = {
     profileSaved: 'Profil muvaffaqiyatli saqlandi!',
 
     // Right Sidebar
-    mobileTitle: 'WorkHub Mobil Ilova',
+    mobileTitle: 'WZone Mobil Ilova',
     mobileSubtitle: 'Barcha vakansiyalar va tezkor suhbatlar cho‘ntagingizda.',
     telegramTitle: 'Telegram Bot',
-    telegramHandle: '@WorkHubUzBot',
+    telegramHandle: '@WZoneUzBot',
     telegramDesc: 'Yangi vakansiyalar chiqqanda Telegram orqali birinchilardan bo‘lib bilib oling.',
     telegramBtn: 'Botga ulanish',
     statsTitle: 'JONLI KO‘RSATKICHLAR',
@@ -77,11 +77,11 @@ export const translations = {
     terms: 'Ommaviy oferta',
     privacy: 'Maxfiylik siyosati',
     help: 'Yordam markazi',
-    copyright: '© 2026 WorkHub. Barcha huquqlar himoyalangan.',
+    copyright: '© 2026 WZone. Barcha huquqlar himoyalangan.',
   },
 
   ru: {
-    appName: 'WorkHub',
+    appName: 'WZone',
     appTagline: 'Портал работы и вакансий',
     searchPlaceholder: 'Поиск по профессии, должности, навыкам или компании...',
     addListing: '+ Разместить',
@@ -93,24 +93,24 @@ export const translations = {
     logoutBtn: 'Выйти из системы',
     notifications: 'Уведомления',
     chat: 'Сообщения & Чат',
-    liveChat: 'Живой чат WorkHub',
+    liveChat: 'Живой чат WZone',
 
     // Nav
     navFeed: 'Главная страница',
     navVacancies: 'Все вакансии',
     navResumes: 'База кандидатов',
-    navApplications: 'Мои отклики',
+    navApplications: 'Мои заявки',
     navChat: 'Сообщения & Чат',
-    navSaved: 'Сохранённые',
+    navSaved: 'Сохраненные',
     navMyVacancies: 'Мои вакансии',
     navProfile: 'Профиль & Настройки',
 
     // Filters
-    categoryAll: 'Все категории',
+    categoryAll: 'Все',
     regionLabel: 'Регион:',
     regionAll: 'Все регионы',
     jobTypeLabel: 'Занятость:',
-    jobTypeAll: 'Все типы',
+    jobTypeAll: 'Все',
     vacanciesCount: 'вакансий',
     refresh: 'Обновить',
 
@@ -123,9 +123,9 @@ export const translations = {
     details: 'Подробнее',
 
     // Applications
-    applicationsTitle: 'Мои отклики',
-    applicationsSubtitle: 'Все поданные заявки и их статус в реальном времени',
-    noApplications: 'Вы пока не откликались ни на одну вакансию',
+    applicationsTitle: 'Мои заявки',
+    applicationsSubtitle: 'Статус ваших отправленных откликов в реальном времени',
+    noApplications: 'Вы еще не откликались ни на одну вакансию',
     statusSubmitted: 'Отправлено',
     statusReviewing: 'На рассмотрении',
     statusAccepted: 'Принято',
@@ -136,18 +136,18 @@ export const translations = {
     uploadPhoto: 'Загрузить фото',
     fullName: 'Полное имя',
     phone: 'Номер телефона',
-    profession: 'Профессия / Должность',
+    profession: 'Профессия / Специальность',
     location: 'Регион проживания',
-    bio: 'Кратко о себе (Bio)',
+    bio: 'О себе (Bio)',
     skills: 'Ключевые навыки (через запятую)',
     saveChanges: 'Сохранить изменения',
-    profileSaved: 'Профиль успешно сохранён!',
+    profileSaved: 'Профиль успешно сохранен!',
 
     // Right Sidebar
-    mobileTitle: 'Мобильное приложение WorkHub',
-    mobileSubtitle: 'Вакансии и мгновенные уведомления всегда под рукой.',
+    mobileTitle: 'Мобильное приложение WZone',
+    mobileSubtitle: 'Все вакансии и быстрые чаты в вашем кармане.',
     telegramTitle: 'Telegram Бот',
-    telegramHandle: '@WorkHubUzBot',
+    telegramHandle: '@WZoneUzBot',
     telegramDesc: 'Получайте уведомления о новых вакансиях прямо в Telegram.',
     telegramBtn: 'Подключить бота',
     statsTitle: 'ЖИВАЯ СТАТИСТИКА',
@@ -156,11 +156,11 @@ export const translations = {
     terms: 'Публичная оферта',
     privacy: 'Политика конфиденциальности',
     help: 'Центр помощи',
-    copyright: '© 2026 WorkHub. Все права защищены.',
+    copyright: '© 2026 WZone. Все права защищены.',
   },
 
   en: {
-    appName: 'WorkHub',
+    appName: 'WZone',
     appTagline: 'Career & Jobs Platform',
     searchPlaceholder: 'Search jobs, titles, skills, or companies...',
     addListing: '+ Post Job',
@@ -172,7 +172,7 @@ export const translations = {
     logoutBtn: 'Sign Out',
     notifications: 'Notifications',
     chat: 'Messages & Chat',
-    liveChat: 'WorkHub Live Chat',
+    liveChat: 'WZone Live Chat',
 
     // Nav
     navFeed: 'Home Feed',
@@ -223,10 +223,10 @@ export const translations = {
     profileSaved: 'Profile saved successfully!',
 
     // Right Sidebar
-    mobileTitle: 'WorkHub Mobile App',
+    mobileTitle: 'WZone Mobile App',
     mobileSubtitle: 'All jobs and instant messages right in your pocket.',
     telegramTitle: 'Telegram Bot',
-    telegramHandle: '@WorkHubUzBot',
+    telegramHandle: '@WZoneUzBot',
     telegramDesc: 'Get instant notifications about fresh vacancies directly in Telegram.',
     telegramBtn: 'Connect Bot',
     statsTitle: 'LIVE PLATFORM STATS',
@@ -235,6 +235,6 @@ export const translations = {
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
     help: 'Help Center',
-    copyright: '© 2026 WorkHub. All rights reserved.',
+    copyright: '© 2026 WZone. All rights reserved.',
   },
 };

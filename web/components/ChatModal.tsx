@@ -153,7 +153,7 @@ export default function ChatModal({
             </div>
             <div>
               <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <span>{targetUser?.name ? `Muloqot: ${targetUser.name}` : 'WorkHub Jonli Muloqot'}</span>
+                <span>{targetUser?.name ? `Muloqot: ${targetUser.name}` : 'WZone Jonli Muloqot'}</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800">
                   {targetUser?.name ? 'To‘g‘ridan-to‘g‘ri' : '#general'}
                 </span>
@@ -211,7 +211,7 @@ export default function ChatModal({
                   <div className={`max-w-[80%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}>
                     {!isSelf && (
                       <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 ml-1 mb-0.5">
-                        {msg.sender_name || 'WorkHub Foydalanuvchisi'}
+                        {msg.sender_name || 'WZone Foydalanuvchisi'}
                       </span>
                     )}
 

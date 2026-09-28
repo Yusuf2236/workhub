@@ -550,7 +550,7 @@ export default function CreateResumeModal({
                   <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 text-white shadow-xl flex items-center justify-between gap-4">
                     <div>
                       <span className="text-xs font-semibold uppercase tracking-wider text-indigo-100">
-                        WorkHub AI Tahlilchi Natijasi
+                        WZone AI Tahlilchi Natijasi
                       </span>
                       <h3 className="text-xl sm:text-2xl font-black mt-1">
                         ATS Reytingi: {analysis.score} / 100 ball ({analysis.grade})

@@ -80,7 +80,7 @@ export default function VacancyDetailModal({
 
     setSubmitting(true);
     try {
-      const authorName = currentUser?.name || guestName.trim() || 'WorkHub Foydalanuvchisi';
+      const authorName = currentUser?.name || guestName.trim() || 'WZone Foydalanuvchisi';
       const authorAvatar = currentUser?.avatar_url || '';
 
       const res = await api.createVacancyComment(vacancy.id, {
@@ -128,7 +128,7 @@ export default function VacancyDetailModal({
                   <CheckCircle size={15} className="text-blue-600 fill-blue-100 dark:fill-blue-950" />
                 )}
                 <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
-                  WorkHub
+                  WZone
                 </span>
               </div>
               <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-1 leading-snug">

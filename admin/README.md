@@ -1,6 +1,6 @@
-# Admin panel
+# WZone Admin panel
 
-The WorkHub admin panel is the management layer for recruiters, HR specialists, and platform administrators. It provides moderation, analytics, and operational oversight for the platform.
+The WZone admin panel is the management layer for recruiters, HR specialists, and platform administrators. It provides moderation, analytics, and operational oversight for the platform.
 
 ## Stack
 

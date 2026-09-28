@@ -157,7 +157,7 @@ func CreateVacancy(c *gin.Context) {
 	payload.UpdatedAt = time.Now().UTC()
 	payload.IsVerified = true
 	if payload.Source == "" {
-		payload.Source = "WorkHub"
+		payload.Source = "WZone"
 	}
 
 	if vacancyRepo != nil {

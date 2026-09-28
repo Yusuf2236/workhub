@@ -3,8 +3,8 @@ import { Sidebar } from '../components/layout/Sidebar';
 import { Navbar } from '../components/layout/Navbar';
 
 export const metadata = {
-  title: 'WorkHub Admin Dashboard',
-  description: 'Management & Analytics Platform for WorkHub',
+  title: 'WZone Admin Dashboard',
+  description: 'Management & Analytics Platform for WZone',
 };
 
 export default function RootLayout({

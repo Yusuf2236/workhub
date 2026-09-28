@@ -5,7 +5,7 @@ export async function GET(request: Request) {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Google Autentifikatsiyasi - WorkHub</title>
+  <title>Google Autentifikatsiyasi - WZone</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
   <div class="card">
     <div class="spinner" id="spinner"></div>
     <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 8px;" id="title">Google orqali kirilmoqda...</h3>
-    <p style="font-size: 13px; color: #94a3b8; margin: 0;" id="status">WorkHub hisobingiz tasdiqlanmoqda, bir oz kuting.</p>
+    <p style="font-size: 13px; color: #94a3b8; margin: 0;" id="status">WZone hisobingiz tasdiqlanmoqda, bir oz kuting.</p>
     <button class="btn" id="closeBtn" style="display: none;" onclick="window.close();">Oynani yopish</button>
   </div>
   <script>
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
         var code = searchParams.get('code') || hashParams.get('code') || '';
         
         var authData = {
-          type: 'WORKHUB_GOOGLE_AUTH_CALLBACK',
+          type: 'WZONE_GOOGLE_AUTH_CALLBACK',
           accessToken: accessToken,
           code: code,
           hash: hash,
@@ -100,7 +100,7 @@ export async function GET(request: Request) {
         }
 
         document.getElementById('title').innerText = 'Muvaffaqiyatli!';
-        document.getElementById('status').innerText = 'Google hisobingiz tasdiqlandi. WorkHub ochilmoqda...';
+        document.getElementById('status').innerText = 'Google hisobingiz tasdiqlandi. WZone ochilmoqda...';
         document.getElementById('spinner').style.display = 'none';
 
         // 3. Close popup or redirect to main app

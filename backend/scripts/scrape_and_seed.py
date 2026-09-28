@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-WorkHub Real-Time Job Scraper & Aggregator
+WZone Real-Time Job Scraper & Aggregator
 Aggregates live vacancies across Uzbekistan (hh.uz, olx.uz and top employers),
-cleans all external portal references so only 'WorkHub' branding is visible,
+cleans all external portal references so only 'WZone' branding is visible,
 and seeds rich vacancies across all 14 regions and major categories into PostgreSQL.
 """
 
@@ -86,23 +86,23 @@ TOP_UZ_COMPANIES = {
 }
 
 def clean_text(text: str) -> str:
-    """Removes all mentions of external scraping sources and brands them as WorkHub."""
+    """Removes all mentions of external scraping sources and brands them as WZone."""
     if not text:
         return ""
     # Strip external site names
     patterns = [
         (r'https?://\S+', ''),
         (r'www\.\S+', ''),
-        (r'olx(\.uz)?', 'WorkHub', re.IGNORECASE),
-        (r'headhunter', 'WorkHub', re.IGNORECASE),
-        (r'hh\.uz', 'WorkHub', re.IGNORECASE),
-        (r'hh\.ru', 'WorkHub', re.IGNORECASE),
-        (r'rabota\.uz', 'WorkHub', re.IGNORECASE),
-        (r'ish\.uz', 'WorkHub', re.IGNORECASE),
-        (r't\.me/\S+', '@workhub_official'),
-        (r'telegram:?\s*@\S+', '@workhub_contact'),
-        (r'OLX platformasida joylashtirilgan vakansiya:?', 'WorkHub tasdiqlangan rasmiy vakansiyasi:'),
-        (r'Вакансия с сайта hh\.uz:?', 'WorkHub rasmiy vakansiyasi:'),
+        (r'olx(\.uz)?', 'WZone', re.IGNORECASE),
+        (r'headhunter', 'WZone', re.IGNORECASE),
+        (r'hh\.uz', 'WZone', re.IGNORECASE),
+        (r'hh\.ru', 'WZone', re.IGNORECASE),
+        (r'rabota\.uz', 'WZone', re.IGNORECASE),
+        (r'ish\.uz', 'WZone', re.IGNORECASE),
+        (r't\.me/\S+', '@wzone_official'),
+        (r'telegram:?\s*@\S+', '@wzone_contact'),
+        (r'OLX platformasida joylashtirilgan vakansiya:?', 'WZone tasdiqlangan rasmiy vakansiyasi:'),
+        (r'Вакансия с сайта hh\.uz:?', 'WZone rasmiy vakansiyasi:'),
     ]
     cleaned = text
     for p in patterns:
@@ -165,8 +165,8 @@ def categorize(title: str, desc: str) -> str:
 
 def get_reputable_company(cat: str, company: str) -> str:
     c = company.strip()
-    if not c or c in ['WorkHub Ish beruvchi', 'O‘zbekiston Kompaniyasi', 'Частное лицо', 'ИП', 'ООО', 'Ish beruvchi', 'OOO', 'Kompaniya']:
-        return random.choice(TOP_UZ_COMPANIES.get(cat, ['WorkHub Hamkor Korxonasi']))
+    if not c or c in ['WZone Ish beruvchi', 'O‘zbekiston Kompaniyasi', 'Частное лицо', 'ИП', 'ООО', 'Ish beruvchi', 'OOO', 'Kompaniya']:
+        return random.choice(TOP_UZ_COMPANIES.get(cat, ['WZone Hamkor Korxonasi']))
     return c
 
 def scrape_hh(query: str, page: int = 0):
@@ -192,7 +192,7 @@ def scrape_hh(query: str, page: int = 0):
                 raw_company = clean_text(company_el.get_text(strip=True) if company_el else '')
                 salary = clean_text(salary_el.get_text(strip=True) if salary_el else 'Kelishilgan')
                 location_raw = address_el.get_text(strip=True) if address_el else 'Toshkent'
-                desc = snippet_el.get_text(strip=True) if snippet_el else f"{title} lavozimi uchun malakali xodim ishga taklif etiladi. WorkHub orqali bog‘laning."
+                desc = snippet_el.get_text(strip=True) if snippet_el else f"{title} lavozimi uchun malakali xodim ishga taklif etiladi. WZone orqali bog‘laning."
                 desc = clean_text(desc)
 
                 region = normalize_region(location_raw + ' ' + title)
@@ -206,7 +206,7 @@ def scrape_hh(query: str, page: int = 0):
                     'location': region,
                     'description': desc,
                     'category': cat,
-                    'source': 'WorkHub'
+                    'source': 'WZone'
                 })
     except Exception as e:
         print(f"Error scraping hh for '{query}': {e}")
@@ -252,7 +252,7 @@ def scrape_olx():
                         cat = categorize(title, '')
                         company = get_reputable_company(cat, '')
 
-                        desc = f"{company} korxonasiga {title} yo‘nalishi bo‘yicha mas’uliyatli mutaxassis ishga qabul qilinadi. Talablar: tajriba va mas’uliyat. Qulay ish tartibi va o‘z vaqtida oylik maosh. WorkHub orqali rezyume topshiring."
+                        desc = f"{company} korxonasiga {title} yo‘nalishi bo‘yicha mas’uliyatli mutaxassis ishga qabul qilinadi. Talablar: tajriba va mas’uliyat. Qulay ish tartibi va o‘z vaqtida oylik maosh. WZone orqali rezyume topshiring."
 
                         results.append({
                             'title': title,
@@ -261,7 +261,7 @@ def scrape_olx():
                             'location': region,
                             'description': desc,
                             'category': cat,
-                            'source': 'WorkHub'
+                            'source': 'WZone'
                         })
             except Exception as e:
                 print(f"Error scraping OLX {slug} page {page}: {e}")
@@ -334,8 +334,8 @@ def generate_regional_catalog():
             sample_count = 3 if reg in ['Toshkent shahri', 'Samarqand viloyati', 'Farg‘ona viloyati', 'Masofaviy (Remote)'] else 2
             chosen = random.sample(pos_list, min(sample_count, len(pos_list)))
             for title, sal, desc in chosen:
-                company = random.choice(TOP_UZ_COMPANIES.get(cat, ['WorkHub Hamkor Korxonasi']))
-                full_desc = f"{company} korxonasi {reg} hududida '{title}' lavozimiga tanlov e’lon qiladi. {desc} Biz barcha xodimlarimizga rasmiy ish bilan ta’minlash, qulay mehnat sharoiti, o‘z vaqtida yuqori maosh va kasbiy o‘sish imkoniyatlarini kafolatlaymiz. WorkHub orqali o‘z rezyumeingizni yuboring."
+                company = random.choice(TOP_UZ_COMPANIES.get(cat, ['WZone Hamkor Korxonasi']))
+                full_desc = f"{company} korxonasi {reg} hududida '{title}' lavozimiga tanlov e’lon qiladi. {desc} Biz barcha xodimlarimizga rasmiy ish bilan ta’minlash, qulay mehnat sharoiti, o‘z vaqtida yuqori maosh va kasbiy o‘sish imkoniyatlarini kafolatlaymiz. WZone orqali o‘z rezyumeingizni yuboring."
                 
                 generated.append({
                     'title': title,
@@ -344,13 +344,13 @@ def generate_regional_catalog():
                     'location': reg,
                     'description': full_desc,
                     'category': cat,
-                    'source': 'WorkHub'
+                    'source': 'WZone'
                 })
 
     return generated
 
 def main():
-    print("=== WORKHUB REAL-TIME ALL-REGION JOB AGGREGATOR STARTED ===")
+    print("=== WZONE REAL-TIME ALL-REGION JOB AGGREGATOR STARTED ===")
     all_vacancies = []
 
     # 1. Scrape HH.uz with diverse queries
@@ -384,8 +384,8 @@ def main():
     # Deduplicate in memory by (title, company, location)
     unique = {}
     for v in all_vacancies:
-        # Enforce source = 'WorkHub'
-        v['source'] = 'WorkHub'
+        # Enforce source = 'WZone'
+        v['source'] = 'WZone'
         v['description'] = clean_text(v['description'])
         key = (v['title'].strip().lower(), v['company'].strip().lower(), v['location'])
         if key not in unique:
@@ -405,7 +405,7 @@ def main():
         desc = item['description'].replace("'", "''")
         sal = item['salary'].replace("'", "''")
         cat = item['category'].replace("'", "''")
-        source = 'WorkHub'
+        source = 'WZone'
 
         job_types = ['Full-time', 'Full-time', 'Part-time', 'Remote', 'Gibrid']
         job_type = 'Remote' if 'Remote' in loc else random.choice(job_types)
@@ -443,13 +443,13 @@ def main():
     else:
         print(f"⚠️ SQL execution error: {res.stderr}")
 
-    # Ensure all vacancies in DB have source = 'WorkHub' and clean descriptions
+    # Ensure all vacancies in DB have source = 'WZone' and clean descriptions
     clean_all_cmd = """
     docker exec -i workhub_postgres psql -U postgres -d workhub -c "
-        UPDATE vacancies SET source = 'WorkHub' WHERE source <> 'WorkHub';
-        UPDATE vacancies SET description = REGEXP_REPLACE(description, 'OLX platformasida joylashtirilgan vakansiya:\s*', 'WorkHub orqali e''lon qilingan rasmiy vakansiya: ', 'gi') WHERE description ILIKE '%OLX%';
-        UPDATE vacancies SET description = REGEXP_REPLACE(description, 'hh\.uz', 'WorkHub', 'gi') WHERE description ILIKE '%hh.uz%';
-        UPDATE vacancies SET description = REGEXP_REPLACE(description, 'HeadHunter', 'WorkHub', 'gi') WHERE description ILIKE '%headhunter%';
+        UPDATE vacancies SET source = 'WZone' WHERE source <> 'WZone';
+        UPDATE vacancies SET description = REGEXP_REPLACE(description, 'OLX platformasida joylashtirilgan vakansiya:\s*', 'WZone orqali e''lon qilingan rasmiy vakansiya: ', 'gi') WHERE description ILIKE '%OLX%';
+        UPDATE vacancies SET description = REGEXP_REPLACE(description, 'hh\.uz', 'WZone', 'gi') WHERE description ILIKE '%hh.uz%';
+        UPDATE vacancies SET description = REGEXP_REPLACE(description, 'HeadHunter', 'WZone', 'gi') WHERE description ILIKE '%headhunter%';
     "
     """
     subprocess.run(clean_all_cmd, shell=True)
@@ -457,7 +457,7 @@ def main():
     # Check total vacancies count in database
     count_cmd = "docker exec workhub_postgres psql -U postgres -d workhub -t -c 'SELECT COUNT(*) FROM vacancies;'"
     total_db = subprocess.check_output(count_cmd, shell=True).decode().strip()
-    print(f"\n🎉 Total active WorkHub vacancies now in PostgreSQL: {total_db}")
+    print(f"\n🎉 Total active WZone vacancies now in PostgreSQL: {total_db}")
 
 if __name__ == '__main__':
     main()

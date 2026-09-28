@@ -51,7 +51,7 @@ var plans = []gin.H{
 		"description": "Yirik kompaniyalar, HR agentliklar va xoldinglar uchun to‘liq paket",
 		"features": []string{
 			"Barcha Pro imkoniyatlari kiritilgan",
-			"WorkHub Telegram kanaliga avtomatik e’lon chiqarish",
+			"WZone Telegram kanaliga avtomatik e’lon chiqarish",
 			"Nomzodlarga sun’iy intellekt (AI) orqali tavsiya qilish",
 			"Shaxsiy HR menejer va 24/7 qo‘llab-quvvatlash",
 			"To‘liq rasmiy shartnoma va hisob-faktura (1C integratsiya)",
@@ -217,7 +217,7 @@ func ClickWebhook(c *gin.Context) {
 				ID:        uuid.NewString(),
 				UserID:    merchantTransID,
 				Title:     "To‘lov qabul qilindi (Click)",
-				Body:      "WorkHub " + strings.ToUpper(plan) + " obunangiz Click orqali 30 kunga faollashtirildi.",
+				Body:      "WZone " + strings.ToUpper(plan) + " obunangiz Click orqali 30 kunga faollashtirildi.",
 				CreatedAt: now,
 			})
 		}
@@ -351,7 +351,7 @@ func HandlePaymentWebhook(c *gin.Context) {
 			ID:        uuid.NewString(),
 			UserID:    payload.UserID,
 			Title:     "To‘lov muvaffaqiyatli amalga oshirildi",
-			Body:      "WorkHub " + strings.ToUpper(payload.Plan) + " obunangiz " + providerName + " orqali faollashtirildi.",
+			Body:      "WZone " + strings.ToUpper(payload.Plan) + " obunangiz " + providerName + " orqali faollashtirildi.",
 			CreatedAt: now,
 		})
 	}

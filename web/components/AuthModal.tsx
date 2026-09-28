@@ -402,7 +402,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               {tab === 'login' ? 'Tizimga kirish' : 'Ro‘yxatdan o‘tish'}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              WorkHub imkoniyatlaridan to‘liq foydalanish uchun hisobingizga kiring
+              WZone imkoniyatlaridan to‘liq foydalanish uchun hisobingizga kiring
             </p>
           </div>
 

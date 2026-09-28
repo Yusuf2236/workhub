@@ -447,7 +447,7 @@ export default function FullChatView({
                     {!isSelf && (
                       <div className="flex items-center gap-1.5 ml-1 mb-1">
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                          {msg.sender_name || 'WorkHub Foydalanuvchisi'}
+                          {msg.sender_name || 'WZone Foydalanuvchisi'}
                         </span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">
                           {formatMessageTime(msg.created_at)}

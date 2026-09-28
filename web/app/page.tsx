@@ -62,7 +62,7 @@ const JOB_TYPES = [
   'Gibrid',
 ];
 
-export default function WorkHubPortal() {
+export default function WZonePortal() {
   const [lang, setLang] = useState<Language>('uz');
   const t = translations[lang] || translations.uz;
 

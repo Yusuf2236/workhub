@@ -1,5 +1,5 @@
 /**
- * WorkHub AI Resume (CV) Builder & AI Analyst (AI Tahlilchi)
+ * WZone AI Resume (CV) Builder & AI Analyst (AI Tahlilchi)
  * Generates authentic, full-scale, professional original resumes for any profession.
  * Analyzes resumes with ATS scoring, strength checks, and actionable hiring tips.
  */

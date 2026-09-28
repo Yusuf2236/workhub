@@ -39,7 +39,7 @@ func (r *postgresChatRepo) ListByRoom(roomID string) ([]models.ChatMessage, erro
 	query := `
 		SELECT 
 			m.id, m.room_id, COALESCE(m.user_id::text, ''), m.content, m.created_at,
-			COALESCE(NULLIF(m.sender_name, ''), u.name, 'WorkHub Foydalanuvchisi') as sender_name,
+			COALESCE(NULLIF(m.sender_name, ''), u.name, 'WZone Foydalanuvchisi') as sender_name,
 			COALESCE(NULLIF(m.sender_avatar, ''), p.avatar_url, u.avatar_url, '') as sender_avatar
 		FROM chat_messages m
 		LEFT JOIN users u ON m.user_id = u.id

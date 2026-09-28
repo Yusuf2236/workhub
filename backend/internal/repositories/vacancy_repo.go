@@ -86,7 +86,7 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 		       COALESCE(experience, '1-3 yil'), COALESCE(tags, ''), COALESCE(company_logo, ''),
 		       COALESCE(is_verified, true), COALESCE(is_featured, false), COALESCE(views_count, 0),
 		       COALESCE((SELECT COUNT(*) FROM vacancy_comments vc WHERE vc.vacancy_id = vacancies.id), 0) AS comments_count,
-		       COALESCE(source, 'WorkHub') AS source,
+		       COALESCE(source, 'WZone') AS source,
 		       COALESCE(created_by::text, ''), created_at, updated_at
 		FROM vacancies
 		%s
@@ -125,7 +125,7 @@ func (r *postgresVacancyRepo) Get(id string) (*models.Vacancy, error) {
 		       COALESCE(experience, '1-3 yil'), COALESCE(tags, ''), COALESCE(company_logo, ''),
 		       COALESCE(is_verified, true), COALESCE(is_featured, false), COALESCE(views_count, 0),
 		       COALESCE((SELECT COUNT(*) FROM vacancy_comments vc WHERE vc.vacancy_id = vacancies.id), 0) AS comments_count,
-		       COALESCE(source, 'WorkHub') AS source,
+		       COALESCE(source, 'WZone') AS source,
 		       COALESCE(created_by::text, ''), created_at, updated_at
 		FROM vacancies
 		WHERE id = $1`
@@ -163,7 +163,7 @@ func (r *postgresVacancyRepo) Create(v models.Vacancy) error {
 		v.Experience = "1-3 yil"
 	}
 	if v.Source == "" {
-		v.Source = "WorkHub"
+		v.Source = "WZone"
 	}
 	_, err := r.db.Exec(
 		query,

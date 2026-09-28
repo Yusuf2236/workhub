@@ -64,7 +64,7 @@ export default function VacancyCard({
                 <CheckCircle size={14} className="text-blue-600 fill-blue-100 dark:fill-blue-950" />
               )}
               <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
-                WorkHub
+                WZone
               </span>
               <span className="text-[11px] text-slate-400">•</span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">

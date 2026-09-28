@@ -81,7 +81,7 @@ export default function LeftSidebar({
             <span>AI Rezyume tahlili</span>
           </div>
           <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight font-medium">
-            WorkHub AI sizning ko‘nikmalaringizga mos eng sara vakansiyalarni real-vaqtda tavsiya qiladi.
+            WZone AI sizning ko‘nikmalaringizga mos eng sara vakansiyalarni real-vaqtda tavsiya qiladi.
           </p>
         </div>
       </div>

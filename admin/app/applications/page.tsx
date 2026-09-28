@@ -4,7 +4,7 @@ import React from 'react';
 
 export default function ApplicationsAdminPage() {
   const applications = [
-    { id: '1', candidate: 'Alisher Navoiy', role: 'Principal Go Architect', company: 'WorkHub Global', status: 'Submitted', date: '2026-09-24' },
+    { id: '1', candidate: 'Alisher Navoiy', role: 'Principal Go Architect', company: 'WZone Global', status: 'Submitted', date: '2026-09-24' },
     { id: '2', candidate: 'Bobur Mirzo', role: 'Mobile iOS Engineer', company: 'AppWorks', status: 'Interview', date: '2026-09-23' },
     { id: '3', candidate: 'Ulugbek Samarkandi', role: 'Data Platform Lead', company: 'CloudSys', status: 'Accepted', date: '2026-09-22' },
   ];

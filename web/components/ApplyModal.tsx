@@ -109,7 +109,7 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess }: Appl
                 <FileText size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
                 <div className="text-xs">
                   <p className="font-semibold text-slate-800 dark:text-slate-200">
-                    Sizning WorkHub rezyume profilingiz
+                    Sizning WZone rezyume profilingiz
                   </p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     Arizaga avtomatik ravishda biriktiriladi

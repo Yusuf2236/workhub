@@ -19,7 +19,7 @@ export default function RightSidebar({ vacanciesCount, lang = 'uz' }: RightSideb
         <div className="relative z-10">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 text-[11px] font-bold mb-3 backdrop-blur-sm">
             <Smartphone size={13} />
-            <span>WorkHub Mobile</span>
+            <span>WZone Mobile</span>
           </div>
           <h4 className="font-extrabold text-base leading-snug mb-1">
             {t.mobileTitle}
@@ -66,7 +66,7 @@ export default function RightSidebar({ vacanciesCount, lang = 'uz' }: RightSideb
           {t.telegramDesc}
         </p>
         <a
-          href="https://t.me/workhub_jobs_bot"
+          href="https://t.me/wzone_jobs_bot"
           target="_blank"
           rel="noreferrer"
           className="w-full py-2 px-3 rounded-xl border border-sky-300 dark:border-sky-800 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 text-xs font-bold flex items-center justify-center gap-2 transition"

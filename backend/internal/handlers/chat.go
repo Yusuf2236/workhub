@@ -245,7 +245,7 @@ func HandleChatSocket(c *gin.Context) {
 		}
 	}
 	if userName == "" || userName == "guest" {
-		userName = "WorkHub Mehmon"
+		userName = "WZone Mehmon"
 	}
 
 	client := &WsClient{
