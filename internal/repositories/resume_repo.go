@@ -11,6 +11,7 @@ type ResumeRepo interface {
 	ListAll() ([]models.Resume, error)
 	ListByUser(userID string) ([]models.Resume, error)
 	Create(r models.Resume) error
+	Update(r models.Resume) error
 	Get(id string) (*models.Resume, error)
 	Delete(id string) error
 	Count() (int, error)
@@ -91,6 +92,25 @@ func (r *postgresResumeRepo) Create(res models.Resume) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`
 	_, err := r.db.Exec(query, res.ID, res.UserID, res.Title, res.Summary, res.FileURL, res.CreatedAt, res.UpdatedAt)
 	return err
+}
+
+func (r *postgresResumeRepo) Update(res models.Resume) error {
+	query := `
+		UPDATE resumes
+		SET title = $1, summary = $2, file_url = $3, updated_at = $4
+		WHERE id = $5 AND user_id = $6`
+	result, err := r.db.Exec(query, res.Title, res.Summary, res.FileURL, res.UpdatedAt, res.ID, res.UserID)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 func (r *postgresResumeRepo) Delete(id string) error {

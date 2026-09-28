@@ -145,6 +145,9 @@ func setupRoutes(r *gin.Engine) {
 
         api.GET("/resumes", middleware.OptionalAuth(), handlers.ListResumes)
         api.POST("/resumes", middleware.AuthRequired(), handlers.CreateResume)
+        api.GET("/resumes/:id", middleware.AuthRequired(), handlers.GetResume)
+        api.PUT("/resumes/:id", middleware.AuthRequired(), handlers.UpdateResume)
+        api.DELETE("/resumes/:id", middleware.AuthRequired(), handlers.DeleteResume)
         api.POST("/resumes/upload", middleware.AuthRequired(), handlers.UploadResumeFile)
 
         api.GET("/notifications", middleware.AuthRequired(), handlers.ListNotifications)
