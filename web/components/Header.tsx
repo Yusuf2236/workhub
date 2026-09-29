@@ -90,9 +90,9 @@ export default function Header({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2">
-          {/* Create Action Dropdown */}
-          <div className="relative">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Create Action Dropdown (Hidden on mobile) */}
+          <div className="relative hidden sm:block">
             <button
               onClick={() => setShowAddMenu(!showAddMenu)}
               className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-blue-500/25 transition"
@@ -142,15 +142,16 @@ export default function Header({
             )}
           </div>
 
-          {/* Language Switcher Dropdown */}
+          {/* Language Switcher Dropdown (Always visible on mobile & desktop) */}
           <div className="relative">
             <button
               onClick={() => setShowLangMenu(!showLangMenu)}
-              className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1 text-xs font-bold"
+              className="px-2.5 py-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 sm:bg-transparent dark:bg-slate-800/80 sm:dark:bg-transparent hover:bg-slate-200 dark:hover:bg-slate-800 transition flex items-center gap-1.5 text-xs font-bold"
               title="Tilni tanlash"
             >
-              <Globe size={17} className="text-slate-500 dark:text-slate-400" />
-              <span className="uppercase">{lang}</span>
+              <Globe size={15} className="text-blue-600 dark:text-blue-400" />
+              <span className="uppercase text-[11px] sm:text-xs">{lang}</span>
+              <ChevronDown size={12} className="text-slate-400" />
             </button>
 
             {showLangMenu && (
@@ -176,89 +177,91 @@ export default function Header({
             )}
           </div>
 
-          {/* Real-time WebSocket Chat Icon */}
+          {/* Real-time WebSocket Chat Icon (Hidden on mobile - available in bottom nav) */}
           <button
             onClick={onOpenChat}
             title={t.chat}
-            className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition relative"
+            className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition relative hidden sm:flex"
           >
             <MessageSquare size={19} />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500" />
           </button>
 
-          {/* Notifications */}
+          {/* Notifications (Always visible on mobile & desktop) */}
           <button
             onClick={onOpenNotifications}
             title={t.notifications}
             className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition relative"
           >
-            <Bell size={19} />
+            <Bell size={18} />
             {unreadNotificationsCount > 0 && (
-              <span className="absolute top-1 right-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-red-500 text-white animate-pulse">
+              <span className="absolute top-1 right-1 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-red-500 text-white animate-pulse">
                 {unreadNotificationsCount}
               </span>
             )}
           </button>
 
-          {/* Dark / Light Toggle */}
+          {/* Dark / Light Toggle (Hidden on mobile) */}
           <button
             onClick={onToggleDarkMode}
             title="Mavzuni almashtirish"
-            className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition hidden sm:flex"
           >
             {darkMode ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} />}
           </button>
 
-          {/* User Profile or Login */}
-          {user ? (
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 p-1 pl-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-              >
-                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0">
-                  {user.avatar_url ? (
-                    <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
-                  ) : (
-                    user.name?.[0]?.toUpperCase() || 'U'
-                  )}
-                </div>
-                <span className="text-xs font-bold text-slate-900 dark:text-white hidden md:block max-w-[110px] truncate">
-                  {user.name}
-                </span>
-                <ChevronDown size={14} className="text-slate-400 mr-1" />
-              </button>
-
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-50 animate-fadeIn">
-                  <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
-                    {user.auth_provider && (
-                      <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        {user.auth_provider === 'oneid' ? 'OneID Tasdiqlangan' : user.auth_provider}
-                      </span>
+          {/* User Profile or Login (Hidden on mobile - available in bottom nav) */}
+          <div className="hidden sm:block">
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 p-1 pl-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0">
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      user.name?.[0]?.toUpperCase() || 'U'
                     )}
                   </div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2 transition"
-                  >
-                    <LogOut size={15} />
-                    <span>{t.logoutBtn}</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={onOpenAuth}
-              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition shadow-sm"
-            >
-              {t.loginBtn}
-            </button>
-          )}
+                  <span className="text-xs font-bold text-slate-900 dark:text-white max-w-[110px] truncate">
+                    {user.name}
+                  </span>
+                  <ChevronDown size={14} className="text-slate-400 mr-1" />
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-50 animate-fadeIn">
+                    <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                      {user.auth_provider && (
+                        <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          {user.auth_provider === 'oneid' ? 'OneID Tasdiqlangan' : user.auth_provider}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2 transition"
+                    >
+                      <LogOut size={15} />
+                      <span>{t.logoutBtn}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition shadow-sm"
+              >
+                {t.loginBtn}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </header>

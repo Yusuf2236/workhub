@@ -901,10 +901,34 @@
       renderBothScreens();
     }
 
-    // 1. RENDER NATIVE ANDROID SCREEN (Material 3 + Bottom Safe Padding)
+    // 1. RENDER NATIVE ANDROID SCREEN (Material 3 + Top App Bar + Bottom Safe Padding)
     function renderNativeAndroid(container) {
       const t = I18N[currentLang] || I18N.uz;
       container.innerHTML = `
+        <!-- Android Top App Bar: Material 3 -->
+        <div class="h-14 px-4 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 flex items-center justify-between z-30 shrink-0 shadow-sm">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-500/30">
+              W
+            </div>
+            <span class="font-extrabold text-base tracking-tight text-white flex items-center">
+              W<span class="text-blue-500">Zone</span>
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Language Switcher Pill -->
+            <div class="bg-slate-800 border border-slate-700/80 rounded-xl p-0.5 flex items-center shadow-inner">
+              <button onclick="setLanguage('uz')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'uz' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}">UZ</button>
+              <button onclick="setLanguage('ru')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'ru' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}">RU</button>
+              <button onclick="setLanguage('en')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'en' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}">EN</button>
+            </div>
+            <button onclick="setTab('applications')" class="w-8 h-8 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 flex items-center justify-center text-slate-300 hover:text-white transition relative">
+              <i class="fa-regular fa-bell text-xs"></i>
+              <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            </button>
+          </div>
+        </div>
+
         <div class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-28 bg-[#0b101d]">
           ${buildCurrentTabBody('android')}
         </div>
@@ -936,10 +960,34 @@
       `;
     }
 
-    // 2. RENDER NATIVE IOS SCREEN (SwiftUI Cupertino + Bottom Safe Padding)
+    // 2. RENDER NATIVE IOS SCREEN (SwiftUI Cupertino + Top App Bar + Bottom Safe Padding)
     function renderNativeIOS(container) {
       const t = I18N[currentLang] || I18N.uz;
       container.innerHTML = `
+        <!-- iOS Navigation Bar: Cupertino -->
+        <div class="h-14 px-4 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-30 shrink-0 shadow-sm">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-500/30">
+              W
+            </div>
+            <span class="font-extrabold text-base tracking-tight text-white flex items-center">
+              W<span class="text-blue-400">Zone</span>
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Language Switcher Pill -->
+            <div class="bg-slate-800 border border-slate-700/80 rounded-xl p-0.5 flex items-center shadow-inner">
+              <button onclick="setLanguage('uz')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'uz' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}">UZ</button>
+              <button onclick="setLanguage('ru')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'ru' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}">RU</button>
+              <button onclick="setLanguage('en')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'en' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}">EN</button>
+            </div>
+            <button onclick="setTab('applications')" class="w-8 h-8 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 flex items-center justify-center text-slate-300 hover:text-white transition relative">
+              <i class="fa-regular fa-bell text-xs"></i>
+              <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            </button>
+          </div>
+        </div>
+
         <div class="flex-1 flex flex-col overflow-y-auto screen-scroll pb-28 bg-[#080d1a]">
           ${buildCurrentTabBody('ios')}
         </div>
