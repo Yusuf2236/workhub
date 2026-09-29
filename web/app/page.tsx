@@ -849,78 +849,111 @@ export default function WZonePortal() {
         <RightSidebar vacanciesCount={totalVacancies || vacancies.length} lang={lang} />
       </div>
 
-      {/* Mobile Responsive Bottom Navigation Bar (Visible on screens < 1024px) */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-40 px-3 pt-2.5 pb-6 flex items-center justify-around shadow-2xl safe-area-bottom transition-colors">
+      {/* Mobile Responsive Bottom Navigation Bar (Elevated Ergonomic Bar with Safe Area Clearance) */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#0c1220]/95 backdrop-blur-2xl border-t border-slate-200/90 dark:border-slate-800/90 z-40 px-2 pt-2 pb-8 sm:pb-9 flex items-center justify-around shadow-[0_-8px_25px_rgba(0,0,0,0.15)] select-none transition-colors">
+        {/* Tab 1: Lenta / Asosiy */}
         <button
           onClick={() => {
             setCurrentTab('feed');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className={`flex flex-col items-center gap-1 transition ${
-            currentTab === 'feed'
-              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
-              : 'text-slate-500 dark:text-slate-400 font-medium'
-          }`}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <Home size={20} className={currentTab === 'feed' ? 'stroke-[2.5]' : ''} />
-          <span className="text-[10px] tracking-tight">{t.navFeed}</span>
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'feed'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <Home size={20} className={currentTab === 'feed' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+          </div>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'feed'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {t.navFeed}
+          </span>
         </button>
 
+        {/* Tab 2: Vakansiyalar */}
         <button
           onClick={() => {
             setCurrentTab('vacancies');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className={`flex flex-col items-center gap-1 transition ${
-            currentTab === 'vacancies'
-              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
-              : 'text-slate-500 dark:text-slate-400 font-medium'
-          }`}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <Briefcase size={20} className={currentTab === 'vacancies' ? 'stroke-[2.5]' : ''} />
-          <span className="text-[10px] tracking-tight">{t.navVacancies}</span>
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'vacancies'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <Briefcase size={20} className={currentTab === 'vacancies' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+          </div>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'vacancies'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {t.navVacancies}
+          </span>
         </button>
 
+        {/* Tab 3: Chat */}
         <button
           onClick={() => {
             setCurrentTab('chat');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className={`flex flex-col items-center gap-1 transition relative ${
-            currentTab === 'chat'
-              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
-              : 'text-slate-500 dark:text-slate-400 font-medium'
-          }`}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <div className="relative">
-            <MessageSquare size={20} className={currentTab === 'chat' ? 'stroke-[2.5]' : ''} />
-            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'chat'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <MessageSquare size={20} className={currentTab === 'chat' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            <span className="absolute top-1 right-2.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
           </div>
-          <span className="text-[10px] tracking-tight">{t.navChat}</span>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'chat'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {t.navChat}
+          </span>
         </button>
 
+        {/* Tab 4: Arizalar */}
         <button
           onClick={() => {
             setCurrentTab('applications');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className={`flex flex-col items-center gap-1 transition relative ${
-            currentTab === 'applications'
-              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
-              : 'text-slate-500 dark:text-slate-400 font-medium'
-          }`}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <div className="relative">
-            <FileCheck size={20} className={currentTab === 'applications' ? 'stroke-[2.5]' : ''} />
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'applications'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <FileCheck size={20} className={currentTab === 'applications' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
             {applications.length > 0 && (
-              <span className="absolute -top-1.5 -right-2 px-1.5 py-0.2 rounded-full bg-blue-600 text-white text-[9px] font-bold">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">
                 {applications.length}
               </span>
             )}
           </div>
-          <span className="text-[10px] tracking-tight">{t.navApplications}</span>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'applications'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {t.navApplications}
+          </span>
         </button>
 
+        {/* Tab 5: Profil */}
         <button
           onClick={() => {
             if (!user) {
@@ -930,14 +963,22 @@ export default function WZonePortal() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
-          className={`flex flex-col items-center gap-1 transition ${
-            currentTab === 'profile'
-              ? 'text-blue-600 dark:text-blue-400 font-extrabold scale-105'
-              : 'text-slate-500 dark:text-slate-400 font-medium'
-          }`}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <UserIcon size={20} className={currentTab === 'profile' ? 'stroke-[2.5]' : ''} />
-          <span className="text-[10px] tracking-tight">{user ? t.navProfile : t.loginBtn}</span>
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'profile'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <UserIcon size={20} className={currentTab === 'profile' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+          </div>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'profile'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {user ? t.navProfile : t.loginBtn}
+          </span>
         </button>
       </nav>
 

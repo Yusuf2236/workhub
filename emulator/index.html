@@ -80,11 +80,11 @@
     /* iOS Home indicator */
     .home-indicator {
       position: absolute;
-      bottom: 8px;
+      bottom: 4px;
       left: 50%;
       transform: translateX(-50%);
       width: 134px;
-      height: 4.5px;
+      height: 3.5px;
       background: rgba(255, 255, 255, 0.45);
       border-radius: 3px;
       z-index: 50;
@@ -94,11 +94,11 @@
     /* Android Navigation Pill */
     .android-nav-bar {
       position: absolute;
-      bottom: 6px;
+      bottom: 4px;
       left: 50%;
       transform: translateX(-50%);
       width: 96px;
-      height: 4px;
+      height: 3.5px;
       background: rgba(255, 255, 255, 0.4);
       border-radius: 2px;
       z-index: 50;
@@ -348,8 +348,8 @@
         apiOnline: "API :8080 ✓ OK",
         apiOffline: "API :8080 (Demo)",
 
-        tabFeed: "Lenta",
-        tabHome: "Bosh sahifa",
+        tabFeed: "Asosiy",
+        tabHome: "Asosiy",
         tabVacancies: "Vakansiyalar",
         tabChat: "Chat",
         tabApplications: "Arizalar",
@@ -423,7 +423,7 @@
         apiOnline: "API :8080 ✓ OK",
         apiOffline: "API :8080 (Демо)",
 
-        tabFeed: "Лента",
+        tabFeed: "Главная",
         tabHome: "Главная",
         tabVacancies: "Вакансии",
         tabChat: "Чат",
@@ -499,8 +499,8 @@
         apiOffline: "API :8080 (Demo)",
 
         tabFeed: "Feed",
-        tabHome: "Home",
-        tabVacancies: "Vacancies",
+        tabHome: "Feed",
+        tabVacancies: "Jobs",
         tabChat: "Chat",
         tabApplications: "Applications",
         tabProfile: "Profile",
@@ -934,27 +934,38 @@
         </div>
 
         <!-- Android Material 3 Bottom Nav Bar (Labels strictly positioned above pill) -->
-        <div class="absolute bottom-0 inset-x-0 h-16 pt-2 pb-5 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex items-center justify-around z-40 text-xs shadow-2xl">
-          <button onclick="setTab('feed')" class="flex flex-col items-center gap-1 ${currentTab === 'feed' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-house text-sm"></i>
-            <span class="text-[10px] tracking-tight">${t.tabFeed}</span>
+        <div class="absolute bottom-0 inset-x-0 h-[74px] pt-2 pb-8 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex items-center justify-around z-40 text-xs shadow-2xl">
+          <button onclick="setTab('feed')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
+            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'feed' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-house text-sm"></i>
+            </div>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'feed' ? 'text-blue-500 font-bold' : 'text-slate-400'}">${t.tabFeed}</span>
           </button>
-          <button onclick="setTab('vacancies')" class="flex flex-col items-center gap-1 ${currentTab === 'vacancies' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-briefcase text-sm"></i>
-            <span class="text-[10px] tracking-tight">${t.tabVacancies}</span>
+          <button onclick="setTab('vacancies')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
+            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'vacancies' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-briefcase text-sm"></i>
+            </div>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'vacancies' ? 'text-blue-500 font-bold' : 'text-slate-400'}">${t.tabVacancies}</span>
           </button>
-          <button onclick="setTab('chat')" class="flex flex-col items-center gap-1 relative ${currentTab === 'chat' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-comment-dots text-sm"></i>
-            <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-[10px] tracking-tight">${t.tabChat}</span>
+          <button onclick="setTab('chat')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90 relative">
+            <div class="relative px-3.5 py-1 rounded-2xl transition ${currentTab === 'chat' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-comment-dots text-sm"></i>
+              <span class="absolute top-1 right-2.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-slate-900 animate-pulse"></span>
+            </div>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'chat' ? 'text-blue-500 font-bold' : 'text-slate-400'}">${t.tabChat}</span>
           </button>
-          <button onclick="setTab('applications')" class="flex flex-col items-center gap-1 ${currentTab === 'applications' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-file-circle-check text-sm"></i>
-            <span class="text-[10px] tracking-tight">${t.tabApplications}</span>
+          <button onclick="setTab('applications')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90 relative">
+            <div class="relative px-3.5 py-1 rounded-2xl transition ${currentTab === 'applications' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-file-circle-check text-sm"></i>
+              <span class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">8</span>
+            </div>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'applications' ? 'text-blue-500 font-bold' : 'text-slate-400'}">${t.tabApplications}</span>
           </button>
-          <button onclick="setTab('profile')" class="flex flex-col items-center gap-1 ${currentTab === 'profile' ? 'text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-user-gear text-sm"></i>
-            <span class="text-[10px] tracking-tight">${t.tabProfile}</span>
+          <button onclick="setTab('profile')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
+            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'profile' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-user-gear text-sm"></i>
+            </div>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'profile' ? 'text-blue-500 font-bold' : 'text-slate-400'}">${t.tabProfile}</span>
           </button>
         </div>
       `;
@@ -993,27 +1004,38 @@
         </div>
 
         <!-- iOS Cupertino Bottom Tab Bar (Labels strictly positioned above home indicator) -->
-        <div class="absolute bottom-0 inset-x-0 h-16 pt-2 pb-6 bg-slate-900/95 backdrop-blur-md border-t border-slate-800/80 flex items-center justify-around z-40 text-xs shadow-2xl">
-          <button onclick="setTab('feed')" class="flex flex-col items-center gap-1 ${currentTab === 'feed' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-house text-sm"></i>
-            <span class="text-[9px] tracking-tight">${t.tabHome}</span>
+        <div class="absolute bottom-0 inset-x-0 h-[74px] pt-2 pb-8 bg-slate-900/95 backdrop-blur-md border-t border-slate-800/80 flex items-center justify-around z-40 text-xs shadow-2xl">
+          <button onclick="setTab('feed')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
+            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'feed' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-house text-sm"></i>
+            </div>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'feed' ? 'text-blue-400 font-bold' : 'text-slate-400'}">${t.tabHome}</span>
           </button>
-          <button onclick="setTab('vacancies')" class="flex flex-col items-center gap-1 ${currentTab === 'vacancies' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-briefcase text-sm"></i>
-            <span class="text-[9px] tracking-tight">${t.tabVacancies}</span>
+          <button onclick="setTab('vacancies')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
+            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'vacancies' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-briefcase text-sm"></i>
+            </div>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'vacancies' ? 'text-blue-400 font-bold' : 'text-slate-400'}">${t.tabVacancies}</span>
           </button>
-          <button onclick="setTab('chat')" class="flex flex-col items-center gap-1 relative ${currentTab === 'chat' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-message text-sm"></i>
-            <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-[9px] tracking-tight">${t.tabChat}</span>
+          <button onclick="setTab('chat')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90 relative">
+            <div class="relative px-3.5 py-1 rounded-2xl transition ${currentTab === 'chat' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-message text-sm"></i>
+              <span class="absolute top-1 right-2.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-slate-900 animate-pulse"></span>
+            </div>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'chat' ? 'text-blue-400 font-bold' : 'text-slate-400'}">${t.tabChat}</span>
           </button>
-          <button onclick="setTab('applications')" class="flex flex-col items-center gap-1 ${currentTab === 'applications' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-file-lines text-sm"></i>
-            <span class="text-[9px] tracking-tight">${t.tabApplications}</span>
+          <button onclick="setTab('applications')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90 relative">
+            <div class="relative px-3.5 py-1 rounded-2xl transition ${currentTab === 'applications' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-file-lines text-sm"></i>
+              <span class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">8</span>
+            </div>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'applications' ? 'text-blue-400 font-bold' : 'text-slate-400'}">${t.tabApplications}</span>
           </button>
-          <button onclick="setTab('profile')" class="flex flex-col items-center gap-1 ${currentTab === 'profile' ? 'text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
-            <i class="fa-solid fa-circle-user text-sm"></i>
-            <span class="text-[9px] tracking-tight">${t.tabProfile}</span>
+          <button onclick="setTab('profile')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
+            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'profile' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : 'text-slate-400 hover:text-white'}">
+              <i class="fa-solid fa-circle-user text-sm"></i>
+            </div>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'profile' ? 'text-blue-400 font-bold' : 'text-slate-400'}">${t.tabProfile}</span>
           </button>
         </div>
       `;
