@@ -1,0 +1,55 @@
+stages:
+  - test
+  - build
+
+variables:
+  GO_VERSION: "1.22"
+  NODE_VERSION: "20"
+
+backend:test:
+  stage: test
+  image: golang:1.22
+  before_script:
+    - cd backend
+    - go mod download
+  script:
+    - go test -v ./...
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+
+backend:build:
+  stage: build
+  image: golang:1.22
+  before_script:
+    - cd backend
+    - go mod download
+  script:
+    - CGO_ENABLED=0 go build -v -o bin/workhub-api ./cmd/api
+  artifacts:
+    paths:
+      - backend/bin/workhub-api
+    expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+frontend:build:
+  stage: build
+  image: node:20-alpine
+  before_script:
+    - cd web
+    - npm ci
+  script:
+    - npm run build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+
+admin:build:
+  stage: build
+  image: node:20-alpine
+  before_script:
+    - cd admin
+    - npm ci
+  script:
+    - npm run build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"'
