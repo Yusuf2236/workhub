@@ -91,6 +91,19 @@ export interface TranslationDictionary {
   heroMainHeading: string;
   heroMainDesc: string;
 
+  // Endless Feed Stream Keys
+  streamTitle: string;
+  streamSubtitle: string;
+  streamFilterAll: string;
+  streamFilterJobs: string;
+  streamFilterNews: string;
+  streamFilterComments: string;
+  streamFilterPolls: string;
+  pollVoteBtn: string;
+  pollVotedBadge: string;
+  careerHackTitle: string;
+  loadingMoreStreamNotice: string;
+
   // Vacancy Card & Detail
   topVacancy: string;
   applyBtn: string;
@@ -425,6 +438,19 @@ export const translations: Record<Language, TranslationDictionary> = {
     heroMainHeading: 'Karyerangizni yangi bosqichga olib chiqing',
     heroMainDesc: 'O‘zbekiston va xalqaro bozorning eng so‘nggi vakansiyalari, tahliliy yangiliklar, soha mutaxassislari bilan jonli muloqot va sun’iy intellekt rezyume tekshiruvi.',
 
+    // Endless Feed Stream Keys
+    streamTitle: '🔥 Jonli Professional Lenta & Muhokamalar',
+    streamSubtitle: 'Har kungi yangi ishlar, tahliliy yangiliklar, jamoatchilik fikrlari va karyera maslahatlari oqimi',
+    streamFilterAll: 'Barchasi',
+    streamFilterJobs: '💼 Yangi Ishlar',
+    streamFilterNews: '📰 Yangiliklar',
+    streamFilterComments: '💬 Kamentlar & Fikrlar',
+    streamFilterPolls: '📊 So‘rovnoma & Maslahat',
+    pollVoteBtn: 'Ovoz berish',
+    pollVotedBadge: 'Ovozingiz qabul qilindi',
+    careerHackTitle: '💡 Kundalik Karyera Tavsiyasi',
+    loadingMoreStreamNotice: 'Yangi yangiliklar, kamentlar va ishlar yuklanmoqda...',
+
     topVacancy: 'TOP VAKANSIYA',
     applyBtn: 'Ariza topshirish',
     applyShort: 'Ariza',
@@ -752,6 +778,19 @@ export const translations: Record<Language, TranslationDictionary> = {
     heroMainHeading: 'Выведите вашу карьеру на новый уровень',
     heroMainDesc: 'Свежие вакансии Узбекистана и международного рынка, аналитика, живое профессиональное общение и AI-аудит резюме.',
 
+    // Endless Feed Stream Keys
+    streamTitle: '🔥 Живая Профессиональная Лента и Обсуждения',
+    streamSubtitle: 'Ежедневный поток новых вакансий, аналитических новостей, комментариев сообщества и карьерных советов',
+    streamFilterAll: 'Все публикации',
+    streamFilterJobs: '💼 Новые Вакансии',
+    streamFilterNews: '📰 Новости',
+    streamFilterComments: '💬 Комментарии и Мнения',
+    streamFilterPolls: '📊 Опросы и Советы',
+    pollVoteBtn: 'Голосовать',
+    pollVotedBadge: 'Ваш голос учтен',
+    careerHackTitle: '💡 Совет Дня по Карьере',
+    loadingMoreStreamNotice: 'Загрузка свежих новостей, комментариев и вакансий...',
+
     topVacancy: 'ТОП ВАКАНСИЯ',
     applyBtn: 'Откликнуться',
     applyShort: 'Отклик',
@@ -1078,6 +1117,19 @@ export const translations: Record<Language, TranslationDictionary> = {
     heroWelcomeBadge: '✨ Welcome to WZone 2026 Digital Labor Market!',
     heroMainHeading: 'Take your career to the next level',
     heroMainDesc: 'The latest local and international jobs, industry analytics, live professional discussions, and AI-powered resume screening.',
+
+    // Endless Feed Stream Keys
+    streamTitle: '🔥 Live Professional Feed & Discussions',
+    streamSubtitle: 'Daily stream of fresh jobs, industry insights, community discussions, and career hacks',
+    streamFilterAll: 'All Posts',
+    streamFilterJobs: '💼 Fresh Jobs',
+    streamFilterNews: '📰 News & Insights',
+    streamFilterComments: '💬 Discussions & Feedback',
+    streamFilterPolls: '📊 Polls & Tips',
+    pollVoteBtn: 'Vote',
+    pollVotedBadge: 'Vote recorded',
+    careerHackTitle: '💡 Daily Career Insight',
+    loadingMoreStreamNotice: 'Loading fresh daily news, discussions, and jobs...',
 
     topVacancy: 'FEATURED',
     applyBtn: 'Apply Now',
