@@ -92,7 +92,7 @@ func Register(c *gin.Context) {
 		users[email] = user
 	}
 
-	token, err := jwt.GenerateToken(user.ID, user.Email)
+	token, err := jwt.GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to issue token")
 		return
@@ -138,7 +138,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := jwt.GenerateToken(user.ID, user.Email)
+	token, err := jwt.GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to issue token")
 		return
@@ -469,7 +469,7 @@ func GoogleAuth(c *gin.Context) {
 		}
 	}
 
-	token, err := jwt.GenerateToken(user.ID, user.Email)
+	token, err := jwt.GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to issue token")
 		return
@@ -525,9 +525,10 @@ func parsePINFL(pinfl string) (gender, birthDate, region string) {
 	}
 
 	yearPrefix := "19"
-	if firstChar == '1' || firstChar == '2' {
+	switch firstChar {
+	case '1', '2':
 		yearPrefix = "18"
-	} else if firstChar == '5' || firstChar == '6' {
+	case '5', '6':
 		yearPrefix = "20"
 	}
 
@@ -820,7 +821,7 @@ func OneIDCallback(c *gin.Context) {
 		user = &newUser
 	}
 
-	token, err := jwt.GenerateToken(user.ID, user.Email)
+	token, err := jwt.GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "Token yaratishda xatolik: "+err.Error())
 		return
@@ -904,11 +905,12 @@ func formatWord(s string) string {
 	parts := strings.Fields(s)
 	for i, p := range parts {
 		pLower := strings.ToLower(p)
-		if pLower == "o'g'li" || pLower == "o‘g‘li" || pLower == "oʻgʻli" || pLower == "ogli" {
+		switch pLower {
+		case "o'g'li", "o‘g‘li", "oʻgʻli", "ogli":
 			parts[i] = "o‘g‘li"
-		} else if pLower == "qizi" {
+		case "qizi":
 			parts[i] = "qizi"
-		} else {
+		default:
 			runes := []rune(pLower)
 			if len(runes) > 0 {
 				runes[0] = unicode.ToUpper(runes[0])
@@ -1334,7 +1336,7 @@ func OneIDQRCheck(c *gin.Context) {
 			user = &newUser
 		}
 
-		workhubToken, err := jwt.GenerateToken(user.ID, user.Email)
+		workhubToken, err := jwt.GenerateToken(user.ID, user.Email, user.Role)
 		if err != nil {
 			response.Error(c, http.StatusInternalServerError, "Token yaratishda xatolik")
 			return

@@ -25,10 +25,21 @@ export interface User {
   created_at: string;
 }
 
+export function getAdminToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('workhub_admin_token') || localStorage.getItem('workhub_token');
+}
+
+export function setAdminToken(token: string) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('workhub_admin_token', token);
+}
+
 export async function fetchAnalytics(token?: string): Promise<AnalyticsData> {
   try {
+    const authToken = token || getAdminToken();
     const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
     const res = await fetch(`${API_BASE}/admin/analytics`, { headers, cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -36,7 +47,7 @@ export async function fetchAnalytics(token?: string): Promise<AnalyticsData> {
     return json.data;
   } catch (err) {
     console.error('Failed to fetch analytics:', err);
-    return { total_users: 1, total_vacancies: 1, total_applications: 1, total_resumes: 1 };
+    return { total_users: 0, total_vacancies: 0, total_applications: 0, total_resumes: 0 };
   }
 }
 

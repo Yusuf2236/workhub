@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
+	"github.com/Yusuf2236/workhub/backend/pkg/jwt"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
 )
 
@@ -159,11 +161,9 @@ func (c *WsClient) readPump(h *ChatHub) {
 			if incoming.Content != "" {
 				content = incoming.Content
 			}
-			if incoming.SenderName != "" {
-				c.userName = incoming.SenderName
-			}
-			if incoming.SenderAvatar != "" {
-				c.avatarURL = incoming.SenderAvatar
+			// Prevent spoofing: Only allow unauthenticated guests without an assigned name to set their name
+			if (c.userID == "" || c.userID == "guest") && (c.userName == "" || c.userName == "WZone Mehmon") && strings.TrimSpace(incoming.SenderName) != "" {
+				c.userName = strings.TrimSpace(incoming.SenderName)
 			}
 		}
 
@@ -261,9 +261,7 @@ func SendChatMessage(c *gin.Context) {
 	if userID != "" && userID != "guest" {
 		if userRepo != nil {
 			if u, _ := userRepo.GetByID(userID); u != nil {
-				if senderName == "" {
-					senderName = u.Name
-				}
+				senderName = u.Name
 				if senderAvatar == "" {
 					senderAvatar = u.AvatarURL
 				}
@@ -327,7 +325,31 @@ func HandleChatSocket(c *gin.Context) {
 	userName := c.Query("user_name")
 	avatarURL := c.Query("avatar")
 
-	if userID != "" && userID != "guest" {
+	// 1. If JWT token provided via query parameter or header, verify it
+	tokenStr := c.Query("token")
+	if tokenStr == "" {
+		authHeader := c.GetHeader("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+	}
+
+	if tokenStr != "" {
+		if claims, err := jwt.ParseToken(tokenStr); err == nil && claims.UserID != "" {
+			userID = claims.UserID
+			if userRepo != nil {
+				if u, _ := userRepo.GetByID(claims.UserID); u != nil {
+					userName = u.Name
+					avatarURL = u.AvatarURL
+				}
+			}
+			if profileRepo != nil && avatarURL == "" {
+				if p, _ := profileRepo.GetByUserID(claims.UserID); p != nil && p.AvatarURL != "" {
+					avatarURL = p.AvatarURL
+				}
+			}
+		}
+	} else if userID != "" && userID != "guest" {
 		if userRepo != nil {
 			if u, _ := userRepo.GetByID(userID); u != nil {
 				if userName == "" || userName == "guest" {
@@ -344,6 +366,7 @@ func HandleChatSocket(c *gin.Context) {
 			}
 		}
 	}
+
 	if userName == "" || userName == "guest" {
 		userName = "WZone Mehmon"
 	}

@@ -13,13 +13,14 @@ import {
   HelpCircle,
   Sparkles,
   ChevronRight,
+  ChevronLeft,
   Radio,
   RefreshCw,
   AlertCircle,
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import { api } from '../lib/api';
+import { api, getAuthToken } from '../lib/api';
 import { Language, translations } from '../lib/translations';
 
 interface FullChatViewProps {
@@ -148,7 +149,64 @@ const PROMPTS_BY_LANG: Record<Language, string[]> = {
   ],
 };
 
-function getWebSocketUrl(roomId: string, userId: string, userName: string, avatar: string): string {
+function getAvatarInitials(name?: string): string {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
+function ChatAvatar({
+  avatarUrl,
+  name,
+  size = 'md',
+}: {
+  avatarUrl?: string;
+  name?: string;
+  size?: 'sm' | 'md';
+}) {
+  const [imgError, setImgError] = useState(false);
+  const initials = getAvatarInitials(name);
+
+  let src = avatarUrl?.trim();
+  if (src && src.startsWith('/uploads')) {
+    const host =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:8080'
+        : '';
+    src = `${host}${src}`;
+  }
+
+  if (!src || imgError) {
+    return (
+      <div
+        className={`w-full h-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black ${
+          size === 'sm' ? 'text-[10px]' : 'text-xs'
+        } select-none shrink-0`}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt=""
+      onError={() => setImgError(true)}
+      className="w-full h-full object-cover shrink-0"
+    />
+  );
+}
+
+function getWebSocketUrl(
+  roomId: string,
+  userId: string,
+  userName: string,
+  avatar: string,
+  token?: string | null
+): string {
   const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   let host = 'localhost:8080';
   if (typeof window !== 'undefined') {
@@ -161,11 +219,15 @@ function getWebSocketUrl(roomId: string, userId: string, userName: string, avata
       host = window.location.host;
     }
   }
-  return `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
+  let url = `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
     roomId
   )}&user_id=${encodeURIComponent(userId)}&user_name=${encodeURIComponent(
     userName
   )}&avatar=${encodeURIComponent(avatar)}`;
+  if (token) {
+    url += `&token=${encodeURIComponent(token)}`;
+  }
+  return url;
 }
 
 export default function FullChatView({
@@ -176,6 +238,8 @@ export default function FullChatView({
   const t = translations[lang] || translations.uz;
 
   const [activeRoom, setActiveRoom] = useState<string>('general');
+  const [showMobileChannels, setShowMobileChannels] = useState<boolean>(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(false);
   const [rooms, setRooms] = useState<ChatRoom[]>(ROOMS_BY_LANG[lang] || ROOMS_BY_LANG.uz);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -252,8 +316,9 @@ export default function FullChatView({
       const userId = currentUser?.id || 'guest';
       const userName = currentUser?.name || guestName || 'Mehmon';
       const userAvatar = currentUser?.avatar_url || '';
+      const token = getAuthToken();
 
-      const wsUrl = getWebSocketUrl(activeRoom, userId, userName, userAvatar);
+      const wsUrl = getWebSocketUrl(activeRoom, userId, userName, userAvatar, token);
 
       try {
         const ws = new WebSocket(wsUrl);
@@ -422,123 +487,199 @@ export default function FullChatView({
     }
   };
 
-  const getAvatarInitials = (name?: string) => {
-    if (!name) return 'U';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  };
-
   return (
     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl flex flex-col md:flex-row h-[740px] overflow-hidden transition-all duration-300">
-      {/* Left Sidebar: Channels & Rooms */}
-      <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col shrink-0">
+      {/* Left Sidebar: Channels & Rooms (Compact Icon Rail by default) */}
+      <div
+        className={`border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
+          isSidebarExpanded ? 'w-full md:w-80' : 'w-full md:w-[76px]'
+        } ${showMobileChannels ? 'block h-[340px] md:h-auto' : 'hidden md:flex'}`}
+      >
         {/* Rooms Header */}
-        <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-              <MessageSquare size={18} />
+        <div
+          className={`p-3.5 border-b border-slate-200/80 dark:border-slate-800 flex items-center ${
+            isSidebarExpanded ? 'justify-between' : 'justify-center'
+          }`}
+        >
+          {isSidebarExpanded ? (
+            <>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                  <MessageSquare size={18} />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                    {t.chat}
+                  </h3>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                    {lang === 'ru' ? 'Каналы и общение' : lang === 'en' ? 'Channels & chat' : 'Kanallar & muloqot'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSidebarExpanded(false)}
+                className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition cursor-pointer"
+                title={lang === 'ru' ? 'Свернуть в иконки' : lang === 'en' ? 'Collapse to icons' : 'Ikonkalarga yig‘ish'}
+              >
+                <ChevronLeft size={18} />
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setIsSidebarExpanded(true)}
+                className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 hover:scale-105 transition cursor-pointer"
+                title={lang === 'ru' ? 'Развернуть список каналов' : lang === 'en' ? 'Expand channels list' : 'Kanallar ro‘yxatini ochish'}
+              >
+                <MessageSquare size={19} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsSidebarExpanded(true)}
+                className="p-1 text-slate-400 hover:text-blue-600 transition cursor-pointer"
+                title="Kengaytirish"
+              >
+                <ChevronRight size={14} />
+              </button>
             </div>
-            <div>
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                {t.chat}
-              </h3>
-              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                {lang === 'ru' ? 'Живые каналы и общение' : lang === 'en' ? 'Live channels & chat' : 'Jonli kanallar & muloqot'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-              }`}
-            />
-            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
-              {connected
-                ? (lang === 'ru' ? 'Онлайн' : lang === 'en' ? 'Online' : 'Onlayn')
-                : (lang === 'ru' ? 'Авто-режим' : lang === 'en' ? 'Auto-mode' : 'Avto-rejim')}
-            </span>
-          </div>
+          )}
         </div>
 
         {/* Channels List */}
-        <div className="flex-1 p-3 space-y-1.5 overflow-y-auto">
-          <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-            {lang === 'ru' ? 'Каналы и комнаты' : lang === 'en' ? 'Channels & Rooms' : 'Kanal va xonalar'}
-          </div>
+        <div
+          className={`flex-1 p-2 space-y-2 overflow-y-auto ${
+            isSidebarExpanded ? '' : 'flex flex-col items-center'
+          }`}
+        >
+          {isSidebarExpanded && (
+            <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {lang === 'ru' ? 'Каналы и комнаты' : lang === 'en' ? 'Channels & Rooms' : 'Kanal va xonalar'}
+            </div>
+          )}
           {rooms.map((room) => {
             const isActive = room.id === activeRoom;
             return (
-              <button
-                key={room.id}
-                onClick={() => setActiveRoom(room.id)}
-                className={`w-full text-left p-3 rounded-2xl transition-all flex items-start gap-3 group relative ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 font-bold'
-                    : 'hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-medium'
-                }`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-slate-700'
+              <div key={room.id} className="relative group w-full flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveRoom(room.id);
+                    setShowMobileChannels(false);
+                  }}
+                  className={`transition-all flex items-center cursor-pointer relative ${
+                    isSidebarExpanded
+                      ? `w-full text-left p-3 rounded-2xl gap-3 ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 font-bold'
+                            : 'hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-medium'
+                        }`
+                      : `w-11 h-11 rounded-2xl justify-center ${
+                          isActive
+                            ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-105'
+                            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`
                   }`}
+                  title={room.name}
                 >
-                  {room.icon === 'users' && <Users size={16} />}
-                  {room.icon === 'briefcase' && <Briefcase size={16} />}
-                  {room.icon === 'help-circle' && <HelpCircle size={16} />}
-                  {(room.icon === 'hash' || !room.icon) && <Hash size={16} />}
-                </div>
+                  {/* Active Indicator bar when collapsed */}
+                  {!isSidebarExpanded && isActive && (
+                    <span className="absolute -left-1.5 top-2.5 bottom-2.5 w-1 bg-blue-600 rounded-r-full" />
+                  )}
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold truncate">{room.name}</span>
-                  </div>
-                  <p
-                    className={`text-[11px] truncate mt-0.5 ${
-                      isActive
-                        ? 'text-blue-100'
-                        : 'text-slate-500 dark:text-slate-400'
+                  <div
+                    className={`${
+                      isSidebarExpanded
+                        ? `w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition ${
+                            isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-slate-700'
+                          }`
+                        : 'flex items-center justify-center'
                     }`}
                   >
-                    {room.description}
-                  </p>
-                </div>
-              </button>
+                    {room.icon === 'users' && <Users size={isSidebarExpanded ? 16 : 19} />}
+                    {room.icon === 'briefcase' && <Briefcase size={isSidebarExpanded ? 16 : 19} />}
+                    {room.icon === 'help-circle' && <HelpCircle size={isSidebarExpanded ? 16 : 19} />}
+                    {(room.icon === 'hash' || !room.icon) && <Hash size={isSidebarExpanded ? 16 : 19} />}
+                  </div>
+
+                  {isSidebarExpanded && (
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold truncate">{room.name}</span>
+                      </div>
+                      <p
+                        className={`text-[11px] truncate mt-0.5 ${
+                          isActive ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        {room.description}
+                      </p>
+                    </div>
+                  )}
+                </button>
+
+                {/* Floating Tooltip when Collapsed */}
+                {!isSidebarExpanded && (
+                  <div className="pointer-events-none absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 hidden group-hover:flex flex-col whitespace-nowrap bg-slate-900/95 dark:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl shadow-2xl border border-slate-700/80 backdrop-blur-md">
+                    <span className="font-extrabold text-[12px]">{room.name}</span>
+                    <span className="text-[10px] text-blue-400 font-semibold">#{room.id}</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 max-w-[200px] text-wrap">
+                      {room.description}
+                    </span>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
 
         {/* User Card in Sidebar */}
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+        <div
+          className={`p-2.5 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 ${
+            isSidebarExpanded ? '' : 'flex justify-center'
+          }`}
+        >
           {currentUser ? (
-            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-100/80 dark:bg-slate-800/80">
-              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-black overflow-hidden shrink-0">
-                {currentUser.avatar_url ? (
-                  <img
-                    src={currentUser.avatar_url}
-                    alt={currentUser.name}
-                    className="w-full h-full object-cover"
+            isSidebarExpanded ? (
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-100/80 dark:bg-slate-800/80">
+                <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-sm">
+                  <ChatAvatar
+                    avatarUrl={currentUser.avatar_url}
+                    name={currentUser.name}
                   />
-                ) : (
-                  getAvatarInitials(currentUser.name)
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">
-                  <span>{currentUser.name}</span>
-                  {currentUser.auth_provider === 'oneid' && (
-                    <ShieldCheck size={13} className="text-blue-500 shrink-0" />
-                  )}
                 </div>
-                <div className="text-[10px] text-slate-400 truncate">
-                  {currentUser.email}
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">
+                    <span>{currentUser.name}</span>
+                    {currentUser.auth_provider === 'oneid' && (
+                      <ShieldCheck size={13} className="text-blue-500 shrink-0" />
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-400 truncate">
+                    {currentUser.email}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
+            ) : (
+              <div className="relative group">
+                <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-sm relative ring-2 ring-blue-500/30 cursor-pointer">
+                  <ChatAvatar
+                    avatarUrl={currentUser.avatar_url}
+                    name={currentUser.name}
+                  />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
+                </div>
+                {/* User Tooltip */}
+                <div className="pointer-events-none absolute left-full ml-3 bottom-0 z-50 hidden group-hover:flex flex-col whitespace-nowrap bg-slate-900/95 dark:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl shadow-2xl border border-slate-700/80 backdrop-blur-md">
+                  <span className="font-extrabold text-[12px]">{currentUser.name}</span>
+                  <span className="text-[10px] text-slate-400">{currentUser.email}</span>
+                </div>
+              </div>
+            )
+          ) : isSidebarExpanded ? (
             <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 flex items-center justify-between gap-2">
               <div className="text-[11px] font-semibold text-blue-900 dark:text-blue-200">
                 {lang === 'ru' ? 'Вы не авторизованы' : lang === 'en' ? 'Not signed in' : 'Ro‘yxatdan o‘tmagansiz'}
@@ -546,11 +687,20 @@ export default function FullChatView({
               <button
                 type="button"
                 onClick={onOpenAuth}
-                className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-sm"
+                className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-sm cursor-pointer"
               >
                 {t.loginBtn}
               </button>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900 transition cursor-pointer"
+              title={t.loginBtn}
+            >
+              <User size={18} />
+            </button>
           )}
         </div>
       </div>
@@ -558,42 +708,56 @@ export default function FullChatView({
       {/* Right Area: Messages & Input */}
       <div className="flex-1 flex flex-col min-w-0 bg-slate-50/40 dark:bg-slate-900/40">
         {/* Chat Room Header */}
-        <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+        <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {/* Mobile Channel Switcher Button */}
+            <button
+              type="button"
+              onClick={() => setShowMobileChannels(!showMobileChannels)}
+              className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition shrink-0 border border-slate-200 dark:border-slate-700"
+              title="Kanallarni ko‘rish"
+            >
+              <Hash size={14} className="text-blue-500" />
+              <span className="truncate max-w-[120px]">{currentRoomObj.name}</span>
+              <ChevronRight
+                size={13}
+                className={`transform transition ${showMobileChannels ? 'rotate-90' : ''}`}
+              />
+            </button>
+            <div className="hidden md:flex w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 items-center justify-center font-bold shrink-0">
               <Hash size={18} />
             </div>
-            <div>
-              <h4 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <span>{currentRoomObj.name}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase">
+            <div className="min-w-0 hidden md:block">
+              <h4 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                <span className="truncate">{currentRoomObj.name}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase shrink-0">
                   #{currentRoomObj.id}
                 </span>
               </h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate hidden sm:block">
                 {currentRoomObj.description}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => fetchMessagesViaHTTP(activeRoom)}
               title={lang === 'ru' ? 'Обновить сообщения' : lang === 'en' ? 'Refresh messages' : 'Xabarlarni yangilash'}
-              className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-600 transition"
+              className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-600 transition shrink-0"
             >
               <RefreshCw size={15} className={loadingHistory ? 'animate-spin text-blue-600' : ''} />
             </button>
-            <div className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
               {connected ? (
                 <>
                   <Wifi size={13} className="text-emerald-500" />
-                  <span>{lang === 'ru' ? 'Реал-тайм' : lang === 'en' ? 'Real-time' : 'Real-vaqt'}</span>
+                  <span className="hidden sm:inline">{lang === 'ru' ? 'Реал-тайм' : lang === 'en' ? 'Real-time' : 'Real-vaqt'}</span>
                 </>
               ) : (
                 <>
                   <Radio size={13} className="text-blue-500 animate-pulse" />
-                  <span>{lang === 'ru' ? 'Экспресс' : lang === 'en' ? 'Instant' : 'Tezkor xabar'}</span>
+                  <span className="hidden sm:inline">{lang === 'ru' ? 'Экспресс' : lang === 'en' ? 'Instant' : 'Tezkor xabar'}</span>
                 </>
               )}
             </div>
@@ -628,16 +792,11 @@ export default function FullChatView({
                   className={`flex gap-3 items-end ${isSelf ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isSelf && (
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
-                      {msg.sender_avatar ? (
-                        <img
-                          src={msg.sender_avatar}
-                          alt={msg.sender_name || 'User'}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        getAvatarInitials(msg.sender_name)
-                      )}
+                    <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-sm">
+                      <ChatAvatar
+                        avatarUrl={msg.sender_avatar}
+                        name={msg.sender_name}
+                      />
                     </div>
                   )}
 
@@ -729,20 +888,22 @@ export default function FullChatView({
             </div>
           )}
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder={lang === 'ru' ? `#${currentRoomObj.id}: напишите сообщение... (Enter для отправки)` : lang === 'en' ? `#${currentRoomObj.id}: type a message... (Press Enter to send)` : `#${currentRoomObj.id} kanalida xabar yozing... (Enter orqali yuborish)`}
+              placeholder={lang === 'ru' ? `#${currentRoomObj.id}: напишите сообщение...` : lang === 'en' ? `#${currentRoomObj.id}: type a message...` : `#${currentRoomObj.id} kanalida xabar yozing...`}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 px-4 py-3 text-xs sm:text-sm font-medium rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+              className="flex-1 min-w-0 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
             />
             <button
               type="submit"
               disabled={!inputMessage.trim() || isSending}
-              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm transition disabled:opacity-50 shadow-lg shadow-blue-500/25 flex items-center gap-2 shrink-0 cursor-pointer"
+              className="px-3.5 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm transition disabled:opacity-50 shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 shrink-0 cursor-pointer min-w-[44px]"
             >
-              <span>{isSending ? (lang === 'ru' ? 'Отправка...' : lang === 'en' ? 'Sending...' : 'Yuborilmoqda...') : (lang === 'ru' ? 'Отправить' : lang === 'en' ? 'Send' : 'Yuborish')}</span>
+              <span className="hidden sm:inline">
+                {isSending ? (lang === 'ru' ? 'Отправка...' : lang === 'en' ? 'Sending...' : 'Yuborilmoqda...') : (lang === 'ru' ? 'Отправить' : lang === 'en' ? 'Send' : 'Yuborish')}
+              </span>
               <Send size={16} />
             </button>
           </div>

@@ -846,7 +846,9 @@ export default function WZonePortal() {
         </main>
 
         {/* Right Info & Widgets Sidebar */}
-        <RightSidebar vacanciesCount={totalVacancies || vacancies.length} lang={lang} />
+        {currentTab !== 'chat' && (
+          <RightSidebar vacanciesCount={totalVacancies || vacancies.length} lang={lang} />
+        )}
       </div>
 
       {/* Mobile Responsive Bottom Navigation Bar (Elevated Ergonomic Bar with Safe Area Clearance) */}

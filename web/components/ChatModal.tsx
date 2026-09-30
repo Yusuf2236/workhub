@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Send, MessageSquare, User, Radio, CheckCircle2, RefreshCw, Wifi } from 'lucide-react';
-import { api } from '../lib/api';
+import { api, getAuthToken } from '../lib/api';
 import { Language, translations } from '../lib/translations';
 
 interface ChatModalProps {
@@ -24,7 +24,64 @@ interface ChatMessage {
   isSelf?: boolean;
 }
 
-function getWebSocketUrl(roomId: string, userId: string, userName: string, avatar: string): string {
+function getAvatarInitials(name?: string): string {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
+function ChatAvatar({
+  avatarUrl,
+  name,
+  size = 'md',
+}: {
+  avatarUrl?: string;
+  name?: string;
+  size?: 'sm' | 'md';
+}) {
+  const [imgError, setImgError] = useState(false);
+  const initials = getAvatarInitials(name);
+
+  let src = avatarUrl?.trim();
+  if (src && src.startsWith('/uploads')) {
+    const host =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:8080'
+        : '';
+    src = `${host}${src}`;
+  }
+
+  if (!src || imgError) {
+    return (
+      <div
+        className={`w-full h-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black ${
+          size === 'sm' ? 'text-[10px]' : 'text-xs'
+        } select-none shrink-0`}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt=""
+      onError={() => setImgError(true)}
+      className="w-full h-full object-cover shrink-0"
+    />
+  );
+}
+
+function getWebSocketUrl(
+  roomId: string,
+  userId: string,
+  userName: string,
+  avatar: string,
+  token?: string | null
+): string {
   const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   let host = 'localhost:8080';
   if (typeof window !== 'undefined') {
@@ -37,11 +94,15 @@ function getWebSocketUrl(roomId: string, userId: string, userName: string, avata
       host = window.location.host;
     }
   }
-  return `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
+  let url = `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
     roomId
   )}&user_id=${encodeURIComponent(userId)}&user_name=${encodeURIComponent(
     userName
   )}&avatar=${encodeURIComponent(avatar)}`;
+  if (token) {
+    url += `&token=${encodeURIComponent(token)}`;
+  }
+  return url;
 }
 
 export default function ChatModal({
@@ -111,8 +172,9 @@ export default function ChatModal({
       const userId = currentUser?.id || 'guest';
       const userName = currentUser?.name || guestName || 'Mehmon';
       const userAvatar = currentUser?.avatar_url || '';
+      const token = getAuthToken();
 
-      const wsUrl = getWebSocketUrl(roomId, userId, userName, userAvatar);
+      const wsUrl = getWebSocketUrl(roomId, userId, userName, userAvatar, token);
 
       try {
         const ws = new WebSocket(wsUrl);
@@ -270,13 +332,6 @@ export default function ChatModal({
     }
   };
 
-  const getAvatarInitials = (name?: string) => {
-    if (!name) return 'U';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -355,18 +410,12 @@ export default function ChatModal({
                   className={`flex gap-2.5 items-end ${isSelf ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isSelf && (
-                    <div className="shrink-0 mb-1">
-                      {msg.sender_avatar ? (
-                        <img
-                          src={msg.sender_avatar}
-                          alt={msg.sender_name || 'Foydalanuvchi'}
-                          className="w-7 h-7 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700"
-                        />
-                      ) : (
-                        <div className="w-7 h-7 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center text-[10px]">
-                          {getAvatarInitials(msg.sender_name)}
-                        </div>
-                      )}
+                    <div className="shrink-0 mb-1 w-7 h-7 rounded-xl overflow-hidden shadow-sm">
+                      <ChatAvatar
+                        avatarUrl={msg.sender_avatar}
+                        name={msg.sender_name}
+                        size="sm"
+                      />
                     </div>
                   )}
 
