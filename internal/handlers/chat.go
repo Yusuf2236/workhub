@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
+	"github.com/Yusuf2236/workhub/backend/pkg/jwt"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
 )
 
@@ -20,6 +22,29 @@ type WsClient struct {
 	userName  string
 	avatarURL string
 	send      chan []byte
+	isClosed  bool
+	mu        sync.Mutex
+}
+
+func (c *WsClient) safeSend(data []byte) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.isClosed {
+		return
+	}
+	select {
+	case c.send <- data:
+	default:
+	}
+}
+
+func (c *WsClient) safeClose() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.isClosed {
+		c.isClosed = true
+		close(c.send)
+	}
 }
 
 type ChatHub struct {
@@ -59,7 +84,7 @@ func (h *ChatHub) run() {
 			if clients, ok := h.rooms[client.roomID]; ok {
 				if _, exists := clients[client]; exists {
 					delete(clients, client)
-					close(client.send)
+					client.safeClose()
 					if len(clients) == 0 {
 						delete(h.rooms, client.roomID)
 					}
@@ -82,10 +107,7 @@ func (h *ChatHub) run() {
 			})
 			if err == nil {
 				for client := range clients {
-					select {
-					case client.send <- data:
-					default:
-					}
+					client.safeSend(data)
 				}
 			}
 			h.mu.RUnlock()
@@ -119,19 +141,29 @@ func (c *WsClient) readPump(h *ChatHub) {
 		}
 
 		content := string(rawMsg)
+		if content == "ping" {
+			c.safeSend([]byte(`{"type":"pong"}`))
+			continue
+		}
+
 		var incoming struct {
+			Type         string `json:"type"`
 			Content      string `json:"content"`
 			SenderName   string `json:"sender_name"`
 			SenderAvatar string `json:"sender_avatar"`
 			RoomID       string `json:"room_id"`
 		}
-		if err := json.Unmarshal(rawMsg, &incoming); err == nil && incoming.Content != "" {
-			content = incoming.Content
-			if incoming.SenderName != "" {
-				c.userName = incoming.SenderName
+		if err := json.Unmarshal(rawMsg, &incoming); err == nil {
+			if incoming.Type == "ping" {
+				c.safeSend([]byte(`{"type":"pong"}`))
+				continue
 			}
-			if incoming.SenderAvatar != "" {
-				c.avatarURL = incoming.SenderAvatar
+			if incoming.Content != "" {
+				content = incoming.Content
+			}
+			// Prevent spoofing: Only allow unauthenticated guests without an assigned name to set their name
+			if (c.userID == "" || c.userID == "guest") && (c.userName == "" || c.userName == "WZone Mehmon") && strings.TrimSpace(incoming.SenderName) != "" {
+				c.userName = strings.TrimSpace(incoming.SenderName)
 			}
 		}
 
@@ -201,6 +233,72 @@ func ListChatMessages(c *gin.Context) {
 	})
 }
 
+func SendChatMessage(c *gin.Context) {
+	var payload struct {
+		RoomID       string `json:"room_id"`
+		Content      string `json:"content" binding:"required"`
+		SenderName   string `json:"sender_name"`
+		SenderAvatar string `json:"sender_avatar"`
+	}
+
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, http.StatusBadRequest, "Xabar matni kiritilishi shart")
+		return
+	}
+
+	if payload.RoomID == "" {
+		payload.RoomID = "general"
+	}
+
+	userID := "guest"
+	if uid, exists := c.Get("user_id"); exists && uid != nil {
+		userID = uid.(string)
+	}
+
+	senderName := payload.SenderName
+	senderAvatar := payload.SenderAvatar
+
+	if userID != "" && userID != "guest" {
+		if userRepo != nil {
+			if u, _ := userRepo.GetByID(userID); u != nil {
+				senderName = u.Name
+				if senderAvatar == "" {
+					senderAvatar = u.AvatarURL
+				}
+			}
+		}
+		if profileRepo != nil && senderAvatar == "" {
+			if p, _ := profileRepo.GetByUserID(userID); p != nil && p.AvatarURL != "" {
+				senderAvatar = p.AvatarURL
+			}
+		}
+	}
+
+	if senderName == "" {
+		senderName = "WZone Mehmon"
+	}
+
+	chatMsg := models.ChatMessage{
+		ID:           uuid.NewString(),
+		RoomID:       payload.RoomID,
+		UserID:       userID,
+		SenderName:   senderName,
+		SenderAvatar: senderAvatar,
+		Content:      payload.Content,
+		CreatedAt:    time.Now().UTC(),
+	}
+
+	if chatRepo != nil {
+		_ = chatRepo.SaveMessage(chatMsg)
+	}
+
+	globalHub.broadcast <- chatMsg
+
+	response.Success(c, http.StatusOK, gin.H{
+		"message": chatMsg,
+	})
+}
+
 func ListChatRooms(c *gin.Context) {
 	rooms := []gin.H{
 		{"id": "general", "name": "Umumiy IT Muloqot", "description": "Barcha IT mutaxassislar va qidiruvchilar uchun ochiq suhbat", "icon": "hash"},
@@ -227,7 +325,31 @@ func HandleChatSocket(c *gin.Context) {
 	userName := c.Query("user_name")
 	avatarURL := c.Query("avatar")
 
-	if userID != "" && userID != "guest" {
+	// 1. If JWT token provided via query parameter or header, verify it
+	tokenStr := c.Query("token")
+	if tokenStr == "" {
+		authHeader := c.GetHeader("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+	}
+
+	if tokenStr != "" {
+		if claims, err := jwt.ParseToken(tokenStr); err == nil && claims.UserID != "" {
+			userID = claims.UserID
+			if userRepo != nil {
+				if u, _ := userRepo.GetByID(claims.UserID); u != nil {
+					userName = u.Name
+					avatarURL = u.AvatarURL
+				}
+			}
+			if profileRepo != nil && avatarURL == "" {
+				if p, _ := profileRepo.GetByUserID(claims.UserID); p != nil && p.AvatarURL != "" {
+					avatarURL = p.AvatarURL
+				}
+			}
+		}
+	} else if userID != "" && userID != "guest" {
 		if userRepo != nil {
 			if u, _ := userRepo.GetByID(userID); u != nil {
 				if userName == "" || userName == "guest" {
@@ -244,6 +366,7 @@ func HandleChatSocket(c *gin.Context) {
 			}
 		}
 	}
+
 	if userName == "" || userName == "guest" {
 		userName = "WZone Mehmon"
 	}
