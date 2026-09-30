@@ -26,6 +26,7 @@ import {
   Check,
   Code2,
   Layers,
+  Settings,
   Award,
   Zap,
   Clock,
@@ -122,8 +123,8 @@ export default function ProfileView({
 }: ProfileViewProps) {
   const t = translations[lang] || translations.uz;
 
-  // Active top-level subtab: 1-chi bo'lib Rezyumelar & Skillar!
-  const [activeSection, setActiveSection] = useState<'resumes-skills' | 'settings'>('resumes-skills');
+  // Active top-level subtab: Rezyumelar, Shaxsiy ma'lumotlar, Sozlamalar
+  const [activeSection, setActiveSection] = useState<'resumes-skills' | 'personal' | 'settings'>('resumes-skills');
 
   // Personal Info Form
   const [name, setName] = useState(user?.name || '');
@@ -152,6 +153,8 @@ export default function ProfileView({
   // States
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [personalSavedSuccess, setPersonalSavedSuccess] = useState(false);
+  const [settingsSavedSuccess, setSettingsSavedSuccess] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [skillsSavedSuccess, setSkillsSavedSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -255,21 +258,33 @@ export default function ProfileView({
     }
   };
 
-  const handleSaveGeneralSettings = async (e: React.FormEvent) => {
+  const handleSavePersonalInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setSavedSuccess(false);
+    setPersonalSavedSuccess(false);
     setErrorMessage(null);
 
     const cleanName = name.trim();
     const cleanEmail = email.trim();
     if (!cleanName) {
-      setErrorMessage('To‘liq ism-sharifingiz (F.I.O) maydonini to‘ldiring');
+      setErrorMessage(
+        lang === 'ru'
+          ? 'Введите ваше Ф.И.О'
+          : lang === 'en'
+          ? 'Please enter your full name'
+          : 'To‘liq ism-sharifingiz (F.I.O) maydonini to‘ldiring'
+      );
       setLoading(false);
       return;
     }
     if (!cleanEmail || !cleanEmail.includes('@')) {
-      setErrorMessage('Haqiqiy email manzilingizni to‘g‘ri kiriting');
+      setErrorMessage(
+        lang === 'ru'
+          ? 'Введите корректный email'
+          : lang === 'en'
+          ? 'Please enter a valid email address'
+          : 'Haqiqiy email manzilingizni to‘g‘ri kiriting'
+      );
       setLoading(false);
       return;
     }
@@ -287,7 +302,7 @@ export default function ProfileView({
       });
 
       if (res.success) {
-        setSavedSuccess(true);
+        setPersonalSavedSuccess(true);
         const updated = (res.data as any)?.user || {
           ...user,
           name: cleanName,
@@ -296,10 +311,46 @@ export default function ProfileView({
         };
         setCurrentUser(updated);
         onUserUpdated(updated);
-        setTimeout(() => setSavedSuccess(false), 3500);
+        setTimeout(() => setPersonalSavedSuccess(false), 3500);
       } else {
-        setErrorMessage(res.error || 'Sozlamalarni saqlashda xatolik');
+        setErrorMessage(
+          res.error ||
+            (lang === 'ru'
+              ? 'Ошибка при сохранении данных'
+              : lang === 'en'
+              ? 'Error saving personal information'
+              : 'Shaxsiy ma’lumotlarni saqlashda xatolik')
+        );
       }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Server xatosi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setSettingsSavedSuccess(false);
+    setErrorMessage(null);
+
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(
+          'workhub_user_settings',
+          JSON.stringify({
+            notifyJobAlerts,
+            notifyAppStatus,
+            notifyChatMessages,
+            notifyTelegram,
+            profilePublic,
+            phoneVerifiedOnly,
+          })
+        );
+      }
+      setSettingsSavedSuccess(true);
+      setTimeout(() => setSettingsSavedSuccess(false), 3500);
     } catch (err: any) {
       setErrorMessage(err.message || 'Server xatosi');
     } finally {
@@ -426,10 +477,11 @@ export default function ProfileView({
 
         {/* Primary Sub-Nav */}
         <div className="mt-8 pt-5 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+            {/* 1. Rezyumelar & Skillar */}
             <button
               onClick={() => setActiveSection('resumes-skills')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
                 activeSection === 'resumes-skills'
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -446,15 +498,29 @@ export default function ProfileView({
               )}
             </button>
 
+            {/* 2. Shaxsiy ma'lumotlar */}
+            <button
+              onClick={() => setActiveSection('personal')}
+              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+                activeSection === 'personal'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <User size={16} />
+              <span>{t.profileSubPersonal}</span>
+            </button>
+
+            {/* 3. Sozlamalar */}
             <button
               onClick={() => setActiveSection('settings')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
                 activeSection === 'settings'
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Layers size={16} />
+              <Settings size={16} />
               <span>{t.profileSubSettings}</span>
             </button>
           </div>
@@ -472,7 +538,14 @@ export default function ProfileView({
       </div>
 
       {/* Global Alerts */}
-      {savedSuccess && (
+      {personalSavedSuccess && (
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 animate-fadeIn shadow-sm">
+          <CheckCircle2 size={18} className="shrink-0 text-emerald-600" />
+          <span>{t.profilePersonalSaved}</span>
+        </div>
+      )}
+
+      {settingsSavedSuccess && (
         <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 animate-fadeIn shadow-sm">
           <CheckCircle2 size={18} className="shrink-0 text-emerald-600" />
           <span>{t.profileSettingsSaved}</span>
@@ -749,10 +822,10 @@ export default function ProfileView({
       )}
 
       {/* ======================================================== */}
-      {/* 2-CHI BO'LIM: SAYT VA PROFIL SOZLAMALARI                 */}
+      {/* 2-CHI BO'LIM: SHAXSIY MA'LUMOTLAR                         */}
       {/* ======================================================== */}
-      {activeSection === 'settings' && (
-        <form onSubmit={handleSaveGeneralSettings} className="space-y-6 animate-fadeIn">
+      {activeSection === 'personal' && (
+        <form onSubmit={handleSavePersonalInfo} className="space-y-6 animate-fadeIn">
           {/* OneID Verification Banner if applicable */}
           {user.auth_provider === 'oneid' && (() => {
             const pinflData = parsePINFL(user.pinfl || '');
@@ -811,6 +884,34 @@ export default function ProfileView({
               <User size={18} className="text-blue-600" />
               <span>{t.profilePersonalData}</span>
             </h3>
+
+            {/* Quick avatar photo change in Personal Info */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row items-center gap-3.5 mb-2">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white font-black text-xl flex items-center justify-center overflow-hidden shadow-md shrink-0">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  user.name?.[0]?.toUpperCase() || 'U'
+                )}
+              </div>
+              <div className="flex-1 text-center sm:text-left min-w-0">
+                <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                  Profil rasmi
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {user.name} fotosurati
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-white text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+              >
+                <Camera size={14} className="text-blue-600 dark:text-blue-400" />
+                <span>{uploadingAvatar ? 'Yuklanmoqda...' : 'Rasmni almashtirish'}</span>
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -912,9 +1013,28 @@ export default function ProfileView({
                 className="w-full p-3 text-xs sm:text-sm font-normal rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white leading-relaxed"
               />
             </div>
-          </div>
 
-          {/* Sub-Section 2.2: Site Preferences (Theme, Language) */}
+            {/* Form Save Button */}
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-7 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-xl shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+              >
+                <Save size={17} />
+                <span>{loading ? '...' : t.profileSavePersonalBtn}</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* ======================================================== */}
+      {/* 3-CHI BO'LIM: SOZLAMALAR                                 */}
+      {/* ======================================================== */}
+      {activeSection === 'settings' && (
+        <form onSubmit={handleSaveSettings} className="space-y-6 animate-fadeIn">
+          {/* Sub-Section 3.1: Site Preferences (Theme, Language) */}
           <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-5">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <Sun size={18} className="text-amber-500" />

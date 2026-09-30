@@ -208,7 +208,10 @@ export interface TranslationDictionary {
 
   // Profile View
   profileSubResumesSkills: string;
+  profileSubPersonal: string;
   profileSubSettings: string;
+  profileSavePersonalBtn: string;
+  profilePersonalSaved: string;
   profileCompleteness: string;
   profileAddResumeBtn: string;
   profileMyResumesTitle: string;
@@ -549,7 +552,10 @@ export const translations: Record<Language, TranslationDictionary> = {
 
     // Profile View
     profileSubResumesSkills: '1. Rezyumelar & Skillar',
-    profileSubSettings: '2. Sayt va Profil Sozlamalari',
+    profileSubPersonal: '2. Shaxsiy maʼlumotlar',
+    profileSubSettings: '3. Sozlamalar',
+    profileSavePersonalBtn: 'Shaxsiy maʼlumotlarni saqlash',
+    profilePersonalSaved: 'Shaxsiy maʼlumotlar muvaffaqiyatli saqlandi!',
     profileCompleteness: 'Profil to‘liqligi',
     profileAddResumeBtn: '+ Yangi rezyume yaratish',
     profileMyResumesTitle: 'Mening Rezyumelarim',
@@ -889,7 +895,10 @@ export const translations: Record<Language, TranslationDictionary> = {
 
     // Profile View
     profileSubResumesSkills: '1. Резюме и навыки',
-    profileSubSettings: '2. Настройки платформы',
+    profileSubPersonal: '2. Личные данные',
+    profileSubSettings: '3. Настройки',
+    profileSavePersonalBtn: 'Сохранить личные данные',
+    profilePersonalSaved: 'Личные данные успешно сохранены!',
     profileCompleteness: 'Заполненность профиля',
     profileAddResumeBtn: '+ Создать новое резюме',
     profileMyResumesTitle: 'Мои резюме',
@@ -1229,7 +1238,10 @@ export const translations: Record<Language, TranslationDictionary> = {
 
     // Profile View
     profileSubResumesSkills: '1. Resumes & Skills',
-    profileSubSettings: '2. Site & Profile Settings',
+    profileSubPersonal: '2. Personal Info',
+    profileSubSettings: '3. Settings',
+    profileSavePersonalBtn: 'Save Personal Info',
+    profilePersonalSaved: 'Personal information saved successfully!',
     profileCompleteness: 'Profile Completeness',
     profileAddResumeBtn: '+ Create New Resume',
     profileMyResumesTitle: 'My Resumes',
