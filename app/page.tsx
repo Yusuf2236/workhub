@@ -12,13 +12,14 @@ import CreateResumeModal from '../components/CreateResumeModal';
 import ResumesView from '../components/ResumesView';
 import ApplicationsView from '../components/ApplicationsView';
 import ProfileView from '../components/ProfileView';
+import HomeFeedView from '../components/HomeFeedView';
 import FullChatView from '../components/FullChatView';
 import AuthModal from '../components/AuthModal';
 import ChatModal from '../components/ChatModal';
 import NotificationsModal from '../components/NotificationsModal';
 import { api, getAuthToken, setAuthToken, getCurrentUser, removeAuthToken, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
-import { Search, Filter, RefreshCw, Briefcase, Sparkles, MapPin, Bookmark, ShieldCheck } from 'lucide-react';
+import { Search, Filter, RefreshCw, Briefcase, Sparkles, MapPin, Bookmark, ShieldCheck, Home, MessageSquare, FileCheck, User as UserIcon } from 'lucide-react';
 
 const CATEGORIES = [
   'Barchasi',
@@ -96,7 +97,6 @@ export default function WZonePortal() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [createVacancyModalOpen, setCreateVacancyModalOpen] = useState(false);
   const [createResumeModalOpen, setCreateResumeModalOpen] = useState(false);
-  const [profileSection, setProfileSection] = useState<'settings' | 'resumes'>('settings');
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [chatTargetUser, setChatTargetUser] = useState<any | null>(null);
@@ -274,7 +274,7 @@ export default function WZonePortal() {
     }
     restoreSession();
 
-    // Listen for OneID postMessage from popups
+    // Listen for OneID and language sync postMessage from popups or parent iframe
     const handleOneIDMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'WORKHUB_ONEID_AUTH_CALLBACK' && event.data?.code) {
         try {
@@ -292,6 +292,18 @@ export default function WZonePortal() {
             setTimeout(() => setOneidNotice(null), 5000);
           }
         } catch (e) {}
+      }
+      if (event.data?.type === 'WORKHUB_CHANGE_LANG' && event.data?.lang) {
+        const incoming = event.data.lang;
+        if (incoming === 'uz' || incoming === 'ru' || incoming === 'en') {
+          setLang(incoming);
+          try {
+            localStorage.setItem('workhub_lang', incoming);
+          } catch (_) {}
+        }
+      }
+      if (event.data?.type === 'WORKHUB_SET_TAB' && event.data?.tab) {
+        setCurrentTab(event.data.tab);
       }
     };
     window.addEventListener('message', handleOneIDMessage);
@@ -317,7 +329,12 @@ export default function WZonePortal() {
 
   const handleLanguageChange = (newLang: Language) => {
     setLang(newLang);
-    localStorage.setItem('workhub_lang', newLang);
+    try {
+      localStorage.setItem('workhub_lang', newLang);
+      if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'WORKHUB_LANG_CHANGED', lang: newLang }, '*');
+      }
+    } catch (_) {}
   };
 
   const toggleDarkMode = () => {
@@ -522,7 +539,12 @@ export default function WZonePortal() {
         onOpenNotifications={() => setNotificationsModalOpen(true)}
         unreadNotificationsCount={unreadCount}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={(q) => {
+          setSearchQuery(q);
+          if (q.trim() && currentTab === 'feed') {
+            setCurrentTab('vacancies');
+          }
+        }}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
         onUserLogout={() => setUser(null)}
@@ -545,13 +567,12 @@ export default function WZonePortal() {
       )}
 
       {/* Main 3-Column Layout */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6 pb-32 lg:pb-6">
         {/* Left Navigation Sidebar */}
         <LeftSidebar
           currentTab={currentTab}
           onSelectTab={(tab) => {
             setCurrentTab(tab);
-            if (tab === 'profile') setProfileSection('settings');
           }}
           user={user}
           savedCount={savedIds.length}
@@ -601,32 +622,58 @@ export default function WZonePortal() {
               user={user}
               onUserUpdated={setUser}
               lang={lang}
-              initialSection={profileSection}
+              onLanguageChange={(newLang) => {
+                setLang(newLang);
+                try {
+                  localStorage.setItem('workhub_lang', newLang);
+                } catch (_) {}
+              }}
+              darkMode={darkMode}
+              onToggleDarkMode={() => {
+                const next = !darkMode;
+                setDarkMode(next);
+                try {
+                  localStorage.setItem('workhub_theme', next ? 'dark' : 'light');
+                } catch (_) {}
+                if (next) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              }}
+              onOpenCreateResume={() => setCreateResumeModalOpen(true)}
+              resumes={resumes}
+              onRefreshResumes={fetchResumes}
+              onLogout={() => {
+                removeAuthToken();
+                setUser(null);
+                setCurrentTab('feed');
+              }}
             />
           ) : currentTab === 'saved' && displayedVacancies().length === 0 ? (
             <div className="p-14 text-center bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
               <Bookmark size={44} className="mx-auto text-slate-400" />
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                Saqlangan vakansiyalar yo‘q
+                {t.noSavedVacanciesTitle}
               </h3>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                Sizga ma’qul kelgan vakansiya kartasidagi belgi (bookmark) ustiga bosib saqlab qo‘yishingiz mumkin.
+                {t.noSavedVacanciesDesc}
               </p>
               <button
                 onClick={() => setCurrentTab('feed')}
                 className="mt-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20"
               >
-                Vakansiyalarni ko‘rish
+                {t.viewVacanciesBtn}
               </button>
             </div>
           ) : currentTab === 'my-vacancies' && (!user || displayedVacancies().length === 0) ? (
             <div className="p-14 text-center bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
               <Briefcase size={44} className="mx-auto text-slate-400" />
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                Siz joylashtirgan e’lonlar mavjud emas
+                {t.noMyVacanciesTitle}
               </h3>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                Kompaniyangiz uchun yangi bo‘sh ish o‘rni yaratish uchun quyidagi tugmani bosing.
+                {t.noMyVacanciesDesc}
               </p>
               <button
                 onClick={() => {
@@ -635,9 +682,31 @@ export default function WZonePortal() {
                 }}
                 className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition"
               >
-                + Vakansiya e’lon qilish
+                {t.postVacancyBtn}
               </button>
             </div>
+          ) : currentTab === 'feed' ? (
+            <HomeFeedView
+              vacancies={vacancies}
+              onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
+              onNavigateToVacancies={() => setCurrentTab('vacancies')}
+              onOpenCreateResume={() => {
+                if (!user) setAuthModalOpen(true);
+                else setCreateResumeModalOpen(true);
+              }}
+              onOpenCreateVacancy={() => {
+                if (!user) setAuthModalOpen(true);
+                else setCreateVacancyModalOpen(true);
+              }}
+              onApplyVacancy={(v) => {
+                setSelectedVacancyForApply(v);
+                setApplyModalOpen(true);
+              }}
+              isSaved={(id) => savedIds.includes(id)}
+              onToggleSave={handleToggleSave}
+              currentUser={user}
+              lang={lang}
+            />
           ) : (
             <>
               {/* Category & Region Filter Chips Bar */}
@@ -654,7 +723,7 @@ export default function WZonePortal() {
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold'
                       }`}
                     >
-                      {cat}
+                      {t.categories?.[cat] || cat}
                     </button>
                   ))}
                 </div>
@@ -673,7 +742,7 @@ export default function WZonePortal() {
                       >
                         {REGIONS.map((loc) => (
                           <option key={loc} value={loc}>
-                            {loc}
+                            {t.regions?.[loc] || loc}
                           </option>
                         ))}
                       </select>
@@ -690,7 +759,7 @@ export default function WZonePortal() {
                       >
                         {JOB_TYPES.map((jt) => (
                           <option key={jt} value={jt}>
-                            {jt}
+                            {t.jobTypes?.[jt] || jt}
                           </option>
                         ))}
                       </select>
@@ -734,10 +803,10 @@ export default function WZonePortal() {
                 <div className="p-14 text-center bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
                   <Briefcase size={40} className="mx-auto text-slate-400" />
                   <h4 className="font-extrabold text-base text-slate-900 dark:text-white">
-                    Ushbu hudud yoki mezon bo‘yicha vakansiyalar topilmadi
+                    {t.noVacanciesFound}
                   </h4>
                   <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    Boshqa viloyatni tanlang yoki qidiruv so‘zini tozalang.
+                    {t.noVacanciesSub}
                   </p>
                 </div>
               ) : (
@@ -755,17 +824,17 @@ export default function WZonePortal() {
                   ))}
 
                   {/* Infinite Scroll Trigger Sentinel & Loading Indicator */}
-                  {currentTab === 'feed' && (
+                  {currentTab === 'vacancies' && (
                     <div ref={observerRef} className="py-4 text-center">
                       {loadingMore && (
                         <div className="flex items-center justify-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 py-3 bg-white/60 dark:bg-slate-900/60 rounded-2xl border border-slate-200/60 dark:border-slate-800">
                           <RefreshCw size={15} className="animate-spin text-blue-600" />
-                          <span>Yangi vakansiyalar yuklanmoqda...</span>
+                          <span>{t.loadingMoreNotice}</span>
                         </div>
                       )}
                       {!hasMore && vacancies.length > 0 && (
                         <p className="text-[11px] font-bold text-slate-400 py-2">
-                          ✓ Barcha vakansiyalar ko‘rsatildi ({totalVacancies || vacancies.length} ta)
+                          ✓ {t.allLoadedNotice} ({totalVacancies || vacancies.length} {t.vacanciesCount})
                         </p>
                       )}
                     </div>
@@ -777,8 +846,143 @@ export default function WZonePortal() {
         </main>
 
         {/* Right Info & Widgets Sidebar */}
-        <RightSidebar vacanciesCount={totalVacancies || vacancies.length} lang={lang} />
+        {currentTab !== 'chat' && currentTab !== 'profile' && (
+          <RightSidebar vacanciesCount={totalVacancies || vacancies.length} lang={lang} />
+        )}
       </div>
+
+      {/* Mobile Responsive Bottom Navigation Bar (Elevated Ergonomic Bar with Safe Area Clearance) */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#0c1220]/95 backdrop-blur-2xl border-t border-slate-200/90 dark:border-slate-800/90 z-40 px-2 pt-2 pb-8 sm:pb-9 flex items-center justify-around shadow-[0_-8px_25px_rgba(0,0,0,0.15)] select-none transition-colors">
+        {/* Tab 1: Lenta / Asosiy */}
+        <button
+          onClick={() => {
+            setCurrentTab('feed');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
+        >
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'feed'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <Home size={20} className={currentTab === 'feed' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+          </div>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'feed'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {t.navFeed}
+          </span>
+        </button>
+
+        {/* Tab 2: Vakansiyalar */}
+        <button
+          onClick={() => {
+            setCurrentTab('vacancies');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
+        >
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'vacancies'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <Briefcase size={20} className={currentTab === 'vacancies' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+          </div>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'vacancies'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {t.navVacancies}
+          </span>
+        </button>
+
+        {/* Tab 3: Chat */}
+        <button
+          onClick={() => {
+            setCurrentTab('chat');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
+        >
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'chat'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <MessageSquare size={20} className={currentTab === 'chat' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            <span className="absolute top-1 right-2.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+          </div>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'chat'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {t.navChat}
+          </span>
+        </button>
+
+        {/* Tab 4: Arizalar */}
+        <button
+          onClick={() => {
+            setCurrentTab('applications');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
+        >
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'applications'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <FileCheck size={20} className={currentTab === 'applications' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            {applications.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">
+                {applications.length}
+              </span>
+            )}
+          </div>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'applications'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {t.navApplications}
+          </span>
+        </button>
+
+        {/* Tab 5: Profil */}
+        <button
+          onClick={() => {
+            if (!user) {
+              setAuthModalOpen(true);
+            } else {
+              setCurrentTab('profile');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
+        >
+          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'profile'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <UserIcon size={20} className={currentTab === 'profile' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+          </div>
+          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'profile'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {user ? t.navProfile : t.loginBtn}
+          </span>
+        </button>
+      </nav>
 
       {/* Modals */}
       <AuthModal
@@ -790,6 +994,7 @@ export default function WZonePortal() {
           setCurrentTab('profile');
           fetchUserData();
         }}
+        lang={lang}
       />
 
       <VacancyDetailModal
@@ -800,6 +1005,7 @@ export default function WZonePortal() {
           handleApplyClick(v);
         }}
         currentUser={user}
+        lang={lang}
       />
 
       <ApplyModal
@@ -812,6 +1018,7 @@ export default function WZonePortal() {
         onSuccess={() => {
           fetchUserData();
         }}
+        lang={lang}
       />
 
       <CreateVacancyModal
@@ -825,6 +1032,7 @@ export default function WZonePortal() {
           }
           fetchVacancies();
         }}
+        lang={lang}
       />
 
       <CreateResumeModal
@@ -832,10 +1040,10 @@ export default function WZonePortal() {
         onClose={() => setCreateResumeModalOpen(false)}
         onSuccess={() => {
           fetchResumes();
-          setProfileSection('resumes');
-          setCurrentTab('profile');
+          setCurrentTab('resumes');
         }}
         currentUser={user}
+        lang={lang}
       />
 
       <ChatModal
@@ -846,6 +1054,7 @@ export default function WZonePortal() {
         }}
         currentUser={user}
         targetUser={chatTargetUser}
+        lang={lang}
       />
 
       <NotificationsModal
@@ -853,6 +1062,7 @@ export default function WZonePortal() {
         onClose={() => setNotificationsModalOpen(false)}
         notifications={notifications}
         onRefresh={fetchUserData}
+        lang={lang}
       />
     </div>
   );
