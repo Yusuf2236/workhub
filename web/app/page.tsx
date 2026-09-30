@@ -846,7 +846,7 @@ export default function WZonePortal() {
         </main>
 
         {/* Right Info & Widgets Sidebar */}
-        {currentTab !== 'chat' && (
+        {currentTab !== 'chat' && currentTab !== 'profile' && (
           <RightSidebar vacanciesCount={totalVacancies || vacancies.length} lang={lang} />
         )}
       </div>

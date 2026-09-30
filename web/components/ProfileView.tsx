@@ -27,6 +27,7 @@ import {
   Code2,
   Layers,
   Settings,
+  LayoutGrid,
   Award,
   Zap,
   Clock,
@@ -125,6 +126,7 @@ export default function ProfileView({
 
   // Active top-level subtab: Rezyumelar, Shaxsiy ma'lumotlar, Sozlamalar
   const [activeSection, setActiveSection] = useState<'resumes-skills' | 'personal' | 'settings'>('resumes-skills');
+  const [viewMode, setViewMode] = useState<'tabs' | 'side-by-side'>('tabs');
 
   // Personal Info Form
   const [name, setName] = useState(user?.name || '');
@@ -475,24 +477,33 @@ export default function ProfileView({
           </div>
         </div>
 
-        {/* Primary Sub-Nav */}
-        <div className="mt-8 pt-5 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+        {/* Primary Sub-Nav: 3 lasi yonma-yon */}
+        <div className="mt-8 pt-5 border-t border-slate-100 dark:border-slate-800/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* 3 ta asosiy bo'lim tugmalari — 100% yonma-yon (3 ustunli grid) */}
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl flex-1 max-w-3xl">
             {/* 1. Rezyumelar & Skillar */}
             <button
-              onClick={() => setActiveSection('resumes-skills')}
-              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
-                activeSection === 'resumes-skills'
+              type="button"
+              onClick={() => {
+                setViewMode('tabs');
+                setActiveSection('resumes-skills');
+              }}
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+                viewMode === 'tabs' && activeSection === 'resumes-skills'
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <FileText size={16} />
-              <span>{t.profileSubResumesSkills}</span>
+              <FileText size={16} className="shrink-0" />
+              <span className="truncate">{t.profileSubResumesSkills}</span>
               {userResumes.length > 0 && (
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                  activeSection === 'resumes-skills' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                }`}>
+                <span
+                  className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                    viewMode === 'tabs' && activeSection === 'resumes-skills'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                  }`}
+                >
                   {userResumes.length}
                 </span>
               )}
@@ -500,40 +511,53 @@ export default function ProfileView({
 
             {/* 2. Shaxsiy ma'lumotlar */}
             <button
-              onClick={() => setActiveSection('personal')}
-              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
-                activeSection === 'personal'
+              type="button"
+              onClick={() => {
+                setViewMode('tabs');
+                setActiveSection('personal');
+              }}
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+                viewMode === 'tabs' && activeSection === 'personal'
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <User size={16} />
-              <span>{t.profileSubPersonal}</span>
+              <User size={16} className="shrink-0" />
+              <span className="truncate">{t.profileSubPersonal}</span>
             </button>
 
             {/* 3. Sozlamalar */}
             <button
-              onClick={() => setActiveSection('settings')}
-              className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
-                activeSection === 'settings'
+              type="button"
+              onClick={() => {
+                setViewMode('tabs');
+                setActiveSection('settings');
+              }}
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+                viewMode === 'tabs' && activeSection === 'settings'
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Settings size={16} />
-              <span>{t.profileSubSettings}</span>
+              <Settings size={16} className="shrink-0" />
+              <span className="truncate">{t.profileSubSettings}</span>
             </button>
           </div>
 
-          {activeSection === 'resumes-skills' && onOpenCreateResume && (
-            <button
-              onClick={onOpenCreateResume}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-500/25 transition cursor-pointer"
-            >
-              <Plus size={16} />
-              <span>{t.profileAddResumeBtn}</span>
-            </button>
-          )}
+          {/* 3 lasini ekranda yonma-yon ko'rish tugmasi */}
+          <button
+            type="button"
+            onClick={() => setViewMode(viewMode === 'side-by-side' ? 'tabs' : 'side-by-side')}
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-2xl text-xs font-extrabold transition-all cursor-pointer shrink-0 border ${
+              viewMode === 'side-by-side'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent shadow-md shadow-blue-500/25'
+                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 shadow-xs'
+            }`}
+            title="3 ta bo‘limni bir vaqtda ekranda yonma-yon (3 ustun) ko‘rish"
+          >
+            <LayoutGrid size={15} />
+            <span>{viewMode === 'side-by-side' ? 'Tablar ko‘rinishi' : '3 lasi yonma-yon'}</span>
+          </button>
         </div>
       </div>
 
@@ -567,9 +591,17 @@ export default function ProfileView({
       )}
 
       {/* ======================================================== */}
-      {/* 1-CHI BO'LIM: REZYUMELAR VA SKILLAR (PRIMARY SECTION)     */}
+      {/* 3 LASINI YONMA-YON (3 USTUN) YOKI TABLAR BO'YICHA        */}
       {/* ======================================================== */}
-      {activeSection === 'resumes-skills' && (
+      <div
+        className={
+          viewMode === 'side-by-side'
+            ? 'grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn items-start'
+            : 'space-y-6'
+        }
+      >
+        {/* 1-CHI BO'LIM: REZYUMELAR VA SKILLAR */}
+        {(viewMode === 'side-by-side' || activeSection === 'resumes-skills') && (
         <div className="space-y-6 animate-fadeIn">
           {/* Section 1.1: User's Resumes List */}
           <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-5">
@@ -821,10 +853,8 @@ export default function ProfileView({
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 2-CHI BO'LIM: SHAXSIY MA'LUMOTLAR                         */}
-      {/* ======================================================== */}
-      {activeSection === 'personal' && (
+        {/* 2-CHI BO'LIM: SHAXSIY MA'LUMOTLAR */}
+        {(viewMode === 'side-by-side' || activeSection === 'personal') && (
         <form onSubmit={handleSavePersonalInfo} className="space-y-6 animate-fadeIn">
           {/* OneID Verification Banner if applicable */}
           {user.auth_provider === 'oneid' && (() => {
@@ -1029,10 +1059,8 @@ export default function ProfileView({
         </form>
       )}
 
-      {/* ======================================================== */}
-      {/* 3-CHI BO'LIM: SOZLAMALAR                                 */}
-      {/* ======================================================== */}
-      {activeSection === 'settings' && (
+        {/* 3-CHI BO'LIM: SOZLAMALAR */}
+        {(viewMode === 'side-by-side' || activeSection === 'settings') && (
         <form onSubmit={handleSaveSettings} className="space-y-6 animate-fadeIn">
           {/* Sub-Section 3.1: Site Preferences (Theme, Language) */}
           <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-5">
@@ -1257,6 +1285,7 @@ export default function ProfileView({
           </div>
         </form>
       )}
+      </div>
     </div>
   );
 }
