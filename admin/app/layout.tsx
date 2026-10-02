@@ -1,6 +1,7 @@
 import './globals.css';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Navbar } from '../components/layout/Navbar';
+import { AdminGate } from '../components/AdminGate';
 
 export const metadata = {
   title: 'WZone Admin Dashboard',
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <AdminGate>
         <div className="flex min-h-screen">
           <Sidebar />
           <div className="flex-1 flex flex-col">
@@ -24,6 +26,7 @@ export default function RootLayout({
             </main>
           </div>
         </div>
+        </AdminGate>
       </body>
     </html>
   );

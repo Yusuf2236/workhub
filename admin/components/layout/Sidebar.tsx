@@ -6,8 +6,7 @@ export function Sidebar() {
     { label: 'Overview', href: '/', icon: '📊' },
     { label: 'Vacancies', href: '/vacancies', icon: '💼' },
     { label: 'Applications', href: '/applications', icon: '📝' },
-    { label: 'Candidates', href: '/users', icon: '👥' },
-    { label: 'Settings', href: '/settings', icon: '⚙️' },
+    { label: 'Users', href: '/users', icon: '👥' },
   ];
 
   return (

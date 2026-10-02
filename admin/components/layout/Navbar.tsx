@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { clearAdminToken } from '../../lib/api';
 
 export function Navbar() {
   return (
@@ -10,10 +13,16 @@ export function Navbar() {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">
-            HR
+            AD
           </div>
-          <span className="text-sm font-medium text-slate-800">Recruiter Admin</span>
+          <span className="text-sm font-medium text-slate-800">Admin</span>
         </div>
+        <button
+          onClick={clearAdminToken}
+          className="text-xs font-semibold text-slate-600 hover:text-red-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-red-200 transition"
+        >
+          Sign out
+        </button>
       </div>
     </header>
   );

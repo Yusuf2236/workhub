@@ -5,10 +5,10 @@ import { AnalyticsData, Vacancy, fetchAnalytics, fetchVacancies } from '../lib/a
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<AnalyticsData>({
-    total_users: 1,
-    total_vacancies: 1,
-    total_applications: 1,
-    total_resumes: 2,
+    total_users: 0,
+    total_vacancies: 0,
+    total_applications: 0,
+    total_resumes: 0,
   });
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,10 +30,10 @@ export default function DashboardPage() {
   }, []);
 
   const statCards = [
-    { title: 'Total Vacancies', value: stats.total_vacancies, icon: '💼', change: '+12% this week', color: 'border-blue-500' },
-    { title: 'Applications', value: stats.total_applications, icon: '📝', change: '+24% this week', color: 'border-emerald-500' },
-    { title: 'Registered Users', value: stats.total_users, icon: '👥', change: '+5 new today', color: 'border-indigo-500' },
-    { title: 'Uploaded Resumes', value: stats.total_resumes, icon: '📄', change: '100% active', color: 'border-amber-500' },
+    { title: 'Total Vacancies', value: stats.total_vacancies, icon: '💼', color: 'border-blue-500' },
+    { title: 'Applications', value: stats.total_applications, icon: '📝', color: 'border-emerald-500' },
+    { title: 'Registered Users', value: stats.total_users, icon: '👥', color: 'border-indigo-500' },
+    { title: 'Uploaded Resumes', value: stats.total_resumes, icon: '📄', color: 'border-amber-500' },
   ];
 
   return (
@@ -52,7 +52,6 @@ export default function DashboardPage() {
               <span className="text-xl">{card.icon}</span>
             </div>
             <p className="text-3xl font-extrabold text-slate-900 mt-3">{loading ? '...' : card.value}</p>
-            <p className="text-xs text-slate-400 mt-1">{card.change}</p>
           </div>
         ))}
       </div>
@@ -84,7 +83,7 @@ export default function DashboardPage() {
               {vacancies.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-6 text-center text-slate-400">
-                    {loading ? 'Loading vacancies...' : 'Principal Go Architect • WZone Global • $6000 - $8000 (Active)'}
+                    {loading ? 'Loading vacancies...' : 'No vacancies yet'}
                   </td>
                 </tr>
               ) : (
