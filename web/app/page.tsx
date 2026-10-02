@@ -168,7 +168,7 @@ export default function WZonePortal() {
             if (data.code) {
               const res = await api.oneIDCallback({
                 code: data.code,
-                pinfl: data.pinfl || '',
+                state: data.state || '',
               });
               if (res.success && res.data) {
                 setAuthToken(res.data.token);
@@ -211,7 +211,8 @@ export default function WZonePortal() {
         if (urlOneIDCode) {
           window.history.replaceState(null, '', window.location.pathname);
           try {
-            const res = await api.oneIDCallback({ code: urlOneIDCode, pinfl: '' });
+            const urlOneIDState = searchParams.get('oneid_state') || searchParams.get('state') || '';
+            const res = await api.oneIDCallback({ code: urlOneIDCode, state: urlOneIDState });
             if (res.success && res.data) {
               setAuthToken(res.data.token);
               setCurrentUser(res.data.user);
@@ -276,11 +277,12 @@ export default function WZonePortal() {
 
     // Listen for OneID and language sync postMessage from popups or parent iframe
     const handleOneIDMessage = async (event: MessageEvent) => {
-      if (event.data?.type === 'WORKHUB_ONEID_AUTH_CALLBACK' && event.data?.code) {
+      // Auth callbacks must come from our own callback page, never from another site
+      if (event.data?.type === 'WORKHUB_ONEID_AUTH_CALLBACK' && event.data?.code && event.origin === window.location.origin) {
         try {
           const res = await api.oneIDCallback({
             code: event.data.code,
-            pinfl: event.data.pinfl || '',
+            state: event.data.state || '',
           });
           if (res.success && res.data) {
             setAuthToken(res.data.token);
@@ -445,6 +447,10 @@ export default function WZonePortal() {
 
   // Fetch Resumes from Backend (PostgreSQL)
   const fetchResumes = useCallback(async () => {
+    if (!user) {
+      setResumes([]);
+      return;
+    }
     setResumesLoading(true);
     try {
       const res = await api.getResumes(true);
@@ -456,7 +462,7 @@ export default function WZonePortal() {
     } finally {
       setResumesLoading(false);
     }
-  }, []);
+  }, [user]);
 
   // Fetch User Applications & Notifications
   const fetchUserData = useCallback(async () => {
@@ -513,7 +519,7 @@ export default function WZonePortal() {
   };
 
   // Unread notifications
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = notifications.filter((n) => !n.read_at).length;
 
   // Filtered lists for saved / my-vacancies
   const displayedVacancies = () => {
@@ -533,8 +539,8 @@ export default function WZonePortal() {
       <Header
         user={user}
         onOpenAuth={() => setAuthModalOpen(true)}
-        onOpenCreateVacancy={() => setCreateVacancyModalOpen(true)}
-        onOpenCreateResume={() => setCreateResumeModalOpen(true)}
+        onOpenCreateVacancy={() => (user ? setCreateVacancyModalOpen(true) : setAuthModalOpen(true))}
+        onOpenCreateResume={() => (user ? setCreateResumeModalOpen(true) : setAuthModalOpen(true))}
         onOpenChat={() => setCurrentTab('chat')}
         onOpenNotifications={() => setNotificationsModalOpen(true)}
         unreadNotificationsCount={unreadCount}

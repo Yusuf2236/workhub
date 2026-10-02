@@ -152,11 +152,12 @@ export const api = {
   },
 
   async getOneIDLoginUrl() {
-    return request<{ auth_url: string; provider: string }>('/auth/oneid/login');
+    return request<{ auth_url: string; provider: string; state: string; is_live_configured: boolean; demo_mode: boolean }>('/auth/oneid/login');
   },
 
   async oneIDCallback(payload: {
-    pinfl: string;
+    pinfl?: string;
+    state?: string;
     full_name?: string;
     email?: string;
     phone?: string;
@@ -196,7 +197,6 @@ export const api = {
       status: 'pending' | 'approved' | 'expired';
       user?: any;
       token?: string;
-      oneid_token?: string;
       message?: string;
       citizen?: {
         pinfl: string;
@@ -250,7 +250,7 @@ export const api = {
     });
   },
 
-  async updateResume(id: string, payload: { title: string; summary: string; file_url?: string }) {
+  async updateResume(id: string, payload: { title?: string; summary?: string; file_url?: string }) {
     return request<{ resume: any }>(`/resumes/${id}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
