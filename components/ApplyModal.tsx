@@ -3,15 +3,18 @@
 import React, { useState } from 'react';
 import { X, Send, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../lib/api';
+import { Language, translations } from '../lib/translations';
 
 interface ApplyModalProps {
   vacancy: any | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  lang?: Language;
 }
 
-export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess }: ApplyModalProps) {
+export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess, lang = 'uz' }: ApplyModalProps) {
+  const t = translations[lang] || translations.uz;
   const [coverLetter, setCoverLetter] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +57,7 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess }: Appl
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
           <div>
             <h3 className="font-bold text-base text-slate-900 dark:text-white">
-              Vakansiyaga ariza topshirish
+              {lang === 'ru' ? 'Отклик на вакансию' : lang === 'en' ? 'Apply for Vacancy' : 'Vakansiyaga ariza topshirish'}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {vacancy.title} • {vacancy.company}
@@ -76,10 +79,10 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess }: Appl
                 <CheckCircle2 size={32} />
               </div>
               <h4 className="font-bold text-lg text-slate-900 dark:text-white">
-                Arizangiz muvaffaqiyatli qabul qilindi!
+                {lang === 'ru' ? 'Ваш отклик успешно отправлен!' : lang === 'en' ? 'Application submitted successfully!' : 'Arizangiz muvaffaqiyatli qabul qilindi!'}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-                Ish beruvchi arizangizni ko‘rib chiqadi va sizga tez orada javob yuboradi.
+                {lang === 'ru' ? 'Работодатель рассмотрит вашу кандидатуру и свяжется с вами.' : lang === 'en' ? 'The employer will review your profile and respond soon.' : 'Ish beruvchi arizangizni ko‘rib chiqadi va sizga tez orada javob yuboradi.'}
               </p>
             </div>
           ) : (
@@ -93,12 +96,12 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess }: Appl
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Kuzatuv xati / Izoh (Cover letter)
+                  {lang === 'ru' ? 'Сопроводительное письмо (Cover letter)' : lang === 'en' ? 'Cover Letter / Message' : 'Kuzatuv xati / Izoh (Cover letter)'}
                 </label>
                 <textarea
                   rows={4}
                   required
-                  placeholder="Nima uchun aynan siz ushbu lavozimga mos ekansiz? Tajribangiz va yutuqlaringiz haqida qisqacha yozing..."
+                  placeholder={lang === 'ru' ? 'Почему именно вы подходите на эту роль? Кратко расскажите об опыте и навыках...' : lang === 'en' ? 'Why are you a great fit for this position? Briefly describe your experience...' : 'Nima uchun aynan siz ushbu lavozimga mos ekansiz? Tajribangiz va yutuqlaringiz haqida qisqacha yozing...'}
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
                   className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -109,10 +112,10 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess }: Appl
                 <FileText size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
                 <div className="text-xs">
                   <p className="font-semibold text-slate-800 dark:text-slate-200">
-                    Sizning WZone rezyume profilingiz
+                    {lang === 'ru' ? 'Ваш профиль и резюме на WZone' : lang === 'en' ? 'Your WZone Talent Profile & Resume' : 'Sizning WZone rezyume profilingiz'}
                   </p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Arizaga avtomatik ravishda biriktiriladi
+                    {lang === 'ru' ? 'Будет автоматически прикреплено к заявке' : lang === 'en' ? 'Will be automatically attached to this application' : 'Arizaga avtomatik ravishda biriktiriladi'}
                   </p>
                 </div>
               </div>
@@ -123,7 +126,7 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess }: Appl
                   onClick={onClose}
                   className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
                 >
-                  Bekor qilish
+                  {lang === 'ru' ? 'Отмена' : lang === 'en' ? 'Cancel' : 'Bekor qilish'}
                 </button>
                 <button
                   type="submit"
@@ -131,7 +134,7 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess }: Appl
                   className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs rounded-xl shadow-md shadow-blue-500/20 transition flex items-center gap-2 disabled:opacity-50"
                 >
                   <Send size={14} />
-                  <span>{loading ? 'Yuborilmoqda...' : 'Arizani jo‘natish'}</span>
+                  <span>{loading ? (lang === 'ru' ? 'Отправка...' : lang === 'en' ? 'Sending...' : 'Yuborilmoqda...') : (lang === 'ru' ? 'Отправить отклик' : lang === 'en' ? 'Submit Application' : 'Arizani jo‘natish')}</span>
                 </button>
               </div>
             </form>
