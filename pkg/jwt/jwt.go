@@ -18,13 +18,19 @@ func getSecret() []byte {
 type Claims struct {
 	UserID string `json:"user_id"`
 	Email  string `json:"email"`
+	Role   string `json:"role,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userID, email string) (string, error) {
+func GenerateToken(userID, email string, role ...string) (string, error) {
+	r := "user"
+	if len(role) > 0 && role[0] != "" {
+		r = role[0]
+	}
 	claims := Claims{
 		UserID: userID,
 		Email:  email,
+		Role:   r,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

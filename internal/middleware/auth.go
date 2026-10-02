@@ -25,6 +25,37 @@ func AuthRequired() gin.HandlerFunc {
 
         c.Set("user_id", claims.UserID)
         c.Set("email", claims.Email)
+        c.Set("role", claims.Role)
+        c.Next()
+    }
+}
+
+func AdminRequired() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        authHeader := c.GetHeader("Authorization")
+        if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid authorization header"})
+            return
+        }
+
+        token := strings.TrimPrefix(authHeader, "Bearer ")
+        claims, err := jwt.ParseToken(token)
+        if err != nil {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+            return
+        }
+
+        c.Set("user_id", claims.UserID)
+        c.Set("email", claims.Email)
+        c.Set("role", claims.Role)
+
+        if claims.Role != "admin" {
+            c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+                "error": "Forbidden: Faqat ma'mur (admin) huquqiga ega foydalanuvchilar kira oladi",
+            })
+            return
+        }
+
         c.Next()
     }
 }
@@ -37,6 +68,7 @@ func OptionalAuth() gin.HandlerFunc {
             if claims, err := jwt.ParseToken(token); err == nil {
                 c.Set("user_id", claims.UserID)
                 c.Set("email", claims.Email)
+                c.Set("role", claims.Role)
             }
         }
         c.Next()
