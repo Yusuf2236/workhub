@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -12,6 +15,12 @@ import (
 	"github.com/Yusuf2236/workhub/backend/internal/models"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
 )
+
+func computeClickSign(str string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(str))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
 
 var plans = []gin.H{
 	{
@@ -176,6 +185,32 @@ func ClickWebhook(c *gin.Context) {
 
 	action, _ := strconv.Atoi(actionStr)
 	amount, _ := strconv.ParseFloat(amountStr, 64)
+
+	// Verify Click official signature
+	secretKey := os.Getenv("CLICK_SECRET_KEY")
+	if secretKey == "" {
+		secretKey = "click_secret_key_2026"
+	}
+
+	var expectedSign string
+	if action == 0 {
+		expectedSign = computeClickSign(clickTransID + serviceID + secretKey + merchantTransID + amountStr + actionStr + signTime)
+	} else {
+		merchantPrepareID := c.PostForm("merchant_prepare_id")
+		if merchantPrepareID == "" {
+			merchantPrepareID = "1"
+		}
+		expectedSign = computeClickSign(clickTransID + serviceID + secretKey + merchantTransID + merchantPrepareID + amountStr + actionStr + signTime)
+	}
+
+	if signString == "" || !strings.EqualFold(signString, expectedSign) {
+		log.Printf("[Click Webhook]: Invalid signature: got=%s, expected=%s", signString, expectedSign)
+		c.JSON(http.StatusOK, gin.H{
+			"error":      -1,
+			"error_note": "SIGN CHECK FAILED",
+		})
+		return
+	}
 
 	// Action 0 = Prepare, Action 1 = Complete
 	if action == 0 {
