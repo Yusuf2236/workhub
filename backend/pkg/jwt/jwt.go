@@ -8,7 +8,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+var configuredSecret string
+
+// SetSecret sets the signing secret loaded from config (including .env files,
+// which are not visible through os.Getenv).
+func SetSecret(secret string) {
+	configuredSecret = secret
+}
+
 func getSecret() []byte {
+	if configuredSecret != "" {
+		return []byte(configuredSecret)
+	}
 	if s := os.Getenv("JWT_SECRET"); s != "" {
 		return []byte(s)
 	}
@@ -43,6 +54,9 @@ func GenerateToken(userID, email string, role ...string) (string, error) {
 
 func ParseToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return getSecret(), nil
 	})
 	if err != nil {
@@ -56,4 +70,3 @@ func ParseToken(tokenString string) (*Claims, error) {
 
 	return claims, nil
 }
-

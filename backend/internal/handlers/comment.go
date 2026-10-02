@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func ListVacancyComments(c *gin.Context) {
@@ -72,13 +72,12 @@ func CreateVacancyComment(c *gin.Context) {
 	authorAvatar := strings.TrimSpace(payload.AuthorAvatar)
 
 	if userIDStr != "" && userRepo != nil {
+		// Authenticated users always post under their own identity
+		authorName = ""
+		authorAvatar = ""
 		if u, _ := userRepo.GetByID(userIDStr); u != nil {
-			if authorName == "" {
-				authorName = u.Name
-			}
-			if authorAvatar == "" {
-				authorAvatar = u.AvatarURL
-			}
+			authorName = u.Name
+			authorAvatar = u.AvatarURL
 		}
 		if profileRepo != nil && authorAvatar == "" {
 			if p, _ := profileRepo.GetByUserID(userIDStr); p != nil && p.AvatarURL != "" {
@@ -87,6 +86,16 @@ func CreateVacancyComment(c *gin.Context) {
 		}
 	}
 
+	if !isSafeLink(authorAvatar) {
+		authorAvatar = ""
+	}
+	if len([]rune(authorName)) > 80 {
+		authorName = string([]rune(authorName)[:80])
+	}
+	if len(content) > 2000 {
+		response.Error(c, http.StatusBadRequest, "comment is too long")
+		return
+	}
 	if authorName == "" {
 		authorName = "WZone Nomzod"
 	}
@@ -99,6 +108,13 @@ func CreateVacancyComment(c *gin.Context) {
 		AuthorAvatar: authorAvatar,
 		Content:      content,
 		CreatedAt:    time.Now().UTC(),
+	}
+
+	if vacancyRepo != nil {
+		if v, err := vacancyRepo.Get(vacancyID); err != nil || v == nil {
+			response.Error(c, http.StatusNotFound, "vacancy not found")
+			return
+		}
 	}
 
 	if commentRepo != nil {

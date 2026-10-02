@@ -21,6 +21,11 @@ var defaultAllowedOrigins = []string{
 	"https://admin.workhub.uz",
 }
 
+// IsOriginAllowed reports whether the browser origin may access the API.
+func IsOriginAllowed(origin string) bool {
+	return isOriginAllowed(origin)
+}
+
 func isOriginAllowed(origin string) bool {
 	if origin == "" {
 		return false

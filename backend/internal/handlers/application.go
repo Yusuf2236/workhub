@@ -3,18 +3,35 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
 	"github.com/Yusuf2236/workhub/backend/internal/services"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
+var allowedApplicationStatuses = map[string]bool{
+	"submitted": true,
+	"reviewing": true,
+	"interview": true,
+	"accepted":  true,
+	"rejected":  true,
+}
+
+// ListApplications returns the caller's own applications (admins see all).
 func ListApplications(c *gin.Context) {
+	userID := currentUserID(c)
 	if applicationRepo != nil {
-		items, err := applicationRepo.List()
+		var items []models.Application
+		var err error
+		if isAdmin(c) {
+			items, err = applicationRepo.List()
+		} else {
+			items, err = applicationRepo.ListByUser(userID)
+		}
 		if err != nil {
 			response.Error(c, http.StatusInternalServerError, "failed to query applications")
 			return
@@ -25,7 +42,9 @@ func ListApplications(c *gin.Context) {
 
 	items := make([]models.Application, 0, len(applications))
 	for _, app := range applications {
-		items = append(items, app)
+		if isAdmin(c) || app.UserID == userID {
+			items = append(items, app)
+		}
 	}
 	response.Success(c, http.StatusOK, gin.H{"applications": items})
 }
@@ -48,10 +67,36 @@ func ApplyToVacancy(c *gin.Context) {
 			response.Error(c, http.StatusNotFound, "vacancy not found")
 			return
 		}
+		if v.CreatedBy != "" && v.CreatedBy == userID.(string) {
+			response.Error(c, http.StatusBadRequest, "O‘zingiz joylagan vakansiyaga ariza topshira olmaysiz")
+			return
+		}
 	} else {
 		if _, exists := vacancies[vacancyID]; !exists {
 			response.Error(c, http.StatusNotFound, "vacancy not found")
 			return
+		}
+	}
+
+	// Prevent duplicate applications to the same vacancy
+	if applicationRepo != nil {
+		existing, err := applicationRepo.ListByUser(userID.(string))
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "database error")
+			return
+		}
+		for _, a := range existing {
+			if a.VacancyID == vacancyID {
+				response.Error(c, http.StatusConflict, "Siz bu vakansiyaga allaqachon ariza topshirgansiz")
+				return
+			}
+		}
+	} else {
+		for _, a := range applications {
+			if a.UserID == userID.(string) && a.VacancyID == vacancyID {
+				response.Error(c, http.StatusConflict, "Siz bu vakansiyaga allaqachon ariza topshirgansiz")
+				return
+			}
 		}
 	}
 
@@ -116,6 +161,11 @@ func UpdateApplicationStatus(c *gin.Context) {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
+	payload.Status = strings.ToLower(strings.TrimSpace(payload.Status))
+	if !allowedApplicationStatuses[payload.Status] {
+		response.Error(c, http.StatusBadRequest, "invalid application status")
+		return
+	}
 
 	if applicationRepo != nil {
 		existing, err := applicationRepo.Get(id)
@@ -126,6 +176,19 @@ func UpdateApplicationStatus(c *gin.Context) {
 		if existing == nil {
 			response.Error(c, http.StatusNotFound, "application not found")
 			return
+		}
+
+		// Only the employer who posted the vacancy (or an admin) may change the status
+		if !isAdmin(c) {
+			v, err := vacancyRepo.Get(existing.VacancyID)
+			if err != nil {
+				response.Error(c, http.StatusInternalServerError, "database error")
+				return
+			}
+			if v == nil || v.CreatedBy == "" || v.CreatedBy != currentUserID(c) {
+				response.Error(c, http.StatusForbidden, "only the vacancy owner can update this application")
+				return
+			}
 		}
 
 		if err := applicationRepo.UpdateStatus(id, payload.Status); err != nil {
@@ -140,8 +203,8 @@ func UpdateApplicationStatus(c *gin.Context) {
 			_ = notificationRepo.Create(models.Notification{
 				ID:        uuid.NewString(),
 				UserID:    existing.UserID,
-				Title:     "Application Status Updated",
-				Body:      fmt.Sprintf("Your application status has been updated to: %s", payload.Status),
+				Title:     "Ariza holati yangilandi",
+				Body:      fmt.Sprintf("Arizangiz holati yangilandi: %s", payload.Status),
 				CreatedAt: time.Now().UTC(),
 			})
 		}
@@ -154,6 +217,13 @@ func UpdateApplicationStatus(c *gin.Context) {
 	if !ok {
 		response.Error(c, http.StatusNotFound, "application not found")
 		return
+	}
+	if !isAdmin(c) {
+		v, exists := vacancies[app.VacancyID]
+		if !exists || v.CreatedBy == "" || v.CreatedBy != currentUserID(c) {
+			response.Error(c, http.StatusForbidden, "only the vacancy owner can update this application")
+			return
+		}
 	}
 
 	app.Status = payload.Status

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
 	"github.com/Yusuf2236/workhub/backend/internal/services"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func ListVacancies(c *gin.Context) {
@@ -147,17 +147,18 @@ func CreateVacancy(c *gin.Context) {
 		payload.Company = "Maxfiy ish beruvchi"
 	}
 
-	userID, exists := c.Get("user_id")
-	if exists && payload.CreatedBy == "" {
-		payload.CreatedBy = userID.(string)
-	}
-
+	// Server-controlled fields must never come from the client
+	payload.CreatedBy = currentUserID(c)
 	payload.ID = uuid.NewString()
 	payload.CreatedAt = time.Now().UTC()
 	payload.UpdatedAt = time.Now().UTC()
-	payload.IsVerified = true
-	if payload.Source == "" {
-		payload.Source = "WZone"
+	payload.ViewsCount = 0
+	payload.CommentsCount = 0
+	payload.Source = "WZone"
+	payload.IsVerified = isAdmin(c)
+	payload.IsFeatured = isAdmin(c) && payload.IsFeatured
+	if !isSafeLink(payload.CompanyLogo) {
+		payload.CompanyLogo = ""
 	}
 
 	if vacancyRepo != nil {
@@ -166,11 +167,12 @@ func CreateVacancy(c *gin.Context) {
 			return
 		}
 
-		// Invalidate cache
+		// Invalidate cache (SCAN instead of KEYS so Redis is not blocked)
 		if redisClient != nil {
-			keys, _ := redisClient.Keys(c.Request.Context(), "vacancies:*").Result()
-			for _, k := range keys {
-				_ = redisClient.Del(c.Request.Context(), k)
+			ctx := c.Request.Context()
+			iter := redisClient.Scan(ctx, 0, "vacancies:*", 200).Iterator()
+			for iter.Next(ctx) {
+				_ = redisClient.Del(ctx, iter.Val()).Err()
 			}
 		}
 	} else {
