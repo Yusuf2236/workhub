@@ -1,7 +1,7 @@
 const API_BASE =
   typeof window !== 'undefined'
     ? (process.env.NEXT_PUBLIC_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/api/v1' : '/api/v1'))
-    : (process.env.INTERNAL_API_URL || 'http://wzone_backend:8080/api/v1');
+    : (process.env.INTERNAL_API_URL || 'http://localhost:8080/api/v1');
 
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -263,6 +263,28 @@ export const api = {
     });
   },
 
+  async uploadResumeFile(file: File) {
+    const token = getAuthToken();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/resumes/upload`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  },
+
   // Notifications
   async getNotifications() {
     return request<{ notifications: any[] }>('/notifications');
@@ -309,6 +331,17 @@ export const api = {
 
   async getChatMessages(room: string = 'general') {
     return request<{ room_id: string; messages: any[] }>(`/chat/messages?room=${encodeURIComponent(room)}`);
+  },
+
+  async sendChatMessage(payload: { room_id?: string; content: string; sender_name?: string; sender_avatar?: string }) {
+    return request<{ message: any }>('/chat/messages', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getChatHealth() {
+    return request<{ status: string; active_rooms: number; active_users: number }>('/chat/health');
   },
 
   // Billing & Subscriptions

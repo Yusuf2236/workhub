@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Send,
   MessageSquare,
@@ -12,10 +12,13 @@ import {
   Briefcase,
   HelpCircle,
   Sparkles,
-  Smile,
   ChevronRight,
+  ChevronLeft,
   Radio,
-  Search,
+  RefreshCw,
+  AlertCircle,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { api, getAuthToken } from '../lib/api';
 import { Language, translations } from '../lib/translations';
@@ -44,39 +47,188 @@ interface ChatRoom {
   icon: string;
 }
 
-const DEFAULT_ROOMS: ChatRoom[] = [
-  {
-    id: 'general',
-    name: 'Umumiy IT Muloqot',
-    description: 'Barcha IT mutaxassislar va qidiruvchilar uchun ochiq suhbat',
-    icon: 'hash',
-  },
-  {
-    id: 'ish-qidiruvchilar',
-    name: 'Nomzodlar & Dasturchilar',
-    description: 'Ish qidirayotgan dasturchilar va rezyume muhokamasi',
-    icon: 'users',
-  },
-  {
-    id: 'ish-beruvchilar',
-    name: 'Ish beruvchilar & HR',
-    description: 'HR menejerlar va kompaniya vakillari muloqoti',
-    icon: 'briefcase',
-  },
-  {
-    id: 'savol-javob',
-    name: 'Savol-Javob & Intervyu',
-    description: 'IT intervyulari, texnik savollar va maslahatlar',
-    icon: 'help-circle',
-  },
-];
+const ROOMS_BY_LANG: Record<Language, ChatRoom[]> = {
+  uz: [
+    {
+      id: 'general',
+      name: 'Umumiy IT Muloqot',
+      description: 'Barcha IT mutaxassislar va qidiruvchilar uchun ochiq suhbat',
+      icon: 'hash',
+    },
+    {
+      id: 'ish-qidiruvchilar',
+      name: 'Nomzodlar & Dasturchilar',
+      description: 'Ish qidirayotgan dasturchilar va rezyume muhokamasi',
+      icon: 'users',
+    },
+    {
+      id: 'ish-beruvchilar',
+      name: 'Ish beruvchilar & HR',
+      description: 'HR menejerlar va kompaniya vakillari muloqoti',
+      icon: 'briefcase',
+    },
+    {
+      id: 'savol-javob',
+      name: 'Savol-Javob & Intervyu',
+      description: 'IT intervyulari, texnik savollar va maslahatlar',
+      icon: 'help-circle',
+    },
+  ],
+  ru: [
+    {
+      id: 'general',
+      name: 'Общий IT Чат',
+      description: 'Открытое общение для всех IT специалистов и соискателей',
+      icon: 'hash',
+    },
+    {
+      id: 'ish-qidiruvchilar',
+      name: 'Кандидаты & Разработчики',
+      description: 'Обсуждение резюме, поиск работы и карьера разработчиков',
+      icon: 'users',
+    },
+    {
+      id: 'ish-beruvchilar',
+      name: 'Работодатели & HR',
+      description: 'Коммуникация HR-специалистов и рекрутеров компаний',
+      icon: 'briefcase',
+    },
+    {
+      id: 'savol-javob',
+      name: 'Вопросы & Собеседования',
+      description: 'Технические вопросы, подготовка к интервью и советы',
+      icon: 'help-circle',
+    },
+  ],
+  en: [
+    {
+      id: 'general',
+      name: 'General IT Lounge',
+      description: 'Open discussion for all tech professionals and job seekers',
+      icon: 'hash',
+    },
+    {
+      id: 'ish-qidiruvchilar',
+      name: 'Candidates & Engineers',
+      description: 'Resume review, job hunting, and developer discussions',
+      icon: 'users',
+    },
+    {
+      id: 'ish-beruvchilar',
+      name: 'Employers & Recruiters',
+      description: 'HR leaders, tech recruiters, and hiring managers',
+      icon: 'briefcase',
+    },
+    {
+      id: 'savol-javob',
+      name: 'Q&A & Interview Prep',
+      description: 'Technical interview questions, prep, and career advice',
+      icon: 'help-circle',
+    },
+  ],
+};
 
-const QUICK_PROMPTS = [
-  '👋 Salom hammaga!',
-  '🚀 Kimda yangi vakansiya bor?',
-  '📄 Rezyumeni ko‘rib bera olasizmi?',
-  '💡 Intervyu bo‘yicha maslahat kerak',
-];
+const PROMPTS_BY_LANG: Record<Language, string[]> = {
+  uz: [
+    '👋 Salom hammaga!',
+    '🚀 Kimda yangi vakansiya bor?',
+    '📄 Rezyumeni ko‘rib bera olasizmi?',
+    '💡 Intervyu bo‘yicha maslahat kerak',
+  ],
+  ru: [
+    '👋 Всем привет!',
+    '🚀 У кого есть свежие вакансии?',
+    '📄 Можете посмотреть резюме?',
+    '💡 Нужен совет по собеседованию',
+  ],
+  en: [
+    '👋 Hello everyone!',
+    '🚀 Any open vacancies right now?',
+    '📄 Could you review my resume?',
+    '💡 Need interview prep advice',
+  ],
+};
+
+function getAvatarInitials(name?: string): string {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
+function ChatAvatar({
+  avatarUrl,
+  name,
+  size = 'md',
+}: {
+  avatarUrl?: string;
+  name?: string;
+  size?: 'sm' | 'md';
+}) {
+  const [imgError, setImgError] = useState(false);
+  const initials = getAvatarInitials(name);
+
+  let src = avatarUrl?.trim();
+  if (src && src.startsWith('/uploads')) {
+    const host =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:8080'
+        : '';
+    src = `${host}${src}`;
+  }
+
+  if (!src || imgError) {
+    return (
+      <div
+        className={`w-full h-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black ${
+          size === 'sm' ? 'text-[10px]' : 'text-xs'
+        } select-none shrink-0`}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt=""
+      onError={() => setImgError(true)}
+      className="w-full h-full object-cover shrink-0"
+    />
+  );
+}
+
+function getWebSocketUrl(
+  roomId: string,
+  userId: string,
+  userName: string,
+  avatar: string,
+  token?: string | null
+): string {
+  const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  let host = 'localhost:8080';
+  if (typeof window !== 'undefined') {
+    const hn = window.location.hostname;
+    if (hn === 'localhost' || hn === '127.0.0.1') {
+      host = `${hn}:8080`;
+    } else if (window.location.port === '3000') {
+      host = `${hn}:8080`;
+    } else {
+      host = window.location.host;
+    }
+  }
+  let url = `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
+    roomId
+  )}&user_id=${encodeURIComponent(userId)}&user_name=${encodeURIComponent(
+    userName
+  )}&avatar=${encodeURIComponent(avatar)}`;
+  if (token) {
+    url += `&token=${encodeURIComponent(token)}`;
+  }
+  return url;
+}
 
 export default function FullChatView({
   currentUser,
@@ -86,126 +238,241 @@ export default function FullChatView({
   const t = translations[lang] || translations.uz;
 
   const [activeRoom, setActiveRoom] = useState<string>('general');
-  const [rooms, setRooms] = useState<ChatRoom[]>(DEFAULT_ROOMS);
+  const [showMobileChannels, setShowMobileChannels] = useState<boolean>(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(false);
+  const [rooms, setRooms] = useState<ChatRoom[]>(ROOMS_BY_LANG[lang] || ROOMS_BY_LANG.uz);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [guestName, setGuestName] = useState('');
   const [connected, setConnected] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch rooms from backend
+  // Sync rooms when language changes
+  useEffect(() => {
+    setRooms(ROOMS_BY_LANG[lang] || ROOMS_BY_LANG.uz);
+  }, [lang]);
+
+  // 1. Fetch available chat rooms
   useEffect(() => {
     async function loadRooms() {
       try {
         const res = await api.getChatRooms();
         if (res.success && res.data?.rooms && res.data.rooms.length > 0) {
-          setRooms(res.data.rooms);
+          const localized = ROOMS_BY_LANG[lang] || ROOMS_BY_LANG.uz;
+          setRooms(res.data.rooms.map((r: any) => {
+            const loc = localized.find(lr => lr.id === r.id);
+            return loc ? { ...r, name: loc.name, description: loc.description } : r;
+          }));
         }
       } catch (err) {
         console.error('Error fetching rooms', err);
       }
     }
     loadRooms();
-  }, []);
+  }, [lang]);
 
-  // Connect to WebSocket on room or user change
+  // 2. Load historical messages via HTTP immediately upon room change (Zero-latency fallback)
+  const fetchMessagesViaHTTP = useCallback(async (roomId: string) => {
+    setLoadingHistory(true);
+    try {
+      const res = await api.getChatMessages(roomId);
+      if (res.success && Array.isArray(res.data?.messages)) {
+        setMessages(
+          res.data.messages.map((m: any) => ({
+            ...m,
+            isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to load chat history via HTTP', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [currentUser?.id]);
+
   useEffect(() => {
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
+    fetchMessagesViaHTTP(activeRoom);
+  }, [activeRoom, fetchMessagesViaHTTP]);
+
+  // 3. Connect to WebSocket with auto-reconnect & ping/pong heartbeat
+  useEffect(() => {
+    let isSubscribed = true;
+
+    function connectWS() {
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch (_) {}
+        wsRef.current = null;
+      }
+
+      const userId = currentUser?.id || 'guest';
+      const userName = currentUser?.name || guestName || 'Mehmon';
+      const userAvatar = currentUser?.avatar_url || '';
+      const token = getAuthToken();
+
+      const wsUrl = getWebSocketUrl(activeRoom, userId, userName, userAvatar, token);
+
+      try {
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          if (!isSubscribed) return;
+          setConnected(true);
+
+          // Clear any pending reconnect
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+          }
+
+          // Start heartbeat ping every 25 seconds
+          if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'ping' }));
+            }
+          }, 25000);
+        };
+
+        ws.onmessage = (event) => {
+          if (!isSubscribed) return;
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'pong') {
+              return;
+            }
+
+            if (data.type === 'history' && Array.isArray(data.data)) {
+              setMessages(
+                data.data.map((m: any) => ({
+                  ...m,
+                  isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
+                }))
+              );
+              return;
+            }
+
+            if (data.type === 'message') {
+              setMessages((prev) => {
+                if (data.id && prev.some((p) => p.id === data.id)) {
+                  return prev;
+                }
+                return [
+                  ...prev,
+                  {
+                    ...data,
+                    isSelf: Boolean(currentUser?.id && data.user_id === currentUser.id),
+                  },
+                ];
+              });
+            }
+          } catch (err) {
+            console.error('Failed to parse WS message', err);
+          }
+        };
+
+        ws.onclose = () => {
+          if (!isSubscribed) return;
+          setConnected(false);
+          if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+
+          // Try reconnecting in 3 seconds
+          if (!reconnectTimeoutRef.current) {
+            reconnectTimeoutRef.current = setTimeout(() => {
+              reconnectTimeoutRef.current = null;
+              if (isSubscribed) connectWS();
+            }, 3000);
+          }
+        };
+
+        ws.onerror = () => {
+          if (!isSubscribed) return;
+          setConnected(false);
+        };
+      } catch (err) {
+        console.error('WebSocket connection error', err);
+        setConnected(false);
+      }
     }
 
-    setConnected(false);
-
-    const userId = currentUser?.id || 'guest';
-    const userName = encodeURIComponent(currentUser?.name || guestName || 'Mehmon');
-    const userAvatar = encodeURIComponent(currentUser?.avatar_url || '');
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname === 'localhost' ? 'localhost:8080' : window.location.host;
-    const wsUrl = `${protocol}//${host}/api/v1/ws?room=${encodeURIComponent(
-      activeRoom
-    )}&user_id=${userId}&user_name=${userName}&avatar=${userAvatar}`;
-
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setConnected(true);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        if (data.type === 'history' && Array.isArray(data.data)) {
-          setMessages(
-            data.data.map((m: any) => ({
-              ...m,
-              isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
-            }))
-          );
-          return;
-        }
-
-        if (data.type === 'message') {
-          setMessages((prev) => {
-            // Avoid duplicate message IDs
-            if (data.id && prev.some((p) => p.id === data.id)) {
-              return prev;
-            }
-            return [
-              ...prev,
-              {
-                ...data,
-                isSelf: Boolean(currentUser?.id && data.user_id === currentUser.id),
-              },
-            ];
-          });
-        }
-      } catch (err) {
-        console.error('Failed to parse WS message', err);
-      }
-    };
-
-    ws.onclose = () => {
-      setConnected(false);
-    };
-
-    ws.onerror = () => {
-      setConnected(false);
-    };
+    connectWS();
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      isSubscribed = false;
+      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch (_) {}
+        wsRef.current = null;
       }
     };
   }, [activeRoom, currentUser, guestName]);
 
-  // Scroll to bottom on messages update
+  // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = (e?: React.FormEvent) => {
+  // 4. Send message with dual transport: WebSocket if open, else HTTP POST
+  const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!inputMessage.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+    const text = inputMessage.trim();
+    if (!text || isSending) return;
+
+    const senderName = currentUser?.name || guestName.trim() || 'WZone Mehmon';
+    const senderAvatar = currentUser?.avatar_url || '';
+
+    setInputMessage('');
+
+    // If WebSocket is open, send through it
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const payload = {
+        content: text,
+        sender_name: senderName,
+        sender_avatar: senderAvatar,
+        room_id: activeRoom,
+      };
+      wsRef.current.send(JSON.stringify(payload));
       return;
     }
 
-    const payload = {
-      content: inputMessage.trim(),
-      sender_name: currentUser?.name || guestName || 'Mehmon',
-      sender_avatar: currentUser?.avatar_url || '',
-      room_id: activeRoom,
-    };
+    // Otherwise, send via HTTP REST fallback immediately
+    setIsSending(true);
+    try {
+      const res = await api.sendChatMessage({
+        room_id: activeRoom,
+        content: text,
+        sender_name: senderName,
+        sender_avatar: senderAvatar,
+      });
 
-    wsRef.current.send(JSON.stringify(payload));
-    setInputMessage('');
+      if (res.success && res.data?.message) {
+        const newMsg: ChatMessage = {
+          ...res.data.message,
+          isSelf: true,
+        };
+        setMessages((prev) => {
+          if (newMsg.id && prev.some((p) => p.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
+      }
+    } catch (err) {
+      console.error('Failed to send message via HTTP fallback', err);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const currentRoomObj = rooms.find((r) => r.id === activeRoom) || rooms[0];
@@ -220,234 +487,324 @@ export default function FullChatView({
     }
   };
 
-  const getAvatarInitials = (name?: string) => {
-    if (!name) return 'U';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  };
-
-  const getAvatarColor = (name?: string) => {
-    const colors = [
-      'bg-blue-600',
-      'bg-indigo-600',
-      'bg-purple-600',
-      'bg-emerald-600',
-      'bg-rose-600',
-      'bg-amber-600',
-    ];
-    if (!name) return colors[0];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
-    return colors[hash % colors.length];
-  };
-
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl flex flex-col md:flex-row h-[720px] overflow-hidden transition-all duration-300">
-      {/* Left Sidebar: Channels & Rooms */}
-      <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col shrink-0">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl flex flex-col md:flex-row h-[740px] overflow-hidden transition-all duration-300">
+      {/* Left Sidebar: Channels & Rooms (Compact Icon Rail by default) */}
+      <div
+        className={`border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
+          isSidebarExpanded ? 'w-full md:w-80' : 'w-full md:w-[76px]'
+        } ${showMobileChannels ? 'block h-[340px] md:h-auto' : 'hidden md:flex'}`}
+      >
         {/* Rooms Header */}
-        <div className="p-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-              <MessageSquare size={18} />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                {t.chat}
-              </h3>
-              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                Jonli kanallar & muloqot
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60">
-            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
-              {connected ? 'Onlayn' : 'Ulanmoqda'}
-            </span>
-          </div>
-        </div>
-
-        {/* Channels List */}
-        <div className="flex-1 p-3 space-y-1.5 overflow-y-auto">
-          <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-            Kanal va xonalar
-          </div>
-          {rooms.map((room) => {
-            const isActive = room.id === activeRoom;
-            return (
-              <button
-                key={room.id}
-                onClick={() => setActiveRoom(room.id)}
-                className={`w-full text-left p-3 rounded-2xl transition-all flex items-start gap-3 group relative ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 font-bold'
-                    : 'hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-medium'
-                }`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-slate-700'
-                  }`}
-                >
-                  {room.icon === 'users' && <Users size={16} />}
-                  {room.icon === 'briefcase' && <Briefcase size={16} />}
-                  {room.icon === 'help-circle' && <HelpCircle size={16} />}
-                  {(room.icon === 'hash' || !room.icon) && <Hash size={16} />}
+        <div
+          className={`p-3.5 border-b border-slate-200/80 dark:border-slate-800 flex items-center ${
+            isSidebarExpanded ? 'justify-between' : 'justify-center'
+          }`}
+        >
+          {isSidebarExpanded ? (
+            <>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                  <MessageSquare size={18} />
                 </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold truncate">
-                      #{room.id}
-                    </span>
-                    {isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                    )}
-                  </div>
-                  <p
-                    className={`text-[11px] truncate mt-0.5 ${
-                      isActive ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'
-                    }`}
-                  >
-                    {room.name}
+                <div className="min-w-0">
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                    {t.chat}
+                  </h3>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                    {lang === 'ru' ? 'Каналы и общение' : lang === 'en' ? 'Channels & chat' : 'Kanallar & muloqot'}
                   </p>
                 </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Current User Card at bottom of sidebar */}
-        <div className="p-3.5 border-t border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 flex items-center justify-between gap-3">
-          {currentUser ? (
-            <div className="flex items-center gap-2.5 min-w-0">
-              {currentUser.avatar_url ? (
-                <img
-                  src={currentUser.avatar_url}
-                  alt={currentUser.name}
-                  className="w-9 h-9 rounded-xl object-cover ring-2 ring-blue-500/20"
-                />
-              ) : (
-                <div
-                  className={`w-9 h-9 rounded-xl text-white font-bold flex items-center justify-center text-xs shadow-sm ${getAvatarColor(
-                    currentUser.name
-                  )}`}
-                >
-                  {getAvatarInitials(currentUser.name)}
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                  {currentUser.name}
-                </p>
-                <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                  Avtorizatsiyadan o‘tgan
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="w-full flex items-center justify-between gap-2">
-              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                Mehmon rejimi
               </div>
               <button
-                onClick={onOpenAuth}
-                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm"
+                type="button"
+                onClick={() => setIsSidebarExpanded(false)}
+                className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition cursor-pointer"
+                title={lang === 'ru' ? 'Свернуть в иконки' : lang === 'en' ? 'Collapse to icons' : 'Ikonkalarga yig‘ish'}
               >
-                {t.loginBtn}
+                <ChevronLeft size={18} />
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setIsSidebarExpanded(true)}
+                className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 hover:scale-105 transition cursor-pointer"
+                title={lang === 'ru' ? 'Развернуть список каналов' : lang === 'en' ? 'Expand channels list' : 'Kanallar ro‘yxatini ochish'}
+              >
+                <MessageSquare size={19} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsSidebarExpanded(true)}
+                className="p-1 text-slate-400 hover:text-blue-600 transition cursor-pointer"
+                title="Kengaytirish"
+              >
+                <ChevronRight size={14} />
               </button>
             </div>
           )}
         </div>
+
+        {/* Channels List */}
+        <div
+          className={`flex-1 p-2 space-y-2 overflow-y-auto ${
+            isSidebarExpanded ? '' : 'flex flex-col items-center'
+          }`}
+        >
+          {isSidebarExpanded && (
+            <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {lang === 'ru' ? 'Каналы и комнаты' : lang === 'en' ? 'Channels & Rooms' : 'Kanal va xonalar'}
+            </div>
+          )}
+          {rooms.map((room) => {
+            const isActive = room.id === activeRoom;
+            return (
+              <div key={room.id} className="relative group w-full flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveRoom(room.id);
+                    setShowMobileChannels(false);
+                  }}
+                  className={`transition-all flex items-center cursor-pointer relative ${
+                    isSidebarExpanded
+                      ? `w-full text-left p-3 rounded-2xl gap-3 ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 font-bold'
+                            : 'hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-medium'
+                        }`
+                      : `w-11 h-11 rounded-2xl justify-center ${
+                          isActive
+                            ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-105'
+                            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`
+                  }`}
+                  title={room.name}
+                >
+                  {/* Active Indicator bar when collapsed */}
+                  {!isSidebarExpanded && isActive && (
+                    <span className="absolute -left-1.5 top-2.5 bottom-2.5 w-1 bg-blue-600 rounded-r-full" />
+                  )}
+
+                  <div
+                    className={`${
+                      isSidebarExpanded
+                        ? `w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition ${
+                            isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 dark:group-hover:bg-slate-700'
+                          }`
+                        : 'flex items-center justify-center'
+                    }`}
+                  >
+                    {room.icon === 'users' && <Users size={isSidebarExpanded ? 16 : 19} />}
+                    {room.icon === 'briefcase' && <Briefcase size={isSidebarExpanded ? 16 : 19} />}
+                    {room.icon === 'help-circle' && <HelpCircle size={isSidebarExpanded ? 16 : 19} />}
+                    {(room.icon === 'hash' || !room.icon) && <Hash size={isSidebarExpanded ? 16 : 19} />}
+                  </div>
+
+                  {isSidebarExpanded && (
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold truncate">{room.name}</span>
+                      </div>
+                      <p
+                        className={`text-[11px] truncate mt-0.5 ${
+                          isActive ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        {room.description}
+                      </p>
+                    </div>
+                  )}
+                </button>
+
+                {/* Floating Tooltip when Collapsed */}
+                {!isSidebarExpanded && (
+                  <div className="pointer-events-none absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 hidden group-hover:flex flex-col whitespace-nowrap bg-slate-900/95 dark:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl shadow-2xl border border-slate-700/80 backdrop-blur-md">
+                    <span className="font-extrabold text-[12px]">{room.name}</span>
+                    <span className="text-[10px] text-blue-400 font-semibold">#{room.id}</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 max-w-[200px] text-wrap">
+                      {room.description}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* User Card in Sidebar */}
+        <div
+          className={`p-2.5 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 ${
+            isSidebarExpanded ? '' : 'flex justify-center'
+          }`}
+        >
+          {currentUser ? (
+            isSidebarExpanded ? (
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-100/80 dark:bg-slate-800/80">
+                <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-sm">
+                  <ChatAvatar
+                    avatarUrl={currentUser.avatar_url}
+                    name={currentUser.name}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">
+                    <span>{currentUser.name}</span>
+                    {currentUser.auth_provider === 'oneid' && (
+                      <ShieldCheck size={13} className="text-blue-500 shrink-0" />
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-400 truncate">
+                    {currentUser.email}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="relative group">
+                <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-sm relative ring-2 ring-blue-500/30 cursor-pointer">
+                  <ChatAvatar
+                    avatarUrl={currentUser.avatar_url}
+                    name={currentUser.name}
+                  />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
+                </div>
+                {/* User Tooltip */}
+                <div className="pointer-events-none absolute left-full ml-3 bottom-0 z-50 hidden group-hover:flex flex-col whitespace-nowrap bg-slate-900/95 dark:bg-slate-800 text-white text-xs px-3 py-2 rounded-xl shadow-2xl border border-slate-700/80 backdrop-blur-md">
+                  <span className="font-extrabold text-[12px]">{currentUser.name}</span>
+                  <span className="text-[10px] text-slate-400">{currentUser.email}</span>
+                </div>
+              </div>
+            )
+          ) : isSidebarExpanded ? (
+            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 flex items-center justify-between gap-2">
+              <div className="text-[11px] font-semibold text-blue-900 dark:text-blue-200">
+                {lang === 'ru' ? 'Вы не авторизованы' : lang === 'en' ? 'Not signed in' : 'Ro‘yxatdan o‘tmagansiz'}
+              </div>
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-sm cursor-pointer"
+              >
+                {t.loginBtn}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900 transition cursor-pointer"
+              title={t.loginBtn}
+            >
+              <User size={18} />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Right Column: Chat Feed & Active Conversation */}
-      <div className="flex-1 flex flex-col bg-slate-50/30 dark:bg-slate-900/40">
-        {/* Active Room Top Bar */}
-        <div className="px-6 py-3.5 border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center font-extrabold border border-blue-200 dark:border-blue-900/60">
-              <Hash size={20} />
+      {/* Right Area: Messages & Input */}
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-50/40 dark:bg-slate-900/40">
+        {/* Chat Room Header */}
+        <div className="p-3 sm:p-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {/* Mobile Channel Switcher Button */}
+            <button
+              type="button"
+              onClick={() => setShowMobileChannels(!showMobileChannels)}
+              className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition shrink-0 border border-slate-200 dark:border-slate-700"
+              title="Kanallarni ko‘rish"
+            >
+              <Hash size={14} className="text-blue-500" />
+              <span className="truncate max-w-[120px]">{currentRoomObj.name}</span>
+              <ChevronRight
+                size={13}
+                className={`transform transition ${showMobileChannels ? 'rotate-90' : ''}`}
+              />
+            </button>
+            <div className="hidden md:flex w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 items-center justify-center font-bold shrink-0">
+              <Hash size={18} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+            <div className="min-w-0 hidden md:block">
+              <h4 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                <span className="truncate">{currentRoomObj.name}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase shrink-0">
                   #{currentRoomObj.id}
-                </h3>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                  {currentRoomObj.name}
                 </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate hidden sm:block">
                 {currentRoomObj.description}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-              <span className={`w-2.5 h-2.5 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-              <span>{connected ? 'PostgreSQL Jonli efir' : 'Qayta ulanmoqda...'}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => fetchMessagesViaHTTP(activeRoom)}
+              title={lang === 'ru' ? 'Обновить сообщения' : lang === 'en' ? 'Refresh messages' : 'Xabarlarni yangilash'}
+              className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-600 transition shrink-0"
+            >
+              <RefreshCw size={15} className={loadingHistory ? 'animate-spin text-blue-600' : ''} />
+            </button>
+            <div className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+              {connected ? (
+                <>
+                  <Wifi size={13} className="text-emerald-500" />
+                  <span className="hidden sm:inline">{lang === 'ru' ? 'Реал-тайм' : lang === 'en' ? 'Real-time' : 'Real-vaqt'}</span>
+                </>
+              ) : (
+                <>
+                  <Radio size={13} className="text-blue-500 animate-pulse" />
+                  <span className="hidden sm:inline">{lang === 'ru' ? 'Экспресс' : lang === 'en' ? 'Instant' : 'Tezkor xabar'}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Messages Feed */}
-        <div className="flex-1 p-5 overflow-y-auto space-y-4 bg-slate-100/40 dark:bg-slate-950/40">
-          {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
-              <div className="w-16 h-16 rounded-3xl bg-blue-100/70 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner">
-                <MessageSquare size={28} />
+        {/* Message Feed */}
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-4">
+          {loadingHistory && messages.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-xs font-semibold text-slate-400 gap-2">
+              <RefreshCw size={16} className="animate-spin text-blue-600" />
+              <span>{lang === 'ru' ? 'Загрузка сообщений...' : lang === 'en' ? 'Loading messages...' : 'Xabarlar yuklanmoqda...'}</span>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <MessageSquare size={24} />
               </div>
-              <h4 className="font-extrabold text-base text-slate-900 dark:text-white">
-                #{currentRoomObj.id} kanalida suhbatni boshlang
+              <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                {lang === 'ru' ? 'В этой комнате пока нет сообщений' : lang === 'en' ? 'No messages in this channel yet' : 'Bu xonada hali xabarlar yo‘q'}
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
-                Ushbu kanalda xabarlar real vaqtda butun O‘zbekiston bo‘ylab barcha ishtirokchilarga ko‘rinadi.
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+                {lang === 'ru' ? 'Начните беседу первым или выберите быструю подсказку ниже.' : lang === 'en' ? 'Start the conversation first or pick one of the quick prompts below.' : 'Birinchi bo‘lib suhbatni boshlang yoki quyidagi tezkor xabarlardan birini tanlang.'}
               </p>
             </div>
           ) : (
-            messages.map((msg, index) => {
-              const isSelf =
-                msg.isSelf || Boolean(currentUser?.id && msg.user_id === currentUser.id);
-
+            messages.map((msg, idx) => {
+              const isSelf = msg.isSelf;
               return (
                 <div
-                  key={msg.id || index}
+                  key={msg.id || idx}
                   className={`flex gap-3 items-end ${isSelf ? 'justify-end' : 'justify-start'}`}
                 >
-                  {/* Avatar for other users */}
                   {!isSelf && (
-                    <div className="shrink-0 mb-1">
-                      {msg.sender_avatar ? (
-                        <img
-                          src={msg.sender_avatar}
-                          alt={msg.sender_name || 'Foydalanuvchi'}
-                          className="w-8 h-8 rounded-xl object-cover ring-2 ring-slate-200 dark:ring-slate-700 shadow-xs"
-                        />
-                      ) : (
-                        <div
-                          className={`w-8 h-8 rounded-xl text-white font-bold flex items-center justify-center text-[11px] shadow-xs ${getAvatarColor(
-                            msg.sender_name
-                          )}`}
-                        >
-                          {getAvatarInitials(msg.sender_name)}
-                        </div>
-                      )}
+                    <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-sm">
+                      <ChatAvatar
+                        avatarUrl={msg.sender_avatar}
+                        name={msg.sender_name}
+                      />
                     </div>
                   )}
 
-                  {/* Message Bubble Container */}
-                  <div className={`max-w-[78%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}>
-                    {/* Sender Name & Role */}
+                  <div className={`max-w-[75%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}>
                     {!isSelf && (
                       <div className="flex items-center gap-1.5 ml-1 mb-1">
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                          {msg.sender_name || 'WZone Foydalanuvchisi'}
+                        <span className="text-[11px] font-extrabold text-slate-800 dark:text-slate-200">
+                          {msg.sender_name || (lang === 'ru' ? 'Пользователь WZone' : lang === 'en' ? 'WZone User' : 'WZone Foydalanuvchisi')}
                         </span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">
                           {formatMessageTime(msg.created_at)}
@@ -484,9 +841,9 @@ export default function FullChatView({
         {/* Quick Prompts Bar */}
         <div className="px-4 py-2 bg-white/70 dark:bg-slate-900/70 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2 overflow-x-auto no-scrollbar">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
-            <Sparkles size={12} className="text-amber-500" /> Tezkor:
+            <Sparkles size={12} className="text-amber-500" /> {lang === 'ru' ? 'Быстро:' : lang === 'en' ? 'Quick:' : 'Tezkor:'}
           </span>
-          {QUICK_PROMPTS.map((prompt, i) => (
+          {(PROMPTS_BY_LANG[lang] || PROMPTS_BY_LANG.uz).map((prompt, i) => (
             <button
               key={i}
               onClick={() => {
@@ -508,43 +865,45 @@ export default function FullChatView({
           {!currentUser && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                Ismingiz:
+                {lang === 'ru' ? 'Ваше имя:' : lang === 'en' ? 'Your name:' : 'Ismingiz:'}
               </span>
               <input
                 type="text"
-                placeholder="Ismingizni kiriting..."
+                placeholder={lang === 'ru' ? 'Введите ваше имя...' : lang === 'en' ? 'Enter your name...' : 'Ismingizni kiriting...'}
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
                 className="px-3 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                (yoki to‘liq imkoniyatlar uchun{' '}
+                ({lang === 'ru' ? 'или для полного доступа ' : lang === 'en' ? 'or for full access ' : 'yoki to‘liq imkoniyatlar uchun '}
                 <button
                   type="button"
                   onClick={onOpenAuth}
                   className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
                 >
-                  kirish
+                  {t.loginBtn.toLowerCase()}
                 </button>
                 )
               </span>
             </div>
           )}
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder={`#${currentRoomObj.id} kanalida xabar yozing... (Enter orqali yuborish)`}
+              placeholder={lang === 'ru' ? `#${currentRoomObj.id}: напишите сообщение...` : lang === 'en' ? `#${currentRoomObj.id}: type a message...` : `#${currentRoomObj.id} kanalida xabar yozing...`}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 px-4 py-3 text-xs sm:text-sm font-medium rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+              className="flex-1 min-w-0 px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
             />
             <button
               type="submit"
-              disabled={!inputMessage.trim() || !connected}
-              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm transition disabled:opacity-50 shadow-lg shadow-blue-500/25 flex items-center gap-2 shrink-0 cursor-pointer"
+              disabled={!inputMessage.trim() || isSending}
+              className="px-3.5 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm transition disabled:opacity-50 shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 shrink-0 cursor-pointer min-w-[44px]"
             >
-              <span>Yuborish</span>
+              <span className="hidden sm:inline">
+                {isSending ? (lang === 'ru' ? 'Отправка...' : lang === 'en' ? 'Sending...' : 'Yuborilmoqda...') : (lang === 'ru' ? 'Отправить' : lang === 'en' ? 'Send' : 'Yuborish')}
+              </span>
               <Send size={16} />
             </button>
           </div>
