@@ -11,7 +11,7 @@ import (
 
 type VacancyRepo interface {
 	List() ([]models.Vacancy, error)
-	ListFiltered(search, category, location, jobType string, page, limit int) ([]models.Vacancy, int, error)
+	ListFiltered(search, category, location, jobType string, skills []string, page, limit int) ([]models.Vacancy, int, error)
 	Get(id string) (*models.Vacancy, error)
 	Create(v models.Vacancy) error
 	Update(v models.Vacancy) error
@@ -19,6 +19,9 @@ type VacancyRepo interface {
 	IncrementViews(id string) error
 	Count() (int, error)
 }
+
+// likeEscaper escapes LIKE wildcards so user-supplied skills match literally
+var likeEscaper = strings.NewReplacer(`\`, `\\`, "%", `\%`, "_", `\_`)
 
 type postgresVacancyRepo struct {
 	db *sql.DB
@@ -29,11 +32,11 @@ func NewPostgresVacancyRepo(db *sql.DB) VacancyRepo {
 }
 
 func (r *postgresVacancyRepo) List() ([]models.Vacancy, error) {
-	vacs, _, err := r.ListFiltered("", "", "", "", 1, 50)
+	vacs, _, err := r.ListFiltered("", "", "", "", nil, 1, 50)
 	return vacs, err
 }
 
-func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType string, page, limit int) ([]models.Vacancy, int, error) {
+func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType string, skills []string, page, limit int) ([]models.Vacancy, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -53,11 +56,21 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 	}
 
 	if strings.TrimSpace(category) != "" && strings.ToLower(category) != "all" && strings.ToLower(category) != "barchasi" {
-		cat := strings.TrimSpace(category)
-		catPrefix := strings.TrimSpace(strings.Split(cat, "&")[0])
-		whereClause += fmt.Sprintf(" AND (LOWER(category) = LOWER($%d) OR LOWER(category) LIKE LOWER($%d) || '%%' OR LOWER($%d) LIKE '%%' || LOWER(category) || '%%')", argIdx, argIdx+1, argIdx+2)
-		args = append(args, cat, catPrefix, cat)
-		argIdx += 3
+		// Comma-separated list means "any of these categories" (used by the interests survey)
+		var conds []string
+		for _, cat := range strings.Split(category, ",") {
+			cat = strings.TrimSpace(cat)
+			if cat == "" {
+				continue
+			}
+			catPrefix := strings.TrimSpace(strings.Split(cat, "&")[0])
+			conds = append(conds, fmt.Sprintf("(LOWER(category) = LOWER($%d) OR LOWER(category) LIKE LOWER($%d) || '%%' OR LOWER($%d) LIKE '%%' || LOWER(category) || '%%')", argIdx, argIdx+1, argIdx+2))
+			args = append(args, cat, catPrefix, cat)
+			argIdx += 3
+		}
+		if len(conds) > 0 {
+			whereClause += " AND (" + strings.Join(conds, " OR ") + ")"
+		}
 	}
 
 	if strings.TrimSpace(location) != "" && strings.ToLower(location) != "all" && strings.ToLower(location) != "barchasi" {
@@ -79,6 +92,18 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 		return nil, 0, err
 	}
 
+	// Skills from the user's profile boost (not filter) matching vacancies
+	orderBy := "is_featured DESC, created_at DESC, id DESC"
+	if len(skills) > 0 {
+		var score []string
+		for _, sk := range skills {
+			score = append(score, fmt.Sprintf("(CASE WHEN title ILIKE $%d OR tags ILIKE $%d OR description ILIKE $%d THEN 1 ELSE 0 END)", argIdx, argIdx, argIdx))
+			args = append(args, "%"+likeEscaper.Replace(sk)+"%")
+			argIdx++
+		}
+		orderBy = "is_featured DESC, (" + strings.Join(score, " + ") + ") DESC, created_at DESC, id DESC"
+	}
+
 	// 2. Query paginated data
 	dataQuery := fmt.Sprintf(`
 		SELECT id, title, company, COALESCE(location, ''), COALESCE(description, ''),
@@ -86,12 +111,12 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 		       COALESCE(experience, '1-3 yil'), COALESCE(tags, ''), COALESCE(company_logo, ''),
 		       COALESCE(is_verified, true), COALESCE(is_featured, false), COALESCE(views_count, 0),
 		       COALESCE((SELECT COUNT(*) FROM vacancy_comments vc WHERE vc.vacancy_id = vacancies.id), 0) AS comments_count,
-		       COALESCE(source, 'WZone') AS source,
+		       COALESCE(source, 'WZone') AS source, COALESCE(source_url, ''),
 		       COALESCE(created_by::text, ''), created_at, updated_at
 		FROM vacancies
 		%s
-		ORDER BY is_featured DESC, created_at DESC
-		LIMIT $%d OFFSET $%d`, whereClause, argIdx, argIdx+1)
+		ORDER BY %s
+		LIMIT $%d OFFSET $%d`, whereClause, orderBy, argIdx, argIdx+1)
 
 	args = append(args, limit, offset)
 
@@ -108,7 +133,7 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 			&v.ID, &v.Title, &v.Company, &v.Location, &v.Description,
 			&v.Salary, &v.Category, &v.JobType, &v.Experience, &v.Tags,
 			&v.CompanyLogo, &v.IsVerified, &v.IsFeatured, &v.ViewsCount,
-			&v.CommentsCount, &v.Source,
+			&v.CommentsCount, &v.Source, &v.SourceURL,
 			&v.CreatedBy, &v.CreatedAt, &v.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
@@ -125,7 +150,7 @@ func (r *postgresVacancyRepo) Get(id string) (*models.Vacancy, error) {
 		       COALESCE(experience, '1-3 yil'), COALESCE(tags, ''), COALESCE(company_logo, ''),
 		       COALESCE(is_verified, true), COALESCE(is_featured, false), COALESCE(views_count, 0),
 		       COALESCE((SELECT COUNT(*) FROM vacancy_comments vc WHERE vc.vacancy_id = vacancies.id), 0) AS comments_count,
-		       COALESCE(source, 'WZone') AS source,
+		       COALESCE(source, 'WZone') AS source, COALESCE(source_url, ''),
 		       COALESCE(created_by::text, ''), created_at, updated_at
 		FROM vacancies
 		WHERE id = $1`
@@ -134,7 +159,7 @@ func (r *postgresVacancyRepo) Get(id string) (*models.Vacancy, error) {
 		&v.ID, &v.Title, &v.Company, &v.Location, &v.Description,
 		&v.Salary, &v.Category, &v.JobType, &v.Experience, &v.Tags,
 		&v.CompanyLogo, &v.IsVerified, &v.IsFeatured, &v.ViewsCount,
-		&v.CommentsCount, &v.Source,
+		&v.CommentsCount, &v.Source, &v.SourceURL,
 		&v.CreatedBy, &v.CreatedAt, &v.UpdatedAt,
 	)
 	if err != nil {

@@ -19,6 +19,7 @@ type Vacancy struct {
 	ViewsCount    int       `json:"views_count"`
 	CommentsCount int       `json:"comments_count"`
 	Source        string    `json:"source,omitempty"`
+	SourceURL     string    `json:"source_url,omitempty"`
 	CreatedBy     string    `json:"created_by,omitempty"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at,omitempty"`

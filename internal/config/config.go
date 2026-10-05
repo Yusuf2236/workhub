@@ -1,126 +1,139 @@
 package config
 
 import (
-    "fmt"
-    "strings"
-    "time"
+	"fmt"
+	"strings"
+	"time"
 
-    "github.com/spf13/viper"
+	"github.com/spf13/viper"
+	"github.com/subosito/gotenv"
 )
 
 type Config struct {
-    Server struct {
-        Port int
-        Env  string
-    }
-    JWT struct {
-        Secret     string
-        AccessTTL  time.Duration
-        RefreshTTL time.Duration
-    }
-    Database struct {
-        Host     string
-        Port     int
-        User     string
-        Password string
-        Name     string
-        SSLMode  string
-    }
-    Redis struct {
-        Host     string
-        Port     int
-        Password string
-        URL      string
-    }
-    Storage struct {
-        Provider    string
-        Endpoint    string
-        Bucket      string
-        AccessKey   string
-        SecretKey   string
-        PublicURL   string
-        UseSSL      bool
-    }
-    Firebase struct {
-        ProjectID    string
-        ClientEmail  string
-        PrivateKey   string
-        WebAPIKey    string
-    }
-    CORS struct {
-        AllowedOrigins []string
-    }
+	Server struct {
+		Port int
+		Env  string
+	}
+	JWT struct {
+		Secret     string
+		AccessTTL  time.Duration
+		RefreshTTL time.Duration
+	}
+	Database struct {
+		Host     string
+		Port     int
+		User     string
+		Password string
+		Name     string
+		SSLMode  string
+	}
+	Redis struct {
+		Host     string
+		Port     int
+		Password string
+		URL      string
+	}
+	Storage struct {
+		Provider  string
+		Endpoint  string
+		Bucket    string
+		AccessKey string
+		SecretKey string
+		PublicURL string
+		UseSSL    bool
+	}
+	Firebase struct {
+		ProjectID   string
+		ClientEmail string
+		PrivateKey  string
+		WebAPIKey   string
+	}
+	CORS struct {
+		AllowedOrigins []string
+	}
 }
 
 func Load() (*Config, error) {
-    v := viper.New()
-    v.SetConfigFile(".env")
-    _ = v.ReadInConfig()
+	// Export .env into the process environment (without overriding real env vars),
+	// because several packages read secrets such as GOOGLE_CLIENT_ID or
+	// ONEID_ENCRYPTION_KEY directly via os.Getenv.
+	_ = gotenv.Load(".env")
 
-    v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-    v.AutomaticEnv()
+	v := viper.New()
+	v.SetConfigFile(".env")
+	_ = v.ReadInConfig()
 
-    v.SetDefault("PORT", 8080)
-    v.SetDefault("APP_ENV", "development")
-    v.SetDefault("JWT_SECRET", "dev-secret")
-    v.SetDefault("JWT_ACCESS_TTL", "15m")
-    v.SetDefault("JWT_REFRESH_TTL", "168h")
-    v.SetDefault("DB_HOST", "localhost")
-    v.SetDefault("DB_PORT", 5433)
-    v.SetDefault("DB_USER", "postgres")
-    v.SetDefault("DB_PASSWORD", "postgres")
-    v.SetDefault("DB_NAME", "workhub")
-    v.SetDefault("DB_SSLMODE", "disable")
-    v.SetDefault("REDIS_HOST", "localhost")
-    v.SetDefault("REDIS_PORT", 6380)
-    v.SetDefault("REDIS_PASSWORD", "")
-    v.SetDefault("REDIS_URL", "redis://localhost:6380")
-    v.SetDefault("STORAGE_PROVIDER", "minio")
-    v.SetDefault("STORAGE_ENDPOINT", "localhost:9002")
-    v.SetDefault("STORAGE_BUCKET", "workhub")
-    v.SetDefault("STORAGE_ACCESS_KEY", "minioadmin")
-    v.SetDefault("STORAGE_SECRET_KEY", "minioadmin")
-    v.SetDefault("STORAGE_PUBLIC_URL", "http://localhost:9002/workhub")
-    v.SetDefault("STORAGE_USE_SSL", false)
-    v.SetDefault("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
 
-    cfg := &Config{}
-    cfg.Server.Port = v.GetInt("PORT")
-    cfg.Server.Env = v.GetString("APP_ENV")
-    cfg.JWT.Secret = v.GetString("JWT_SECRET")
-    cfg.JWT.AccessTTL, _ = time.ParseDuration(v.GetString("JWT_ACCESS_TTL"))
-    cfg.JWT.RefreshTTL, _ = time.ParseDuration(v.GetString("JWT_REFRESH_TTL"))
+	v.SetDefault("PORT", 8080)
+	v.SetDefault("APP_ENV", "development")
+	v.SetDefault("JWT_SECRET", "dev-secret")
+	v.SetDefault("JWT_ACCESS_TTL", "15m")
+	v.SetDefault("JWT_REFRESH_TTL", "168h")
+	v.SetDefault("DB_HOST", "localhost")
+	v.SetDefault("DB_PORT", 5433)
+	v.SetDefault("DB_USER", "postgres")
+	v.SetDefault("DB_PASSWORD", "postgres")
+	v.SetDefault("DB_NAME", "workhub")
+	v.SetDefault("DB_SSLMODE", "disable")
+	v.SetDefault("REDIS_HOST", "localhost")
+	v.SetDefault("REDIS_PORT", 6380)
+	v.SetDefault("REDIS_PASSWORD", "")
+	v.SetDefault("REDIS_URL", "redis://localhost:6380")
+	v.SetDefault("STORAGE_PROVIDER", "minio")
+	v.SetDefault("STORAGE_ENDPOINT", "localhost:9002")
+	v.SetDefault("STORAGE_BUCKET", "workhub")
+	v.SetDefault("STORAGE_ACCESS_KEY", "minioadmin")
+	v.SetDefault("STORAGE_SECRET_KEY", "minioadmin")
+	v.SetDefault("STORAGE_PUBLIC_URL", "http://localhost:9002/workhub")
+	v.SetDefault("STORAGE_USE_SSL", false)
+	v.SetDefault("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
 
-    cfg.Database.Host = v.GetString("DB_HOST")
-    cfg.Database.Port = v.GetInt("DB_PORT")
-    cfg.Database.User = v.GetString("DB_USER")
-    cfg.Database.Password = v.GetString("DB_PASSWORD")
-    cfg.Database.Name = v.GetString("DB_NAME")
-    cfg.Database.SSLMode = v.GetString("DB_SSLMODE")
+	cfg := &Config{}
+	cfg.Server.Port = v.GetInt("PORT")
+	cfg.Server.Env = v.GetString("APP_ENV")
+	cfg.JWT.Secret = v.GetString("JWT_SECRET")
+	cfg.JWT.AccessTTL, _ = time.ParseDuration(v.GetString("JWT_ACCESS_TTL"))
+	cfg.JWT.RefreshTTL, _ = time.ParseDuration(v.GetString("JWT_REFRESH_TTL"))
 
-    cfg.Redis.Host = v.GetString("REDIS_HOST")
-    cfg.Redis.Port = v.GetInt("REDIS_PORT")
-    cfg.Redis.Password = v.GetString("REDIS_PASSWORD")
-    cfg.Redis.URL = v.GetString("REDIS_URL")
+	cfg.Database.Host = v.GetString("DB_HOST")
+	cfg.Database.Port = v.GetInt("DB_PORT")
+	cfg.Database.User = v.GetString("DB_USER")
+	cfg.Database.Password = v.GetString("DB_PASSWORD")
+	cfg.Database.Name = v.GetString("DB_NAME")
+	cfg.Database.SSLMode = v.GetString("DB_SSLMODE")
 
-    cfg.Storage.Provider = v.GetString("STORAGE_PROVIDER")
-    cfg.Storage.Endpoint = v.GetString("STORAGE_ENDPOINT")
-    cfg.Storage.Bucket = v.GetString("STORAGE_BUCKET")
-    cfg.Storage.AccessKey = v.GetString("STORAGE_ACCESS_KEY")
-    cfg.Storage.SecretKey = v.GetString("STORAGE_SECRET_KEY")
-    cfg.Storage.PublicURL = v.GetString("STORAGE_PUBLIC_URL")
-    cfg.Storage.UseSSL = v.GetBool("STORAGE_USE_SSL")
+	cfg.Redis.Host = v.GetString("REDIS_HOST")
+	cfg.Redis.Port = v.GetInt("REDIS_PORT")
+	cfg.Redis.Password = v.GetString("REDIS_PASSWORD")
+	cfg.Redis.URL = v.GetString("REDIS_URL")
 
-    cfg.Firebase.ProjectID = v.GetString("FIREBASE_PROJECT_ID")
-    cfg.Firebase.ClientEmail = v.GetString("FIREBASE_CLIENT_EMAIL")
-    cfg.Firebase.PrivateKey = v.GetString("FIREBASE_PRIVATE_KEY")
-    cfg.Firebase.WebAPIKey = v.GetString("FIREBASE_WEB_API_KEY")
+	cfg.Storage.Provider = v.GetString("STORAGE_PROVIDER")
+	cfg.Storage.Endpoint = v.GetString("STORAGE_ENDPOINT")
+	cfg.Storage.Bucket = v.GetString("STORAGE_BUCKET")
+	cfg.Storage.AccessKey = v.GetString("STORAGE_ACCESS_KEY")
+	cfg.Storage.SecretKey = v.GetString("STORAGE_SECRET_KEY")
+	cfg.Storage.PublicURL = v.GetString("STORAGE_PUBLIC_URL")
+	cfg.Storage.UseSSL = v.GetBool("STORAGE_USE_SSL")
 
-    cfg.CORS.AllowedOrigins = strings.Split(v.GetString("CORS_ALLOWED_ORIGINS"), ",")
+	cfg.Firebase.ProjectID = v.GetString("FIREBASE_PROJECT_ID")
+	cfg.Firebase.ClientEmail = v.GetString("FIREBASE_CLIENT_EMAIL")
+	cfg.Firebase.PrivateKey = v.GetString("FIREBASE_PRIVATE_KEY")
+	cfg.Firebase.WebAPIKey = v.GetString("FIREBASE_WEB_API_KEY")
 
-    if cfg.JWT.Secret == "" {
-        return nil, fmt.Errorf("JWT_SECRET is required")
-    }
+	cfg.CORS.AllowedOrigins = strings.Split(v.GetString("CORS_ALLOWED_ORIGINS"), ",")
 
-    return cfg, nil
+	if cfg.JWT.Secret == "" {
+		return nil, fmt.Errorf("JWT_SECRET is required")
+	}
+	if cfg.IsProduction() && (cfg.JWT.Secret == "dev-secret" || len(cfg.JWT.Secret) < 32) {
+		return nil, fmt.Errorf("JWT_SECRET must be set to a random value of at least 32 characters in production")
+	}
+
+	return cfg, nil
+}
+
+func (c *Config) IsProduction() bool {
+	return strings.EqualFold(c.Server.Env, "production")
 }

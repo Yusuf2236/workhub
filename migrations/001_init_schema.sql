@@ -53,10 +53,13 @@ CREATE TABLE IF NOT EXISTS resumes (
 CREATE TABLE IF NOT EXISTS chat_messages (
     id UUID PRIMARY KEY,
     room_id VARCHAR(255) NOT NULL,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    sender_name VARCHAR(255) NOT NULL DEFAULT 'WZone Foydalanuvchisi',
+    sender_avatar TEXT DEFAULT '',
     content TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_chat_messages_room_created ON chat_messages(room_id, created_at ASC);
 
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY,

@@ -60,6 +60,11 @@ services:
       CORS_ALLOWED_ORIGINS: https://wzone.uz,https://www.wzone.uz,https://admin.wzone.uz,https://api.wzone.uz
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      HH_APP_TOKEN: ${HH_APP_TOKEN:-}
+      HH_CLIENT_ID: ${HH_CLIENT_ID:-}
+      HH_CLIENT_SECRET: ${HH_CLIENT_SECRET:-}
+      HH_USER_AGENT: ${HH_USER_AGENT:-WZone/1.0 (admin@wzone.uz)}
+      SCRAPER_INTERVAL: ${SCRAPER_INTERVAL:-1m}
     volumes:
       - wzone_uploads:/app/uploads
     networks: [wzone]
