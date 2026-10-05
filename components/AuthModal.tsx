@@ -58,18 +58,22 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
 
   useEffect(() => {
     const handleOneIDMessage = async (event: MessageEvent) => {
+      // Only accept auth callbacks posted by our own callback page
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'WORKHUB_ONEID_AUTH_CALLBACK' && event.data?.code) {
         setLoading(true);
         try {
           const res = await api.oneIDCallback({
             code: event.data.code,
-            pinfl: event.data.pinfl || '',
+            state: event.data.state || '',
           });
           if (res.success && res.data) {
             setAuthToken(res.data.token);
             setCurrentUser(res.data.user);
             onSuccess(res.data.user);
             onClose();
+          } else {
+            setError(res.error || 'OneID orqali kirishda xatolik');
           }
         } catch (err: any) {
           setError(err.message || 'OneID xatoligi');
@@ -176,7 +180,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
 
     // 1. Listen for postMessage from popup
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'WORKHUB_GOOGLE_AUTH_CALLBACK') {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'WZONE_GOOGLE_AUTH_CALLBACK' || event.data?.type === 'WORKHUB_GOOGLE_AUTH_CALLBACK') {
         handleAuthData(event.data);
       }
     };

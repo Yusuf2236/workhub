@@ -165,6 +165,68 @@ export interface TranslationDictionary {
   aiResumeAnalysisTitle: string;
   aiResumeAnalysisDesc: string;
 
+  // Personal Survey & Balanced Filtering
+  surveyBadge: string;
+  surveyTitle: string;
+  surveyDesc: string;
+  surveyTabIndustry: string;
+  surveyTabFormat: string;
+  surveyTabGoal: string;
+  surveyFilterAppliedBadge: string;
+  surveyClearFilterBtn: string;
+  surveyOtherRecommendedTitle: string;
+  surveyNavVacs: string;
+  surveyNavCandidates: string;
+  surveyNavAiAudit: string;
+  surveyNavChat: string;
+  surveyGoalFindJob: string;
+  surveyGoalPostResume: string;
+  surveyGoalHire: string;
+  surveyGoalMarket: string;
+  surveyFormatRemote: string;
+  surveyFormatHybrid: string;
+  surveyFormatOffice: string;
+  surveyFormatAny: string;
+  surveyMatchBadge: string;
+
+  // Chat Intro Modal (Chatning vazifalari)
+  chatIntroTitle: string;
+  chatIntroSubtitle: string;
+  chatTask1Title: string;
+  chatTask1Desc: string;
+  chatTask2Title: string;
+  chatTask2Desc: string;
+  chatTask3Title: string;
+  chatTask3Desc: string;
+  chatTask4Title: string;
+  chatTask4Desc: string;
+  chatIntroBtn: string;
+  chatIntroDontShowAgain: string;
+  chatIntroBadge: string;
+  chatInfoBtnTitle: string;
+
+  // AI Resume Audit View
+  aiResumeAuditTitle: string;
+  aiResumeAuditSub: string;
+  aiAuditScoreLabel: string;
+  aiAuditStrengths: string;
+  aiAuditWeaknesses: string;
+  aiAuditMatchingJobs: string;
+  aiAuditScanBtn: string;
+  aiAuditSelectResume: string;
+  aiAuditNoResume: string;
+  aiAuditCreateResumeBtn: string;
+  aiAuditGoodScore: string;
+  aiAuditAtsTip: string;
+  aiAuditMatchPercent: string;
+  aiAuditApplyBtn: string;
+
+  // Vacancy Refresh & Updates
+  vacanciesRefreshedBadge: string;
+  refreshBtn: string;
+  liveUpdatedNotice: string;
+  autoUpdatingNotice: string;
+
   // Right Sidebar & Footer
   mobileTitle: string;
   mobileSubtitle: string;
@@ -329,7 +391,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     logoutBtn: 'Tizimdan chiqish',
     notifications: 'Bildirishnomalar',
     chat: 'Xabarlar & Muloqot',
-    liveChat: 'WZone Jonli Muloqot',
+    liveChat: 'WZone Muloqot',
 
     navFeed: 'Asosiy',
     navVacancies: 'Vakansiyalar',
@@ -396,7 +458,7 @@ export const translations: Record<Language, TranslationDictionary> = {
 
     feedHeroBadge: '✨ WZone 2026',
     feedHeroTitle: 'O‘zbekistondagi eng yirik ish platformasi',
-    feedHeroSub: '5,000+ vakansiyalar, OneID davlat verifikatsiyasi, jonli chat va soha yangiliklari.',
+    feedHeroSub: 'Vakansiyalar, OneID davlat verifikatsiyasi va mutaxassislar bilan muloqot.',
     feedHeroBtn: 'Barcha vakansiyalar →',
     topCompaniesTitle: 'Top Kompaniyalar',
     pollTitle: '📊 Haftaning So‘rovnomasi',
@@ -407,17 +469,17 @@ export const translations: Record<Language, TranslationDictionary> = {
     pollOption3: 'Mobil Native (Kotlin & Swift)',
     pollOption4: 'Fintech & Kiberxavfsizlik',
     communityTitle: 'Hamjamiyat & Yangiliklar',
-    liveFeedBadge: 'Jonli Lenta',
+    liveFeedBadge: 'Lenta',
     featuredVacanciesTitle: 'Haftaning Sara Vakansiyalari',
     viewAllLink: 'Barchasi →',
     salaryIndexTitle: '📈 2026-yil IT Maoshlar Indeksi',
     salaryIndexSub: 'Mehnat bozori tahlili',
-    commentsTitle: 'Jonli Muhokamalar & Izohlar',
+    commentsTitle: 'Muhokamalar & Izohlar',
     commentPlaceholder: 'Fikringiz yoki maslahatingizni yozing...',
     commentSubmitBtn: 'Yuborish',
     newsTitle: 'Yangiliklar & Karyera Tahlillari',
     newsSubtitle: 'O‘zbekiston va jahon mehnat bozoridagi eng muhim o‘zgarishlar va ekspert maslahatlari',
-    realTimeBadge: 'REAL-TIME',
+    realTimeBadge: 'YANGI',
     readFull: 'To‘liq o‘qish',
     commentsSubtitle: 'Dasturchilar, HR menejerlar va nomzodlar o‘rtasidagi professional tajriba almashinuvi',
     guestUser: 'Mehmon foydalanuvchi',
@@ -439,11 +501,11 @@ export const translations: Record<Language, TranslationDictionary> = {
     perMonth: '/oy',
     heroWelcomeBadge: '✨ WZone 2026 Raqamli Mehnat Bozoriga Xush Kelibsiz!',
     heroMainHeading: 'Karyerangizni yangi bosqichga olib chiqing',
-    heroMainDesc: 'O‘zbekiston va xalqaro bozorning eng so‘nggi vakansiyalari, tahliliy yangiliklar, soha mutaxassislari bilan jonli muloqot va sun’iy intellekt rezyume tekshiruvi.',
+    heroMainDesc: 'O‘zbekiston bo‘yicha eng so‘nggi vakansiyalar, mutaxassislar bilan muloqot va sun’iy intellekt rezyume tekshiruvi.',
 
     // Endless Feed Stream Keys
-    streamTitle: '🔥 Jonli Professional Lenta & Muhokamalar',
-    streamSubtitle: 'Har kungi yangi ishlar, tahliliy yangiliklar, jamoatchilik fikrlari va karyera maslahatlari oqimi',
+    streamTitle: 'Lenta: vakansiyalar va izohlar',
+    streamSubtitle: 'Eng yangi vakansiyalar va ular ostidagi izohlar, har daqiqada yangilanadi',
     streamFilterAll: 'Barchasi',
     streamFilterJobs: '💼 Yangi Ishlar',
     streamFilterNews: '📰 Yangiliklar',
@@ -468,7 +530,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     closeBtn: 'Yopish',
 
     applicationsTitle: 'Mening arizalarim',
-    applicationsSubtitle: 'Siz topshirgan arizalar va ularning real vaqt holati',
+    applicationsSubtitle: 'Siz topshirgan arizalar va ularning holati',
     noApplications: 'Hozircha hech qanday vakansiyaga ariza topshirmagansiz',
     statusSubmitted: 'Yuborildi',
     statusReviewing: 'Ko‘rib chiqilmoqda',
@@ -508,7 +570,69 @@ export const translations: Record<Language, TranslationDictionary> = {
 
     // LeftSidebar AI card
     aiResumeAnalysisTitle: 'AI Rezyume tahlili',
-    aiResumeAnalysisDesc: 'WZone AI sizning ko‘nikmalaringizga mos eng sara vakansiyalarni real-vaqtda tavsiya qiladi.',
+    aiResumeAnalysisDesc: 'WZone AI sizning ko‘nikmalaringizga mos eng sara vakansiyalarni tavsiya qiladi.',
+
+    // Personal Survey & Balanced Filtering
+    surveyBadge: '📊 Shaxsiy Qiziqishlar So‘rovnomasi',
+    surveyTitle: 'O‘zingizga mos eng ma’qul vakansiyalarni kashf eting',
+    surveyDesc: 'Qaysi soha va ish formati sizni qiziqtiradi? O‘z sohangizni tanlang — lenta darhol siz uchun moslashtiriladi.',
+    surveyTabIndustry: 'Yo‘nalish & Soha',
+    surveyTabFormat: 'Ish Formati',
+    surveyTabGoal: 'Asosiy Maqsad',
+    surveyFilterAppliedBadge: 'Sizning qiziqishingiz bo‘yicha moslangan',
+    surveyClearFilterBtn: 'Barcha vakansiyalarni ko‘rish',
+    surveyOtherRecommendedTitle: 'Tavsiya etilayotgan boshqa sara vakansiyalar',
+    surveyNavVacs: 'Vakansiyalarni ochish',
+    surveyNavCandidates: 'Nomzodlarni ko‘rish',
+    surveyNavAiAudit: 'AI Rezyume Audit',
+    surveyNavChat: 'Muloqot Chat',
+    surveyGoalFindJob: 'Mos vakansiya topish',
+    surveyGoalPostResume: 'Rezyume joylashtirish',
+    surveyGoalHire: 'Mutaxassis yollash',
+    surveyGoalMarket: 'Bozor va maoshlarni kuzatish',
+    surveyFormatRemote: 'Masofaviy (Remote)',
+    surveyFormatHybrid: 'Gibrid (Ofis + Uy)',
+    surveyFormatOffice: 'Faqat ofisda',
+    surveyFormatAny: 'Barcha formatlar',
+    surveyMatchBadge: '⚡ Qiziqishingizga mos',
+
+    // Chat Intro Modal (Chatning vazifalari)
+    chatIntroTitle: 'WZone Chat — Asosiy vazifalari va imkoniyatlari',
+    chatIntroSubtitle: 'Ish beruvchilar va nomzodlar o‘rtasida to‘g‘ridan-to‘g‘ri, xavfsiz va samarali aloqa tizimi',
+    chatTask1Title: 'To‘g‘ridan-to‘g‘ri aloqa & Suhbat',
+    chatTask1Desc: 'Vositachilarsiz rekruter va nomzod o‘rtasida to‘g‘ridan-to‘g‘ri bog‘lanish, suhbat (intervyu) vaqtini belgilash va tezkor javob olish.',
+    chatTask2Title: 'Hujjatlar va Rezyumelar almashinuvi',
+    chatTask2Desc: 'Portfolio havolalari, test topshiriqlari natijalari va professional rezyumelarni xavfsiz almashish imkoniyati.',
+    chatTask3Title: 'Oferta va shartlarni kelishish',
+    chatTask3Desc: 'Maosh, ish formati (remote/ofis), boshlanish sanasi va boshqa mehnat shartlarini rasmiylashtirishdan oldin batafsil kelishib olish.',
+    chatTask4Title: 'Xavfsizlik va Etika kafolati',
+    chatTask4Desc: 'Platformada firibgarlik va noqonuniy talablarga yo‘l qo‘yilmaydi. Shaxsiy bank sirlari va hisob parollarini hech kimga bermang.',
+    chatIntroBtn: 'Tushundim, chatga kirish',
+    chatIntroDontShowAgain: 'Qaytadan ko‘rsatilmasin',
+    chatIntroBadge: '1 Martalik Yo‘riqnoma',
+    chatInfoBtnTitle: 'Chat vazifalari haqida',
+
+    // AI Resume Audit View
+    aiResumeAuditTitle: 'WZone AI — Rezyume Audit va Ko‘nikmalar Tahlili',
+    aiResumeAuditSub: 'Sun’iy intellekt rezyumengizni chuqur tahlil qiladi, ATS talablariga muvofiqligini tekshiradi va mos vakansiyalarni tavsiya qiladi.',
+    aiAuditScoreLabel: 'Umumiy ATS moslik balli',
+    aiAuditStrengths: 'Kuchli tomonlari & Yutuqlar',
+    aiAuditWeaknesses: 'Yaxshilash bo‘yicha AI tavsiyalar',
+    aiAuditMatchingJobs: 'Rezyumeingizga eng mos vakansiyalar',
+    aiAuditScanBtn: 'Rezyumeni qayta tahlil qilish',
+    aiAuditSelectResume: 'Tahlil uchun rezyumeni tanlang',
+    aiAuditNoResume: 'Tahlil qilish uchun avval rezyume yarating yoki yuklang',
+    aiAuditCreateResumeBtn: 'Rezyume yaratish',
+    aiAuditGoodScore: 'A’lo darajadagi rezyume',
+    aiAuditAtsTip: 'ATS filtrlardan o‘tish ehtimoli yuqori',
+    aiAuditMatchPercent: 'Moslik',
+    aiAuditApplyBtn: 'Ariza topshirish',
+
+    // Vacancy Refresh & Updates
+    vacanciesRefreshedBadge: 'Vakansiyalar yangilandi',
+    refreshBtn: 'Yangilash',
+    liveUpdatedNotice: 'Yangilandi',
+    autoUpdatingNotice: 'Avtomatik yangilanmoqda',
 
     mobileTitle: 'WZone Mobil Ilova',
     mobileSubtitle: 'Barcha vakansiyalar va tezkor suhbatlar cho‘ntagingizda.',
@@ -516,7 +640,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     telegramHandle: '@WZoneUzBot',
     telegramDesc: 'Yangi vakansiyalar chiqqanda Telegram orqali birinchilardan bo‘lib bilib oling.',
     telegramBtn: 'Botga ulanish',
-    statsTitle: 'JONLI KO‘RSATKICHLAR',
+    statsTitle: 'KO‘RSATKICHLAR',
     activeVacancies: 'Faol vakansiyalar',
     verifiedCompanies: 'Tasdiqlangan korxonalar',
     verifiedPercent: '100% Tasdiqlangan',
@@ -672,7 +796,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     logoutBtn: 'Выйти из системы',
     notifications: 'Уведомления',
     chat: 'Сообщения & Чат',
-    liveChat: 'Живой чат WZone',
+    liveChat: 'Чат WZone',
 
     navFeed: 'Главная',
     navVacancies: 'Вакансии',
@@ -739,7 +863,7 @@ export const translations: Record<Language, TranslationDictionary> = {
 
     feedHeroBadge: '✨ WZone 2026',
     feedHeroTitle: 'Крупнейшая платформа карьеры и вакансий в Узбекистане',
-    feedHeroSub: '5,000+ вакансий, государственная верификация OneID, живой чат и аналитика рынка.',
+    feedHeroSub: 'Вакансии, государственная верификация OneID и общение со специалистами.',
     feedHeroBtn: 'Все вакансии →',
     topCompaniesTitle: 'Топ Компании',
     pollTitle: '📊 Опрос Недели',
@@ -750,17 +874,17 @@ export const translations: Record<Language, TranslationDictionary> = {
     pollOption3: 'Мобильная разработка (Kotlin & Swift)',
     pollOption4: 'Финтех и Кибербезопасность',
     communityTitle: 'Сообщество и Новости',
-    liveFeedBadge: 'Живая Лента',
+    liveFeedBadge: 'Лента',
     featuredVacanciesTitle: 'Лучшие Вакансии Недели',
     viewAllLink: 'Все →',
     salaryIndexTitle: '📈 Индекс зарплат в IT на 2026 год',
     salaryIndexSub: 'Анализ рынка труда',
-    commentsTitle: 'Живые обсуждения и отзывы',
+    commentsTitle: 'Обсуждения и отзывы',
     commentPlaceholder: 'Напишите ваше мнение или совет...',
     commentSubmitBtn: 'Отправить',
     newsTitle: 'Новости и Аналитика Карьеры',
     newsSubtitle: 'Ключевые изменения рынка труда Узбекистана и экспертные советы',
-    realTimeBadge: 'В РЕАЛЬНОМ ВРЕМЕНИ',
+    realTimeBadge: 'НОВОЕ',
     readFull: 'Читать далее',
     commentsSubtitle: 'Профессиональный обмен опытом между разработчиками, HR и соискателями',
     guestUser: 'Гость',
@@ -782,11 +906,11 @@ export const translations: Record<Language, TranslationDictionary> = {
     perMonth: '/мес',
     heroWelcomeBadge: '✨ Добро пожаловать на цифровую платформу WZone 2026!',
     heroMainHeading: 'Выведите вашу карьеру на новый уровень',
-    heroMainDesc: 'Свежие вакансии Узбекистана и международного рынка, аналитика, живое профессиональное общение и AI-аудит резюме.',
+    heroMainDesc: 'Свежие вакансии Узбекистана, общение со специалистами и AI-аудит резюме.',
 
     // Endless Feed Stream Keys
-    streamTitle: '🔥 Живая Профессиональная Лента и Обсуждения',
-    streamSubtitle: 'Ежедневный поток новых вакансий, аналитических новостей, комментариев сообщества и карьерных советов',
+    streamTitle: 'Лента: вакансии и комментарии',
+    streamSubtitle: 'Новые вакансии и комментарии к ним, обновляется каждую минуту',
     streamFilterAll: 'Все публикации',
     streamFilterJobs: '💼 Новые Вакансии',
     streamFilterNews: '📰 Новости',
@@ -811,7 +935,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     closeBtn: 'Закрыть',
 
     applicationsTitle: 'Мои заявки',
-    applicationsSubtitle: 'Статус ваших отправленных откликов в реальном времени',
+    applicationsSubtitle: 'Статус ваших отправленных откликов',
     noApplications: 'Вы еще не откликались ни на одну вакансию',
     statusSubmitted: 'Отправлено',
     statusReviewing: 'На рассмотрении',
@@ -851,7 +975,69 @@ export const translations: Record<Language, TranslationDictionary> = {
 
     // LeftSidebar AI card
     aiResumeAnalysisTitle: 'AI Анализ резюме',
-    aiResumeAnalysisDesc: 'WZone AI рекомендует лучшие вакансии под ваши навыки в реальном времени.',
+    aiResumeAnalysisDesc: 'WZone AI рекомендует лучшие вакансии под ваши навыки.',
+
+    // Personal Survey & Balanced Filtering
+    surveyBadge: '📊 Персональный опрос интересов',
+    surveyTitle: 'Откройте для себя вакансии, подходящие именно вам',
+    surveyDesc: 'Какая сфера и формат работы вас интересуют? Выберите ваше направление — лента мгновенно подстроится под вас.',
+    surveyTabIndustry: 'Сфера & Направление',
+    surveyTabFormat: 'Формат работы',
+    surveyTabGoal: 'Главная цель',
+    surveyFilterAppliedBadge: 'Подобрано по вашим интересам',
+    surveyClearFilterBtn: 'Показать все вакансии',
+    surveyOtherRecommendedTitle: 'Другие рекомендуемые лучшие вакансии',
+    surveyNavVacs: 'Открыть вакансии',
+    surveyNavCandidates: 'Смотреть кандидатов',
+    surveyNavAiAudit: 'AI Аудит резюме',
+    surveyNavChat: 'Открыть чат',
+    surveyGoalFindJob: 'Найти подходящую работу',
+    surveyGoalPostResume: 'Разместить резюме',
+    surveyGoalHire: 'Нанять специалиста',
+    surveyGoalMarket: 'Мониторинг рынка и зарплат',
+    surveyFormatRemote: 'Удаленная работа (Remote)',
+    surveyFormatHybrid: 'Гибридный график',
+    surveyFormatOffice: 'Только в офисе',
+    surveyFormatAny: 'Любой формат',
+    surveyMatchBadge: '⚡ Подходит вам',
+
+    // Chat Intro Modal (Chatning vazifalari)
+    chatIntroTitle: 'WZone Чат — Основные задачи и правила общения',
+    chatIntroSubtitle: 'Система прямого, безопасного и эффективного взаимодействия между работодателями и кандидатами',
+    chatTask1Title: 'Прямая связь & Собеседования',
+    chatTask1Desc: 'Прямой контакт между рекрутером и кандидатом без посредников, согласование времени онлайн-интервью и быстрый отклик.',
+    chatTask2Title: 'Обмен документами и резюме',
+    chatTask2Desc: 'Безопасная передача ссылок на портфолио, результатов тестовых заданий и файлов профессиональных резюме.',
+    chatTask3Title: 'Обсуждение условий и оффера',
+    chatTask3Desc: 'Обсуждение заработной платы, графика (удаленно/офис), даты выхода на работу и трудовых условий до официального оформления.',
+    chatTask4Title: 'Безопасность и профессиональная этика',
+    chatTask4Desc: 'На платформе запрещены спам, оскорбления и мошенничество. Никогда не передавайте личные пароли и банковские данные.',
+    chatIntroBtn: 'Понятно, перейти в чат',
+    chatIntroDontShowAgain: 'Больше не показывать',
+    chatIntroBadge: 'Официальное руководство',
+    chatInfoBtnTitle: 'О задачах чата',
+
+    // AI Resume Audit View
+    aiResumeAuditTitle: 'WZone AI — Аудит резюме и анализ навыков',
+    aiResumeAuditSub: 'Искусственный интеллект проанализирует ваше резюме, проверит соответствие ATS-стандартам и порекомендует идеальные вакансии.',
+    aiAuditScoreLabel: 'Общий ATS-балл соответствия',
+    aiAuditStrengths: 'Сильные стороны & Достижения',
+    aiAuditWeaknesses: 'Рекомендации AI по улучшению',
+    aiAuditMatchingJobs: 'Вакансии, наиболее подходящие вашему резюме',
+    aiAuditScanBtn: 'Пересканировать резюме',
+    aiAuditSelectResume: 'Выберите резюме для аудита',
+    aiAuditNoResume: 'Создайте или загрузите резюме для запуска AI-аудита',
+    aiAuditCreateResumeBtn: 'Создать резюме',
+    aiAuditGoodScore: 'Отличный результат резюме',
+    aiAuditAtsTip: 'Высокая вероятность прохождения ATS-фильтров',
+    aiAuditMatchPercent: 'Совпадение',
+    aiAuditApplyBtn: 'Откликнуться',
+
+    // Vacancy Refresh & Updates
+    vacanciesRefreshedBadge: 'Вакансии обновлены',
+    refreshBtn: 'Обновить',
+    liveUpdatedNotice: 'Обновлено',
+    autoUpdatingNotice: 'Автоматическое обновление',
 
     mobileTitle: 'Мобильное приложение WZone',
     mobileSubtitle: 'Все вакансии и быстрые чаты в вашем кармане.',
@@ -859,7 +1045,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     telegramHandle: '@WZoneUzBot',
     telegramDesc: 'Получайте уведомления о новых вакансиях прямо в Telegram.',
     telegramBtn: 'Подключить бота',
-    statsTitle: 'ЖИВАЯ СТАТИСТИКА',
+    statsTitle: 'СТАТИСТИКА',
     activeVacancies: 'Активные вакансии',
     verifiedCompanies: 'Проверенные компании',
     verifiedPercent: '100% Проверено',
@@ -1015,7 +1201,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     logoutBtn: 'Sign Out',
     notifications: 'Notifications',
     chat: 'Messages & Chat',
-    liveChat: 'WZone Live Chat',
+    liveChat: 'WZone Chat',
 
     navFeed: 'Feed',
     navVacancies: 'Jobs',
@@ -1082,7 +1268,7 @@ export const translations: Record<Language, TranslationDictionary> = {
 
     feedHeroBadge: '✨ WZone 2026',
     feedHeroTitle: 'The Premier Career & Jobs Platform in Uzbekistan',
-    feedHeroSub: '5,000+ vacancies, OneID sovereign passport verification, live chat & market analytics.',
+    feedHeroSub: 'Vacancies, OneID verification and chat with professionals.',
     feedHeroBtn: 'All Vacancies →',
     topCompaniesTitle: 'Top Companies',
     pollTitle: '📊 Weekly Career Poll',
@@ -1093,17 +1279,17 @@ export const translations: Record<Language, TranslationDictionary> = {
     pollOption3: 'Mobile Native (Kotlin & Swift)',
     pollOption4: 'Fintech & Cybersecurity',
     communityTitle: 'Community & Industry News',
-    liveFeedBadge: 'Live Feed',
+    liveFeedBadge: 'Feed',
     featuredVacanciesTitle: 'Featured Jobs of the Week',
     viewAllLink: 'View all →',
     salaryIndexTitle: '📈 2026 Tech Salary Index',
     salaryIndexSub: 'Labor market analytics',
-    commentsTitle: 'Live Discussions & Comments',
+    commentsTitle: 'Discussions & Comments',
     commentPlaceholder: 'Share your perspective or advice...',
     commentSubmitBtn: 'Post',
     newsTitle: 'News & Career Insights',
     newsSubtitle: 'Key developments in the Uzbekistan labor market and expert career advice',
-    realTimeBadge: 'REAL-TIME',
+    realTimeBadge: 'NEW',
     readFull: 'Read full article',
     commentsSubtitle: 'Professional knowledge sharing between developers, HR, and candidates',
     guestUser: 'Guest User',
@@ -1125,11 +1311,11 @@ export const translations: Record<Language, TranslationDictionary> = {
     perMonth: '/mo',
     heroWelcomeBadge: '✨ Welcome to WZone 2026 Digital Labor Market!',
     heroMainHeading: 'Take your career to the next level',
-    heroMainDesc: 'The latest local and international jobs, industry analytics, live professional discussions, and AI-powered resume screening.',
+    heroMainDesc: 'The latest jobs in Uzbekistan, chat with professionals and AI-powered resume screening.',
 
     // Endless Feed Stream Keys
-    streamTitle: '🔥 Live Professional Feed & Discussions',
-    streamSubtitle: 'Daily stream of fresh jobs, industry insights, community discussions, and career hacks',
+    streamTitle: 'Feed: vacancies & comments',
+    streamSubtitle: 'Newest vacancies and their comments, refreshed every minute',
     streamFilterAll: 'All Posts',
     streamFilterJobs: '💼 Fresh Jobs',
     streamFilterNews: '📰 News & Insights',
@@ -1154,7 +1340,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     closeBtn: 'Close',
 
     applicationsTitle: 'My Applications',
-    applicationsSubtitle: 'Track your submitted applications and real-time status',
+    applicationsSubtitle: 'Track your submitted applications and their status',
     noApplications: 'You haven’t applied to any vacancies yet',
     statusSubmitted: 'Submitted',
     statusReviewing: 'Under Review',
@@ -1194,7 +1380,69 @@ export const translations: Record<Language, TranslationDictionary> = {
 
     // LeftSidebar AI card
     aiResumeAnalysisTitle: 'AI Resume Audit',
-    aiResumeAnalysisDesc: 'WZone AI matches and recommends top vacancies tailored to your skills in real-time.',
+    aiResumeAnalysisDesc: 'WZone AI matches and recommends top vacancies tailored to your skills.',
+
+    // Personal Survey & Balanced Filtering
+    surveyBadge: '📊 Career & Interests Survey',
+    surveyTitle: 'Discover Vacancies Perfectly Tailored to You',
+    surveyDesc: 'Which field and work setup interest you? Pick your path below — your feed personalizes instantly.',
+    surveyTabIndustry: 'Field & Domain',
+    surveyTabFormat: 'Work Format',
+    surveyTabGoal: 'Primary Goal',
+    surveyFilterAppliedBadge: 'Curated based on your interests',
+    surveyClearFilterBtn: 'Show all vacancies',
+    surveyOtherRecommendedTitle: 'Other recommended top opportunities',
+    surveyNavVacs: 'Open Vacancies',
+    surveyNavCandidates: 'Browse Candidates',
+    surveyNavAiAudit: 'AI Resume Audit',
+    surveyNavChat: 'Open Chat',
+    surveyGoalFindJob: 'Find matching jobs',
+    surveyGoalPostResume: 'Publish my resume',
+    surveyGoalHire: 'Hire talent',
+    surveyGoalMarket: 'Track salary & trends',
+    surveyFormatRemote: 'Remote Work (from home)',
+    surveyFormatHybrid: 'Hybrid Setup',
+    surveyFormatOffice: 'On-site Office Only',
+    surveyFormatAny: 'All Formats',
+    surveyMatchBadge: '⚡ Matches your interest',
+
+    // Chat Intro Modal (Chatning vazifalari)
+    chatIntroTitle: 'WZone Chat — Objectives & Key Guidelines',
+    chatIntroSubtitle: 'Direct, secure, and productive communication between employers and candidates',
+    chatTask1Title: 'Direct Contact & Interview Setup',
+    chatTask1Desc: 'Direct messaging between recruiter and candidate without intermediaries, quick responses, and interview scheduling.',
+    chatTask2Title: 'Document & Resume Exchange',
+    chatTask2Desc: 'Securely share portfolio links, technical test assignments, and professional resume files.',
+    chatTask3Title: 'Offer & Terms Negotiation',
+    chatTask3Desc: 'Discuss salary expectations, format (remote/office), start dates, and working conditions before formal acceptance.',
+    chatTask4Title: 'Security & Professional Ethics',
+    chatTask4Desc: 'Strict policy against spam or unauthorized solicitations. Never disclose bank PINs or account passwords to anyone.',
+    chatIntroBtn: 'Got it, Enter Chat',
+    chatIntroDontShowAgain: 'Don’t show this again',
+    chatIntroBadge: 'Official Guide',
+    chatInfoBtnTitle: 'About Chat Objectives',
+
+    // AI Resume Audit View
+    aiResumeAuditTitle: 'WZone AI — Resume Audit & Skill Matching',
+    aiResumeAuditSub: 'Artificial intelligence audits your resume, verifies ATS compatibility, and recommends ideal vacancy matches.',
+    aiAuditScoreLabel: 'Overall ATS Match Score',
+    aiAuditStrengths: 'Key Strengths & Highlights',
+    aiAuditWeaknesses: 'AI Recommendations to Improve',
+    aiAuditMatchingJobs: 'Vacancies Best Matching Your Resume',
+    aiAuditScanBtn: 'Re-analyze Resume',
+    aiAuditSelectResume: 'Select resume for audit',
+    aiAuditNoResume: 'Create or upload a resume first to run the AI audit',
+    aiAuditCreateResumeBtn: 'Create Resume',
+    aiAuditGoodScore: 'Excellent Resume Quality',
+    aiAuditAtsTip: 'High probability of passing automated ATS filters',
+    aiAuditMatchPercent: 'Match',
+    aiAuditApplyBtn: 'Apply Now',
+
+    // Vacancy Refresh & Updates
+    vacanciesRefreshedBadge: 'Vacancies Refreshed',
+    refreshBtn: 'Refresh',
+    liveUpdatedNotice: 'Updated',
+    autoUpdatingNotice: 'Auto-updating in background',
 
     mobileTitle: 'WZone Mobile App',
     mobileSubtitle: 'All jobs and instant messages right in your pocket.',
@@ -1202,7 +1450,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     telegramHandle: '@WZoneUzBot',
     telegramDesc: 'Get instant notifications about fresh vacancies directly in Telegram.',
     telegramBtn: 'Connect Bot',
-    statsTitle: 'LIVE PLATFORM STATS',
+    statsTitle: 'PLATFORM STATS',
     activeVacancies: 'Active Vacancies',
     verifiedCompanies: 'Verified Employers',
     verifiedPercent: '100% Verified',

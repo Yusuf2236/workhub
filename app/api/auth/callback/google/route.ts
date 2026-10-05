@@ -93,7 +93,7 @@ export async function GET(request: Request) {
         // 2. Post message to opener if available
         if (window.opener && !window.opener.closed) {
           try {
-            window.opener.postMessage(authData, '*');
+            window.opener.postMessage(authData, window.location.origin);
           } catch (e) {
             console.warn('postMessage error', e);
           }
