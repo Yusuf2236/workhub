@@ -69,6 +69,7 @@ export const api = {
     category?: string;
     location?: string;
     job_type?: string;
+    skills?: string[];
     page?: number;
     limit?: number;
   }) {
@@ -77,6 +78,7 @@ export const api = {
     if (params?.category && params.category !== 'Barchasi') query.set('category', params.category);
     if (params?.location && params.location !== 'Barchasi' && params.location !== 'Barcha hududlar') query.set('location', params.location);
     if (params?.job_type && params.job_type !== 'Barchasi') query.set('job_type', params.job_type);
+    if (params?.skills?.length) query.set('skills', params.skills.join(','));
     if (params?.page) query.set('page', String(params.page));
     if (params?.limit) query.set('limit', String(params.limit));
 
@@ -96,6 +98,14 @@ export const api = {
 
   async getVacancyComments(vacancyId: string) {
     return request<{ vacancy_id: string; comments: any[]; total: number }>(`/vacancies/${vacancyId}/comments`);
+  },
+
+  async getRecentComments(page = 1, limit = 10, category?: string) {
+    const query = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (category) query.set('category', category);
+    return request<{ comments: any[]; total: number; page: number; has_more: boolean }>(
+      `/comments/recent?${query.toString()}`
+    );
   },
 
   async createVacancyComment(vacancyId: string, payload: { content: string; author_name?: string; author_avatar?: string }) {
@@ -152,11 +162,12 @@ export const api = {
   },
 
   async getOneIDLoginUrl() {
-    return request<{ auth_url: string; provider: string }>('/auth/oneid/login');
+    return request<{ auth_url: string; provider: string; state: string; is_live_configured: boolean; demo_mode: boolean }>('/auth/oneid/login');
   },
 
   async oneIDCallback(payload: {
-    pinfl: string;
+    pinfl?: string;
+    state?: string;
     full_name?: string;
     email?: string;
     phone?: string;
@@ -196,7 +207,6 @@ export const api = {
       status: 'pending' | 'approved' | 'expired';
       user?: any;
       token?: string;
-      oneid_token?: string;
       message?: string;
       citizen?: {
         pinfl: string;
@@ -250,7 +260,7 @@ export const api = {
     });
   },
 
-  async updateResume(id: string, payload: { title: string; summary: string; file_url?: string }) {
+  async updateResume(id: string, payload: { title?: string; summary?: string; file_url?: string }) {
     return request<{ resume: any }>(`/resumes/${id}`, {
       method: 'PUT',
       body: JSON.stringify(payload),

@@ -102,7 +102,7 @@ export async function GET(request: Request) {
 
         if (window.opener && !window.opener.closed) {
           try {
-            window.opener.postMessage(authData, '*');
+            window.opener.postMessage(authData, window.location.origin);
           } catch (e) {
             console.warn('postMessage error', e);
           }
@@ -118,7 +118,7 @@ export async function GET(request: Request) {
           }, 600);
         } else {
           setTimeout(function() {
-            window.location.href = '/?oneid_code=' + encodeURIComponent(code);
+            window.location.href = '/?oneid_code=' + encodeURIComponent(code) + '&oneid_state=' + encodeURIComponent(state);
           }, 800);
         }
       } catch (err) {

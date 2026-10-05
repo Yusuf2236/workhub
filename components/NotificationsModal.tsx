@@ -58,7 +58,7 @@ export default function NotificationsModal({
               <div
                 key={n.id}
                 className={`p-3.5 rounded-xl border text-xs transition ${
-                  n.is_read
+                  n.read_at
                     ? 'bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800 text-slate-500'
                     : 'bg-blue-50/50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50 text-slate-800 dark:text-slate-200 font-medium'
                 }`}
@@ -68,7 +68,7 @@ export default function NotificationsModal({
                     <h5 className="font-bold text-slate-900 dark:text-white mb-0.5">{n.title}</h5>
                     <p className="leading-relaxed">{n.message}</p>
                   </div>
-                  {!n.is_read && (
+                  {!n.read_at && (
                     <button
                       onClick={() => handleMarkAsRead(n.id)}
                       title="O‘qilgan deb belgilash"
