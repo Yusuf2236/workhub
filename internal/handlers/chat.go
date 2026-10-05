@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
 	"github.com/Yusuf2236/workhub/backend/pkg/jwt"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 )
 
 type WsClient struct {
@@ -163,11 +163,16 @@ func (c *WsClient) readPump(h *ChatHub) {
 			}
 			// Prevent spoofing: Only allow unauthenticated guests without an assigned name to set their name
 			if (c.userID == "" || c.userID == "guest") && (c.userName == "" || c.userName == "WZone Mehmon") && strings.TrimSpace(incoming.SenderName) != "" {
-				c.userName = strings.TrimSpace(incoming.SenderName)
+				name := strings.TrimSpace(incoming.SenderName)
+				if len([]rune(name)) > 80 {
+					name = string([]rune(name)[:80])
+				}
+				c.userName = name
 			}
 		}
 
-		if len(content) == 0 {
+		content = strings.TrimSpace(content)
+		if len(content) == 0 || len(content) > maxChatMessageLen {
 			continue
 		}
 
@@ -190,6 +195,33 @@ func (c *WsClient) readPump(h *ChatHub) {
 	}
 }
 
+const maxChatMessageLen = 4000
+
+// canAccessRoom enforces that direct-message rooms ("dm_<userA>_<userB>") are only
+// readable/writable by their two participants. Public rooms are open to everyone.
+func canAccessRoom(roomID, userID string) bool {
+	if roomID == "" || len(roomID) > 120 {
+		return false
+	}
+	for _, ch := range roomID {
+		if !(ch == '-' || ch == '_' || (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')) {
+			return false
+		}
+	}
+	if !strings.HasPrefix(roomID, "dm_") {
+		return true
+	}
+	if userID == "" || userID == "guest" {
+		return false
+	}
+	for _, participant := range strings.Split(strings.TrimPrefix(roomID, "dm_"), "_") {
+		if participant == userID {
+			return true
+		}
+	}
+	return false
+}
+
 func ChatHealth(c *gin.Context) {
 	globalHub.mu.RLock()
 	activeRooms := len(globalHub.rooms)
@@ -200,11 +232,11 @@ func ChatHealth(c *gin.Context) {
 	globalHub.mu.RUnlock()
 
 	response.Success(c, http.StatusOK, gin.H{
-		"status":        "chat-enabled",
-		"endpoint":      "/api/v1/ws",
-		"active_rooms":  activeRooms,
-		"active_users":  totalClients,
-		"timestamp":     time.Now().UTC().Format(time.RFC3339),
+		"status":       "chat-enabled",
+		"endpoint":     "/api/v1/ws",
+		"active_rooms": activeRooms,
+		"active_users": totalClients,
+		"timestamp":    time.Now().UTC().Format(time.RFC3339),
 	})
 }
 
@@ -212,6 +244,10 @@ func ListChatMessages(c *gin.Context) {
 	roomID := c.Query("room")
 	if roomID == "" {
 		roomID = "general"
+	}
+	if !canAccessRoom(roomID, currentUserID(c)) {
+		response.Error(c, http.StatusForbidden, "Bu suhbatga kirish huquqingiz yo‘q")
+		return
 	}
 
 	if chatRepo != nil {
@@ -249,22 +285,35 @@ func SendChatMessage(c *gin.Context) {
 	if payload.RoomID == "" {
 		payload.RoomID = "general"
 	}
-
-	userID := "guest"
-	if uid, exists := c.Get("user_id"); exists && uid != nil {
-		userID = uid.(string)
+	payload.Content = strings.TrimSpace(payload.Content)
+	if payload.Content == "" || len(payload.Content) > maxChatMessageLen {
+		response.Error(c, http.StatusBadRequest, "Xabar bo‘sh yoki juda uzun")
+		return
 	}
 
-	senderName := payload.SenderName
-	senderAvatar := payload.SenderAvatar
+	userID := "guest"
+	if uid := currentUserID(c); uid != "" {
+		userID = uid
+	}
+	if !canAccessRoom(payload.RoomID, userID) {
+		response.Error(c, http.StatusForbidden, "Bu suhbatga kirish huquqingiz yo‘q")
+		return
+	}
 
-	if userID != "" && userID != "guest" {
+	senderName := strings.TrimSpace(payload.SenderName)
+	senderAvatar := strings.TrimSpace(payload.SenderAvatar)
+	if !isSafeLink(senderAvatar) {
+		senderAvatar = ""
+	}
+
+	if userID != "guest" {
+		// Authenticated users always appear under their own identity
+		senderName = ""
+		senderAvatar = ""
 		if userRepo != nil {
 			if u, _ := userRepo.GetByID(userID); u != nil {
 				senderName = u.Name
-				if senderAvatar == "" {
-					senderAvatar = u.AvatarURL
-				}
+				senderAvatar = u.AvatarURL
 			}
 		}
 		if profileRepo != nil && senderAvatar == "" {
@@ -310,22 +359,17 @@ func ListChatRooms(c *gin.Context) {
 }
 
 func HandleChatSocket(c *gin.Context) {
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		response.Error(c, http.StatusBadRequest, "failed to upgrade websocket connection")
-		return
-	}
-
 	roomID := c.Query("room")
 	if roomID == "" {
 		roomID = "general"
 	}
 
-	userID := c.Query("user_id")
-	userName := c.Query("user_name")
-	avatarURL := c.Query("avatar")
+	// Identity comes only from a verified JWT. The user_id query parameter is
+	// ignored, otherwise anyone could impersonate another user.
+	userID := "guest"
+	userName := strings.TrimSpace(c.Query("user_name"))
+	avatarURL := strings.TrimSpace(c.Query("avatar"))
 
-	// 1. If JWT token provided via query parameter or header, verify it
 	tokenStr := c.Query("token")
 	if tokenStr == "" {
 		authHeader := c.GetHeader("Authorization")
@@ -335,40 +379,46 @@ func HandleChatSocket(c *gin.Context) {
 	}
 
 	if tokenStr != "" {
-		if claims, err := jwt.ParseToken(tokenStr); err == nil && claims.UserID != "" {
-			userID = claims.UserID
-			if userRepo != nil {
-				if u, _ := userRepo.GetByID(claims.UserID); u != nil {
-					userName = u.Name
-					avatarURL = u.AvatarURL
-				}
-			}
-			if profileRepo != nil && avatarURL == "" {
-				if p, _ := profileRepo.GetByUserID(claims.UserID); p != nil && p.AvatarURL != "" {
-					avatarURL = p.AvatarURL
-				}
-			}
+		claims, err := jwt.ParseToken(tokenStr)
+		if err != nil || claims.UserID == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": false, "error": "invalid token"})
+			return
 		}
-	} else if userID != "" && userID != "guest" {
+		userID = claims.UserID
+		userName = ""
+		avatarURL = ""
 		if userRepo != nil {
-			if u, _ := userRepo.GetByID(userID); u != nil {
-				if userName == "" || userName == "guest" {
-					userName = u.Name
-				}
-				if avatarURL == "" {
-					avatarURL = u.AvatarURL
-				}
+			if u, _ := userRepo.GetByID(claims.UserID); u != nil {
+				userName = u.Name
+				avatarURL = u.AvatarURL
 			}
 		}
 		if profileRepo != nil && avatarURL == "" {
-			if p, _ := profileRepo.GetByUserID(userID); p != nil && p.AvatarURL != "" {
+			if p, _ := profileRepo.GetByUserID(claims.UserID); p != nil && p.AvatarURL != "" {
 				avatarURL = p.AvatarURL
 			}
 		}
 	}
 
+	if !isSafeLink(avatarURL) {
+		avatarURL = ""
+	}
+	if len([]rune(userName)) > 80 {
+		userName = string([]rune(userName)[:80])
+	}
 	if userName == "" || userName == "guest" {
 		userName = "WZone Mehmon"
+	}
+
+	if !canAccessRoom(roomID, userID) {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"success": false, "error": "room access denied"})
+		return
+	}
+
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		// Upgrade has already written an HTTP error response
+		return
 	}
 
 	client := &WsClient{

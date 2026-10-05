@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
+	"github.com/gin-gonic/gin"
 )
 
 func ListUsers(c *gin.Context) {
@@ -14,12 +14,16 @@ func ListUsers(c *gin.Context) {
 			response.Error(c, http.StatusInternalServerError, "failed to query users")
 			return
 		}
+		for i := range usersList {
+			usersList[i].PINFL = maskPINFL(usersList[i].PINFL)
+		}
 		response.Success(c, http.StatusOK, gin.H{"users": usersList})
 		return
 	}
 
 	usersList := make([]any, 0, len(users))
 	for _, u := range users {
+		u.PINFL = maskPINFL(u.PINFL)
 		usersList = append(usersList, u)
 	}
 	response.Success(c, http.StatusOK, gin.H{"users": usersList})

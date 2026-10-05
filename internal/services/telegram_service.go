@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 	"os"
@@ -100,7 +101,8 @@ func (t *TelegramService) BroadcastVacancy(v *models.Vacancy) {
 			"ℹ️ <b>Batafsil ma'lumot va ariza topshirish:</b>\n"+
 			"https://workhub.uz/vacancies/%s\n\n"+
 			"#workhub #vakansiya #ishbor",
-		v.Title, v.Company, v.Location, v.Salary, v.Category, v.JobType, v.ID,
+		html.EscapeString(v.Title), html.EscapeString(v.Company), html.EscapeString(v.Location),
+		html.EscapeString(v.Salary), html.EscapeString(v.Category), html.EscapeString(v.JobType), v.ID,
 	)
 
 	go func() {
@@ -116,7 +118,7 @@ func (t *TelegramService) NotifyNewApplication(applicantName, vacancyTitle, comp
 			"💼 <b>Vakansiya:</b> %s\n"+
 			"🏢 <b>Kompaniya:</b> %s\n"+
 			"📅 <b>Vaqt:</b> %s",
-		applicantName, vacancyTitle, companyName, time.Now().Format("02.01.2006 15:04"),
+		html.EscapeString(applicantName), html.EscapeString(vacancyTitle), html.EscapeString(companyName), time.Now().Format("02.01.2006 15:04"),
 	)
 
 	go func() {
@@ -124,15 +126,16 @@ func (t *TelegramService) NotifyNewApplication(applicantName, vacancyTitle, comp
 	}()
 }
 
-// NotifyOneIDVerified notifies admin when a citizen registers with OneID
-func (t *TelegramService) NotifyOneIDVerified(fullName, pinfl, region string) {
+// NotifyOneIDVerified notifies admin when a citizen registers with OneID.
+// Callers must pass a masked PINFL; the full identifier must never leave the backend.
+func (t *TelegramService) NotifyOneIDVerified(fullName, maskedPINFL, region string) {
 	text := fmt.Sprintf(
 		"🇺🇿 <b>Yangi OneID Tasdiqlangan Fuqaro!</b>\n\n"+
 			"👤 <b>F.I.O:</b> %s\n"+
 			"🆔 <b>JShShIR:</b> %s\n"+
 			"📍 <b>Hudud:</b> %s\n"+
 			"📅 <b>Vaqt:</b> %s",
-		fullName, pinfl, region, time.Now().Format("02.01.2006 15:04"),
+		html.EscapeString(fullName), maskedPINFL, html.EscapeString(region), time.Now().Format("02.01.2006 15:04"),
 	)
 
 	go func() {

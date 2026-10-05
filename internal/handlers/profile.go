@@ -3,15 +3,16 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"net/mail"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func GetProfile(c *gin.Context) {
@@ -54,26 +55,39 @@ func UpdateProfile(c *gin.Context) {
 		return
 	}
 
+	// Pointer fields: a field omitted from the request keeps its stored value, so
+	// partial updates (e.g. saving only skills) never wipe the rest of the profile.
 	var payload struct {
-		Name      string `json:"name"`
-		Email     string `json:"email"`
-		Bio       string `json:"bio"`
-		Skills    string `json:"skills"`
-		Phone     string `json:"phone"`
-		Location  string `json:"location"`
-		Website   string `json:"website"`
-		AvatarURL string `json:"avatar_url"`
+		Name      *string `json:"name"`
+		Email     *string `json:"email"`
+		Bio       *string `json:"bio"`
+		Skills    *string `json:"skills"`
+		Phone     *string `json:"phone"`
+		Location  *string `json:"location"`
+		Website   *string `json:"website"`
+		AvatarURL *string `json:"avatar_url"`
 	}
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	trimmedName := strings.TrimSpace(payload.Name)
-	trimmedEmail := strings.ToLower(strings.TrimSpace(payload.Email))
+	str := func(p *string) string {
+		if p == nil {
+			return ""
+		}
+		return strings.TrimSpace(*p)
+	}
+	trimmedName := str(payload.Name)
+	trimmedEmail := strings.ToLower(str(payload.Email))
+
+	if payload.Name != nil && trimmedName == "" {
+		response.Error(c, http.StatusBadRequest, "Ism bo‘sh bo‘lishi mumkin emas")
+		return
+	}
 
 	if trimmedEmail != "" {
-		if !strings.Contains(trimmedEmail, "@") {
+		if addr, err := mail.ParseAddress(trimmedEmail); err != nil || addr.Address != trimmedEmail {
 			response.Error(c, http.StatusBadRequest, "Noto‘g‘ri email formati")
 			return
 		}
@@ -86,19 +100,46 @@ func UpdateProfile(c *gin.Context) {
 		}
 	}
 
+	if payload.AvatarURL != nil && !isSafeLink(*payload.AvatarURL) {
+		response.Error(c, http.StatusBadRequest, "Noto‘g‘ri rasm manzili")
+		return
+	}
+
 	now := time.Now().UTC()
 	profile := models.Profile{
 		ID:        uuid.NewString(),
 		UserID:    userID.(string),
-		Bio:       payload.Bio,
-		Skills:    payload.Skills,
-		Phone:     payload.Phone,
-		Location:  payload.Location,
-		Website:   payload.Website,
-		AvatarURL: payload.AvatarURL,
 		CreatedAt: now,
-		UpdatedAt: now,
 	}
+	if profileRepo != nil {
+		existing, err := profileRepo.GetByUserID(userID.(string))
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "database error")
+			return
+		}
+		if existing != nil {
+			profile = *existing
+		}
+	}
+	if payload.Bio != nil {
+		profile.Bio = *payload.Bio
+	}
+	if payload.Skills != nil {
+		profile.Skills = *payload.Skills
+	}
+	if payload.Phone != nil {
+		profile.Phone = str(payload.Phone)
+	}
+	if payload.Location != nil {
+		profile.Location = str(payload.Location)
+	}
+	if payload.Website != nil {
+		profile.Website = str(payload.Website)
+	}
+	if payload.AvatarURL != nil {
+		profile.AvatarURL = str(payload.AvatarURL)
+	}
+	profile.UpdatedAt = now
 
 	if profileRepo != nil {
 		if err := profileRepo.Upsert(profile); err != nil {
@@ -107,23 +148,30 @@ func UpdateProfile(c *gin.Context) {
 		}
 	}
 
+	avatar := str(payload.AvatarURL)
 	if userRepo != nil {
-		if trimmedName != "" || trimmedEmail != "" || payload.AvatarURL != "" {
-			_ = userRepo.Update(userID.(string), trimmedName, trimmedEmail, payload.AvatarURL)
+		if trimmedName != "" || trimmedEmail != "" || avatar != "" {
+			if err := userRepo.Update(userID.(string), trimmedName, trimmedEmail, avatar); err != nil {
+				response.Error(c, http.StatusInternalServerError, "failed to update user")
+				return
+			}
 		}
 	} else {
-		for email, u := range users {
+		for key, u := range users {
 			if u.ID == userID.(string) {
 				if trimmedName != "" {
 					u.Name = trimmedName
 				}
-				if trimmedEmail != "" {
+				if avatar != "" {
+					u.AvatarURL = avatar
+				}
+				if trimmedEmail != "" && trimmedEmail != key {
+					// in-memory users are keyed by email
+					delete(users, key)
 					u.Email = trimmedEmail
+					key = trimmedEmail
 				}
-				if payload.AvatarURL != "" {
-					u.AvatarURL = payload.AvatarURL
-				}
-				users[email] = u
+				users[key] = u
 				break
 			}
 		}
@@ -148,6 +196,19 @@ func UpdateProfile(c *gin.Context) {
 	})
 }
 
+// isSafeLink allows empty values, site-relative upload paths and http(s) URLs only.
+func isSafeLink(raw string) bool {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return true
+	}
+	if strings.HasPrefix(raw, "/uploads/") && !strings.Contains(raw, "..") {
+		return true
+	}
+	lower := strings.ToLower(raw)
+	return strings.HasPrefix(lower, "https://") || strings.HasPrefix(lower, "http://")
+}
+
 func UploadAvatar(c *gin.Context) {
 	file, err := c.FormFile("avatar")
 	if err != nil {
@@ -161,9 +222,10 @@ func UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	ext := filepath.Ext(file.Filename)
-	if ext == "" {
-		ext = ".jpg"
+	ext, err := validateAvatar(file)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
 	}
 	uniqueFilename := fmt.Sprintf("avatar_%s_%s%s", userID.(string), uuid.NewString()[:8], ext)
 	uploadDir := "./uploads/avatars"
