@@ -47,7 +47,44 @@ func TestGoogleAuthSecurity(t *testing.T) {
 		}
 	})
 
+	t.Run("Rejects mock credential unless mock mode is explicitly enabled", func(t *testing.T) {
+		payload := map[string]string{
+			"credential": "mock-verified-google-token",
+			"email":      "victim@domain.uz",
+		}
+		bodyBytes, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/auth/google", bytes.NewBuffer(bodyBytes))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status 401 Unauthorized, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
+
+	t.Run("Rejects mock credential in production even when enabled", func(t *testing.T) {
+		t.Setenv("AUTH_MOCK_ENABLED", "true")
+		isProduction = true
+		defer func() { isProduction = false }()
+
+		payload := map[string]string{
+			"credential": "mock-verified-google-token",
+			"email":      "victim@domain.uz",
+		}
+		bodyBytes, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/auth/google", bytes.NewBuffer(bodyBytes))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status 401 Unauthorized, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
+
 	t.Run("Accepts valid mock credential for automated tests and dev", func(t *testing.T) {
+		t.Setenv("AUTH_MOCK_ENABLED", "true")
 		payload := map[string]string{
 			"credential": "mock-verified-google-token",
 			"email":      "developer@workhub.uz",
@@ -72,4 +109,25 @@ func TestGoogleAuthSecurity(t *testing.T) {
 			t.Fatalf("expected valid token in response data: %v", resp)
 		}
 	})
+}
+
+func TestOneIDCallbackRejectsSelfDeclaredPINFL(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.POST("/api/v1/auth/oneid/callback", OneIDCallback)
+
+	payload := map[string]string{
+		"code":  "one_code-forged",
+		"pinfl": "31201991234567",
+		"email": "victim@domain.uz",
+	}
+	bodyBytes, _ := json.Marshal(payload)
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/auth/oneid/callback", bytes.NewBuffer(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		t.Fatalf("self-declared PINFL must not log in outside demo mode. Body: %s", w.Body.String())
+	}
 }

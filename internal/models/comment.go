@@ -9,5 +9,6 @@ type VacancyComment struct {
 	AuthorName   string    `json:"author_name"`
 	AuthorAvatar string    `json:"author_avatar,omitempty"`
 	Content      string    `json:"content"`
+	VacancyTitle string    `json:"vacancy_title,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
 }

@@ -2,18 +2,22 @@ package handlers
 
 import (
 	"crypto/md5"
+	"crypto/subtle"
+	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func computeClickSign(str string) string {
@@ -108,11 +112,18 @@ func Subscribe(c *gin.Context) {
 	now := time.Now().UTC()
 	expiresAt := now.Add(30 * 24 * time.Hour) // 30 days access
 
+	// Paid plans stay pending until the payment provider confirms the payment
+	// through its signed webhook. Only the free plan is activated immediately.
+	status := "pending"
+	if amount == 0 {
+		status = "active"
+	}
+
 	sub := models.Subscription{
 		ID:        uuid.NewString(),
 		UserID:    userID.(string),
 		Plan:      planID,
-		Status:    "active",
+		Status:    status,
 		Amount:    amount,
 		Currency:  currency,
 		ExpiresAt: &expiresAt,
@@ -120,26 +131,120 @@ func Subscribe(c *gin.Context) {
 		UpdatedAt: now,
 	}
 
-	if subscriptionRepo != nil {
-		if err := subscriptionRepo.Create(sub); err != nil {
-			response.Error(c, http.StatusInternalServerError, "Obunani faollashtirishda xatolik yuz berdi")
-			return
-		}
-	}
-
-	provider := payload.Provider
+	provider := strings.ToLower(strings.TrimSpace(payload.Provider))
 	if provider == "" {
 		provider = "click"
 	}
 
+	payment := gin.H{
+		"provider": provider,
+		"status":   status,
+		"amount":   amount,
+		"currency": currency,
+	}
+	if amount > 0 {
+		checkoutURL, err := buildCheckoutURL(provider, userID.(string), amount)
+		if err != nil {
+			response.Error(c, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		payment["checkout_url"] = checkoutURL
+	}
+
+	if subscriptionRepo != nil {
+		if err := subscriptionRepo.Create(sub); err != nil {
+			response.Error(c, http.StatusInternalServerError, "Obunani yaratishda xatolik yuz berdi")
+			return
+		}
+	}
+
 	response.Success(c, http.StatusOK, gin.H{
 		"subscription": sub,
-		"payment": gin.H{
-			"provider":    provider,
-			"status":      "paid",
-			"checkout_id": "wh_" + uuid.NewString()[:8],
-		},
+		"payment":      payment,
 	})
+}
+
+// buildCheckoutURL returns the provider payment page. The user ID is passed as the
+// merchant transaction / account reference that the provider echoes in its webhook.
+func buildCheckoutURL(provider, userID string, amount float64) (string, error) {
+	switch provider {
+	case "click":
+		serviceID := os.Getenv("CLICK_SERVICE_ID")
+		merchantID := os.Getenv("CLICK_MERCHANT_ID")
+		if serviceID == "" || merchantID == "" {
+			return "", fmt.Errorf("Click to‘lov tizimi sozlanmagan")
+		}
+		q := url.Values{}
+		q.Set("service_id", serviceID)
+		q.Set("merchant_id", merchantID)
+		q.Set("amount", strconv.FormatFloat(amount, 'f', 2, 64))
+		q.Set("transaction_param", userID)
+		return "https://my.click.uz/services/pay?" + q.Encode(), nil
+	case "payme":
+		merchantID := os.Getenv("PAYME_MERCHANT_ID")
+		if merchantID == "" {
+			return "", fmt.Errorf("Payme to‘lov tizimi sozlanmagan")
+		}
+		// Payme expects amounts in tiyin
+		params := fmt.Sprintf("m=%s;ac.user_id=%s;a=%d", merchantID, userID, int64(amount*100))
+		return "https://checkout.paycom.uz/" + base64.StdEncoding.EncodeToString([]byte(params)), nil
+	default:
+		return "", fmt.Errorf("Noma’lum to‘lov tizimi: %s", provider)
+	}
+}
+
+// planForAmount maps a paid amount (UZS) to the plan it buys.
+func planForAmount(amount float64) (string, bool) {
+	for _, p := range plans {
+		price := p["price"].(float64)
+		if price > 0 && amount == price {
+			return p["id"].(string), true
+		}
+	}
+	return "", false
+}
+
+func activateSubscription(userID, plan string, amount float64, providerName string) error {
+	now := time.Now().UTC()
+	expiresAt := now.Add(30 * 24 * time.Hour)
+	if subscriptionRepo != nil {
+		if err := subscriptionRepo.Create(models.Subscription{
+			ID:        uuid.NewString(),
+			UserID:    userID,
+			Plan:      plan,
+			Status:    "active",
+			Amount:    amount,
+			Currency:  "UZS",
+			ExpiresAt: &expiresAt,
+			CreatedAt: now,
+			UpdatedAt: now,
+		}); err != nil {
+			return err
+		}
+	}
+	if notificationRepo != nil {
+		_ = notificationRepo.Create(models.Notification{
+			ID:        uuid.NewString(),
+			UserID:    userID,
+			Title:     "To‘lov qabul qilindi (" + providerName + ")",
+			Body:      "WZone " + strings.ToUpper(plan) + " obunangiz " + providerName + " orqali 30 kunga faollashtirildi.",
+			CreatedAt: now,
+		})
+	}
+	return nil
+}
+
+func userExists(userID string) bool {
+	if userRepo == nil {
+		for _, u := range users {
+			if u.ID == userID {
+				return true
+			}
+		}
+		return false
+	}
+	u, err := userRepo.GetByID(userID)
+	return err == nil && u != nil
 }
 
 func GetMySubscription(c *gin.Context) {
@@ -150,7 +255,7 @@ func GetMySubscription(c *gin.Context) {
 	}
 
 	if subscriptionRepo != nil {
-		sub, err := subscriptionRepo.GetByUserID(userID.(string))
+		sub, err := subscriptionRepo.GetActiveByUserID(userID.(string))
 		if err != nil {
 			response.Error(c, http.StatusInternalServerError, "database error")
 			return
@@ -175,96 +280,93 @@ func ClickWebhook(c *gin.Context) {
 	clickTransID := c.PostForm("click_trans_id")
 	serviceID := c.PostForm("service_id")
 	merchantTransID := c.PostForm("merchant_trans_id")
+	merchantPrepareID := c.PostForm("merchant_prepare_id")
 	amountStr := c.PostForm("amount")
 	actionStr := c.PostForm("action")
 	signTime := c.PostForm("sign_time")
 	signString := c.PostForm("sign_string")
+	clickError, _ := strconv.Atoi(c.PostForm("error"))
 
-	log.Printf("[Click Webhook]: click_trans_id=%s, merchant_trans_id=%s, amount=%s, action=%s, sign_time=%s, sign_string=%s, service_id=%s",
-		clickTransID, merchantTransID, amountStr, actionStr, signTime, signString, serviceID)
+	log.Printf("[Click Webhook]: click_trans_id=%s, merchant_trans_id=%s, amount=%s, action=%s, error=%d",
+		clickTransID, merchantTransID, amountStr, actionStr, clickError)
 
-	action, _ := strconv.Atoi(actionStr)
-	amount, _ := strconv.ParseFloat(amountStr, 64)
+	clickReply := func(code int, note string, extra gin.H) {
+		body := gin.H{
+			"click_trans_id":    clickTransID,
+			"merchant_trans_id": merchantTransID,
+			"error":             code,
+			"error_note":        note,
+		}
+		for k, v := range extra {
+			body[k] = v
+		}
+		c.JSON(http.StatusOK, body)
+	}
 
-	// Verify Click official signature
 	secretKey := os.Getenv("CLICK_SECRET_KEY")
 	if secretKey == "" {
-		secretKey = "click_secret_key_2026"
+		log.Printf("[Click Webhook]: CLICK_SECRET_KEY is not configured, rejecting request")
+		clickReply(-1, "SIGN CHECK FAILED", nil)
+		return
+	}
+	if expected := os.Getenv("CLICK_SERVICE_ID"); expected != "" && serviceID != expected {
+		clickReply(-1, "SIGN CHECK FAILED", nil)
+		return
+	}
+
+	action, err := strconv.Atoi(actionStr)
+	if err != nil || (action != 0 && action != 1) {
+		clickReply(-3, "Action not found", nil)
+		return
 	}
 
 	var expectedSign string
 	if action == 0 {
 		expectedSign = computeClickSign(clickTransID + serviceID + secretKey + merchantTransID + amountStr + actionStr + signTime)
 	} else {
-		merchantPrepareID := c.PostForm("merchant_prepare_id")
-		if merchantPrepareID == "" {
-			merchantPrepareID = "1"
-		}
 		expectedSign = computeClickSign(clickTransID + serviceID + secretKey + merchantTransID + merchantPrepareID + amountStr + actionStr + signTime)
 	}
 
-	if signString == "" || !strings.EqualFold(signString, expectedSign) {
-		log.Printf("[Click Webhook]: Invalid signature: got=%s, expected=%s", signString, expectedSign)
-		c.JSON(http.StatusOK, gin.H{
-			"error":      -1,
-			"error_note": "SIGN CHECK FAILED",
-		})
+	if signString == "" || subtle.ConstantTimeCompare([]byte(strings.ToLower(signString)), []byte(expectedSign)) != 1 {
+		log.Printf("[Click Webhook]: invalid signature for click_trans_id=%s", clickTransID)
+		clickReply(-1, "SIGN CHECK FAILED", nil)
+		return
+	}
+
+	amount, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil {
+		clickReply(-2, "Incorrect parameter amount", nil)
+		return
+	}
+	plan, ok := planForAmount(amount)
+	if !ok {
+		clickReply(-2, "Incorrect parameter amount", nil)
+		return
+	}
+	if merchantTransID == "" || !userExists(merchantTransID) {
+		clickReply(-5, "User does not exist", nil)
 		return
 	}
 
 	// Action 0 = Prepare, Action 1 = Complete
 	if action == 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"click_trans_id":      clickTransID,
-			"merchant_trans_id":   merchantTransID,
-			"merchant_prepare_id": 1,
-			"error":               0,
-			"error_note":          "Success",
-		})
+		clickReply(0, "Success", gin.H{"merchant_prepare_id": 1})
 		return
 	}
 
-	// Complete: Activate subscription for merchantTransID (which is userID)
-	if merchantTransID != "" {
-		now := time.Now().UTC()
-		expiresAt := now.Add(30 * 24 * time.Hour)
-		plan := "pro"
-		if amount >= 700000 {
-			plan = "enterprise"
-		}
-
-		if subscriptionRepo != nil {
-			_ = subscriptionRepo.Create(models.Subscription{
-				ID:        uuid.NewString(),
-				UserID:    merchantTransID,
-				Plan:      plan,
-				Status:    "active",
-				Amount:    amount,
-				Currency:  "UZS",
-				ExpiresAt: &expiresAt,
-				CreatedAt: now,
-				UpdatedAt: now,
-			})
-		}
-
-		if notificationRepo != nil {
-			_ = notificationRepo.Create(models.Notification{
-				ID:        uuid.NewString(),
-				UserID:    merchantTransID,
-				Title:     "To‘lov qabul qilindi (Click)",
-				Body:      "WZone " + strings.ToUpper(plan) + " obunangiz Click orqali 30 kunga faollashtirildi.",
-				CreatedAt: now,
-			})
-		}
+	// Click reports a failed/cancelled payment with a negative error code
+	if clickError < 0 {
+		clickReply(-9, "Transaction cancelled", nil)
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"click_trans_id":      clickTransID,
-		"merchant_trans_id":   merchantTransID,
-		"merchant_confirm_id": 1,
-		"error":               0,
-		"error_note":          "Success",
-	})
+	if err := activateSubscription(merchantTransID, plan, amount, "Click"); err != nil {
+		log.Printf("[Click Webhook]: failed to activate subscription: %v", err)
+		clickReply(-7, "Failed to update user", nil)
+		return
+	}
+
+	clickReply(0, "Success", gin.H{"merchant_confirm_id": 1})
 }
 
 // PaymeWebhook handles official Payme JSON-RPC merchant transactions
@@ -283,7 +385,18 @@ func PaymeWebhook(c *gin.Context) {
 		return
 	}
 
-	log.Printf("[Payme Webhook]: method=%s, params=%v", rpcReq.Method, rpcReq.Params)
+	// Payme authenticates with HTTP Basic "Paycom:<merchant key>"
+	paymeKey := os.Getenv("PAYME_KEY")
+	expectedAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("Paycom:"+paymeKey))
+	if paymeKey == "" || subtle.ConstantTimeCompare([]byte(c.GetHeader("Authorization")), []byte(expectedAuth)) != 1 {
+		c.JSON(http.StatusOK, gin.H{
+			"error": gin.H{"code": -32504, "message": "Insufficient privilege to perform this method"},
+			"id":    rpcReq.ID,
+		})
+		return
+	}
+
+	log.Printf("[Payme Webhook]: method=%s", rpcReq.Method)
 
 	nowMs := time.Now().UnixNano() / int64(time.Millisecond)
 
@@ -332,6 +445,16 @@ func PaymeWebhook(c *gin.Context) {
 }
 
 func HandlePaymentWebhook(c *gin.Context) {
+	secret := os.Getenv("PAYMENT_WEBHOOK_SECRET")
+	if secret == "" {
+		response.Error(c, http.StatusServiceUnavailable, "payment webhook is not configured")
+		return
+	}
+	if subtle.ConstantTimeCompare([]byte(c.GetHeader("X-Webhook-Secret")), []byte(secret)) != 1 {
+		response.Error(c, http.StatusUnauthorized, "invalid webhook signature")
+		return
+	}
+
 	var payload struct {
 		Event    string  `json:"event"`
 		UserID   string  `json:"user_id"`

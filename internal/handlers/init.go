@@ -3,8 +3,8 @@ package handlers
 import (
 	"database/sql"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/Yusuf2236/workhub/backend/internal/repositories"
+	"github.com/go-redis/redis/v8"
 )
 
 var (
@@ -18,9 +18,11 @@ var (
 	subscriptionRepo repositories.SubscriptionRepo
 	commentRepo      repositories.CommentRepo
 	redisClient      *redis.Client
+	isProduction     bool
 )
 
-func Init(db *sql.DB, rdb *redis.Client) {
+func Init(db *sql.DB, rdb *redis.Client, production bool) {
+	isProduction = production
 	if db != nil {
 		userRepo = repositories.NewPostgresUserRepo(db)
 		profileRepo = repositories.NewPostgresProfileRepo(db)
