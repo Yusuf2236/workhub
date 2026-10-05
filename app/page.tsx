@@ -17,9 +17,12 @@ import FullChatView from '../components/FullChatView';
 import AuthModal from '../components/AuthModal';
 import ChatModal from '../components/ChatModal';
 import NotificationsModal from '../components/NotificationsModal';
+import AiResumeAuditView from '../components/AiResumeAuditView';
+import ChatIntroModal from '../components/ChatIntroModal';
+import { SurveyAnswers, EMPTY_SURVEY, loadSurvey, saveSurvey } from '../lib/survey';
 import { api, getAuthToken, setAuthToken, getCurrentUser, removeAuthToken, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
-import { Search, Filter, RefreshCw, Briefcase, Sparkles, MapPin, Bookmark, ShieldCheck, Home, MessageSquare, FileCheck, User as UserIcon } from 'lucide-react';
+import { Search, Filter, RefreshCw, Briefcase, Sparkles, MapPin, Bookmark, ShieldCheck, Home, MessageSquare, FileCheck, User as UserIcon, Info, CheckCircle2 } from 'lucide-react';
 
 const CATEGORIES = [
   'Barchasi',
@@ -104,6 +107,20 @@ export default function WZonePortal() {
   const [selectedVacancyForDetail, setSelectedVacancyForDetail] = useState<any | null>(null);
   const [selectedVacancyForApply, setSelectedVacancyForApply] = useState<any | null>(null);
   const [oneidNotice, setOneidNotice] = useState<string | null>(null);
+  const [chatIntroOpen, setChatIntroOpen] = useState(false);
+  const [survey, setSurvey] = useState<SurveyAnswers>(EMPTY_SURVEY);
+  const [surveyLoaded, setSurveyLoaded] = useState(false);
+
+  // Interests survey answers live in this browser and personalize the home feed
+  useEffect(() => {
+    setSurvey(loadSurvey());
+    setSurveyLoaded(true);
+  }, []);
+  const handleSurveyChange = (answers: SurveyAnswers) => {
+    setSurvey(answers);
+    saveSurvey(answers);
+  };
+  const [vacanciesRefreshed, setVacanciesRefreshed] = useState(false);
 
   // Dark Mode
   const [darkMode, setDarkMode] = useState(false);
@@ -168,7 +185,7 @@ export default function WZonePortal() {
             if (data.code) {
               const res = await api.oneIDCallback({
                 code: data.code,
-                pinfl: data.pinfl || '',
+                state: data.state || '',
               });
               if (res.success && res.data) {
                 setAuthToken(res.data.token);
@@ -211,7 +228,8 @@ export default function WZonePortal() {
         if (urlOneIDCode) {
           window.history.replaceState(null, '', window.location.pathname);
           try {
-            const res = await api.oneIDCallback({ code: urlOneIDCode, pinfl: '' });
+            const urlOneIDState = searchParams.get('oneid_state') || searchParams.get('state') || '';
+            const res = await api.oneIDCallback({ code: urlOneIDCode, state: urlOneIDState });
             if (res.success && res.data) {
               setAuthToken(res.data.token);
               setCurrentUser(res.data.user);
@@ -276,11 +294,12 @@ export default function WZonePortal() {
 
     // Listen for OneID and language sync postMessage from popups or parent iframe
     const handleOneIDMessage = async (event: MessageEvent) => {
-      if (event.data?.type === 'WORKHUB_ONEID_AUTH_CALLBACK' && event.data?.code) {
+      // Auth callbacks must come from our own callback page, never from another site
+      if (event.data?.type === 'WORKHUB_ONEID_AUTH_CALLBACK' && event.data?.code && event.origin === window.location.origin) {
         try {
           const res = await api.oneIDCallback({
             code: event.data.code,
-            pinfl: event.data.pinfl || '',
+            state: event.data.state || '',
           });
           if (res.success && res.data) {
             setAuthToken(res.data.token);
@@ -381,6 +400,31 @@ export default function WZonePortal() {
     }
   }, [debouncedSearch, selectedCategory, selectedLocation, selectedJobType]);
 
+  // Every minute: add newly posted vacancies to the top of the list without resetting scroll/pages
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      try {
+        const res = await api.getVacancies({
+          q: debouncedSearch,
+          category: selectedCategory,
+          location: selectedLocation === 'Barcha hududlar' ? '' : selectedLocation,
+          job_type: selectedJobType,
+          page: 1,
+          limit: 15,
+        });
+        if (res.success && res.data?.vacancies) {
+          setVacancies((prev) => {
+            const existing = new Set(prev.map((v) => v.id));
+            const fresh = res.data!.vacancies.filter((v: any) => !existing.has(v.id));
+            return fresh.length > 0 ? [...fresh, ...prev] : prev;
+          });
+          if (res.data.total !== undefined) setTotalVacancies(res.data.total);
+        }
+      } catch (_) {}
+    }, 60_000);
+    return () => clearInterval(timer);
+  }, [debouncedSearch, selectedCategory, selectedLocation, selectedJobType]);
+
   // Infinite Scroll: Load Next Page
   const loadMoreVacancies = useCallback(async () => {
     if (loading || loadingMore || !hasMore) return;
@@ -445,6 +489,10 @@ export default function WZonePortal() {
 
   // Fetch Resumes from Backend (PostgreSQL)
   const fetchResumes = useCallback(async () => {
+    if (!user) {
+      setResumes([]);
+      return;
+    }
     setResumesLoading(true);
     try {
       const res = await api.getResumes(true);
@@ -456,7 +504,7 @@ export default function WZonePortal() {
     } finally {
       setResumesLoading(false);
     }
-  }, []);
+  }, [user]);
 
   // Fetch User Applications & Notifications
   const fetchUserData = useCallback(async () => {
@@ -512,8 +560,28 @@ export default function WZonePortal() {
     setApplyModalOpen(true);
   };
 
+  // Open chat tab, showing the chat objectives intro first until the user dismisses it permanently
+  const goToChat = () => {
+    let seen = false;
+    try {
+      seen = localStorage.getItem('workhub_chat_intro_seen') === 'true';
+    } catch (_) {}
+    if (seen) {
+      setCurrentTab('chat');
+    } else {
+      setChatIntroOpen(true);
+    }
+  };
+
+  // Manual vacancy refresh with a short confirmation badge
+  const handleRefreshVacancies = async () => {
+    await fetchVacancies();
+    setVacanciesRefreshed(true);
+    setTimeout(() => setVacanciesRefreshed(false), 2500);
+  };
+
   // Unread notifications
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = notifications.filter((n) => !n.read_at).length;
 
   // Filtered lists for saved / my-vacancies
   const displayedVacancies = () => {
@@ -533,9 +601,9 @@ export default function WZonePortal() {
       <Header
         user={user}
         onOpenAuth={() => setAuthModalOpen(true)}
-        onOpenCreateVacancy={() => setCreateVacancyModalOpen(true)}
-        onOpenCreateResume={() => setCreateResumeModalOpen(true)}
-        onOpenChat={() => setCurrentTab('chat')}
+        onOpenCreateVacancy={() => (user ? setCreateVacancyModalOpen(true) : setAuthModalOpen(true))}
+        onOpenCreateResume={() => (user ? setCreateResumeModalOpen(true) : setAuthModalOpen(true))}
+        onOpenChat={goToChat}
         onOpenNotifications={() => setNotificationsModalOpen(true)}
         unreadNotificationsCount={unreadCount}
         searchQuery={searchQuery}
@@ -572,11 +640,14 @@ export default function WZonePortal() {
         <LeftSidebar
           currentTab={currentTab}
           onSelectTab={(tab) => {
-            setCurrentTab(tab);
+            if (tab === 'chat' && currentTab !== 'chat') goToChat();
+            else setCurrentTab(tab);
           }}
           user={user}
           savedCount={savedIds.length}
           applicationsCount={applications.length}
+          survey={surveyLoaded ? survey : undefined}
+          onSurveyChange={handleSurveyChange}
           lang={lang}
         />
 
@@ -604,19 +675,41 @@ export default function WZonePortal() {
                   });
                   setChatModalOpen(true);
                 } else {
-                  setCurrentTab('chat');
+                  goToChat();
                 }
               }}
               onRefresh={fetchResumes}
               loading={resumesLoading}
               lang={lang}
             />
-          ) : currentTab === 'chat' ? (
-            <FullChatView
+          ) : currentTab === 'ai-audit' ? (
+            <AiResumeAuditView
               currentUser={user}
-              onOpenAuth={() => setAuthModalOpen(true)}
+              resumes={resumes}
+              vacancies={vacancies}
+              onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
+              onApplyVacancy={handleApplyClick}
+              onOpenCreateResume={() => (user ? setCreateResumeModalOpen(true) : setAuthModalOpen(true))}
+              onRefreshResumes={fetchResumes}
               lang={lang}
             />
+          ) : currentTab === 'chat' ? (
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setChatIntroOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition"
+                >
+                  <Info size={14} />
+                  <span>{t.chatInfoBtnTitle}</span>
+                </button>
+              </div>
+              <FullChatView
+                currentUser={user}
+                onOpenAuth={() => setAuthModalOpen(true)}
+                lang={lang}
+              />
+            </div>
           ) : currentTab === 'profile' ? (
             <ProfileView
               user={user}
@@ -688,6 +781,9 @@ export default function WZonePortal() {
           ) : currentTab === 'feed' ? (
             <HomeFeedView
               vacancies={vacancies}
+              totalVacancies={totalVacancies}
+              survey={surveyLoaded ? survey : null}
+              onSurveyChange={handleSurveyChange}
               onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
               onNavigateToVacancies={() => setCurrentTab('vacancies')}
               onOpenCreateResume={() => {
@@ -705,6 +801,10 @@ export default function WZonePortal() {
               isSaved={(id) => savedIds.includes(id)}
               onToggleSave={handleToggleSave}
               currentUser={user}
+              onNavigateToTab={(tab) => {
+                if (tab === 'chat') goToChat();
+                else setCurrentTab(tab);
+              }}
               lang={lang}
             />
           ) : (
@@ -767,15 +867,23 @@ export default function WZonePortal() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {vacanciesRefreshed && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold animate-fadeIn">
+                        <CheckCircle2 size={12} />
+                        {t.vacanciesRefreshedBadge}
+                      </span>
+                    )}
                     <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
                       {displayedVacancies().length} {t.vacanciesCount}
                     </span>
                     <button
-                      onClick={fetchVacancies}
+                      onClick={handleRefreshVacancies}
+                      disabled={loading}
                       title={t.refresh}
-                      className="p-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60 transition"
                     >
                       <RefreshCw size={14} className={loading ? 'animate-spin text-blue-600' : ''} />
+                      <span>{t.refreshBtn}</span>
                     </button>
                   </div>
                 </div>
@@ -904,7 +1012,7 @@ export default function WZonePortal() {
         {/* Tab 3: Chat */}
         <button
           onClick={() => {
-            setCurrentTab('chat');
+            if (currentTab !== 'chat') goToChat();
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
@@ -1043,6 +1151,16 @@ export default function WZonePortal() {
           setCurrentTab('resumes');
         }}
         currentUser={user}
+        lang={lang}
+      />
+
+      <ChatIntroModal
+        isOpen={chatIntroOpen}
+        onClose={() => setChatIntroOpen(false)}
+        onProceed={() => {
+          setChatIntroOpen(false);
+          setCurrentTab('chat');
+        }}
         lang={lang}
       />
 

@@ -395,10 +395,10 @@ export default function ChatModal({
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
                 {lang === 'ru'
-                  ? 'Этот диалог защищен и работает в режиме реального времени.'
+                  ? 'Этот диалог защищен.'
                   : lang === 'en'
-                  ? 'This conversation is secure and runs in real time.'
-                  : 'Ushbu suhbat xavfsiz va real-vaqt rejimida amalga oshiriladi.'}
+                  ? 'This conversation is secure.'
+                  : 'Ushbu suhbat xavfsiz.'}
               </p>
             </div>
           ) : (

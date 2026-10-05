@@ -235,7 +235,6 @@ export default function VacancyDetailModal({
                 <MessageCircle size={18} className="text-blue-600" />
                 <span>{lang === 'ru' ? 'Вопросы и обсуждение' : lang === 'en' ? 'Questions & Discussion' : 'Savollar va Fikr-mulohazalar'} ({comments.length})</span>
               </h4>
-              <span className="text-[11px] text-slate-400 font-semibold">{lang === 'ru' ? 'Живое обсуждение' : lang === 'en' ? 'Live discussion' : 'Jonli muhokama'}</span>
             </div>
 
             {/* Comments List */}
@@ -324,6 +323,20 @@ export default function VacancyDetailModal({
             </p>
           </div>
 
+          <div className="flex items-center gap-2">
+          {typeof vacancy.source_url === 'string' && vacancy.source_url.startsWith('https://') && (
+            <a
+              href={vacancy.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 font-bold text-xs sm:text-sm transition flex items-center gap-1.5"
+            >
+              <ExternalLink size={15} />
+              <span>
+                {lang === 'ru' ? `Открыть на ${vacancy.source}` : lang === 'en' ? `Open on ${vacancy.source}` : `${vacancy.source} da ochish`}
+              </span>
+            </a>
+          )}
           <button
             onClick={() => {
               onClose();
@@ -334,6 +347,7 @@ export default function VacancyDetailModal({
             <span>{t.applyBtn}</span>
             <ArrowRight size={16} />
           </button>
+          </div>
         </div>
       </div>
     </div>
