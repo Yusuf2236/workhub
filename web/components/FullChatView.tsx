@@ -420,6 +420,28 @@ export default function FullChatView({
     };
   }, [activeRoom, currentUser, guestName]);
 
+  // If the WebSocket is down (proxy/network), keep the room up to date by polling every 5 seconds
+  useEffect(() => {
+    if (connected) return;
+    const timer = setInterval(async () => {
+      try {
+        const res = await api.getChatMessages(activeRoom);
+        if (res.success && Array.isArray(res.data?.messages)) {
+          const incoming = res.data.messages.map((m: any) => ({
+            ...m,
+            isSelf: Boolean(currentUser?.id && m.user_id === currentUser.id),
+          }));
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            const lastIncoming = incoming[incoming.length - 1];
+            return prev.length === incoming.length && last?.id === lastIncoming?.id ? prev : incoming;
+          });
+        }
+      } catch (_) {}
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [connected, activeRoom, currentUser?.id]);
+
   // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -748,19 +770,6 @@ export default function FullChatView({
             >
               <RefreshCw size={15} className={loadingHistory ? 'animate-spin text-blue-600' : ''} />
             </button>
-            <div className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
-              {connected ? (
-                <>
-                  <Wifi size={13} className="text-emerald-500" />
-                  <span className="hidden sm:inline">{lang === 'ru' ? 'Реал-тайм' : lang === 'en' ? 'Real-time' : 'Real-vaqt'}</span>
-                </>
-              ) : (
-                <>
-                  <Radio size={13} className="text-blue-500 animate-pulse" />
-                  <span className="hidden sm:inline">{lang === 'ru' ? 'Экспресс' : lang === 'en' ? 'Instant' : 'Tezkor xabar'}</span>
-                </>
-              )}
-            </div>
           </div>
         </div>
 

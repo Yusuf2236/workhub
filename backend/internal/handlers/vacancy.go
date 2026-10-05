@@ -27,6 +27,12 @@ func ListVacancies(c *gin.Context) {
 		location = c.Query("region")
 	}
 	jobType := c.Query("job_type")
+	var skills []string
+	for _, sk := range strings.Split(c.Query("skills"), ",") {
+		if sk = strings.TrimSpace(sk); sk != "" && len([]rune(sk)) <= 40 && len(skills) < 12 {
+			skills = append(skills, sk)
+		}
+	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if page < 1 {
@@ -37,7 +43,7 @@ func ListVacancies(c *gin.Context) {
 		limit = 15
 	}
 
-	cacheKey := fmt.Sprintf("vacancies:q:%s:c:%s:l:%s:t:%s:p:%d:lm:%d", search, category, location, jobType, page, limit)
+	cacheKey := fmt.Sprintf("vacancies:q:%s:c:%s:l:%s:t:%s:s:%s:p:%d:lm:%d", search, category, location, jobType, strings.Join(skills, ","), page, limit)
 
 	// 1. Check Redis cache
 	if redisClient != nil {
@@ -60,7 +66,7 @@ func ListVacancies(c *gin.Context) {
 
 	// 2. Query PostgreSQL
 	if vacancyRepo != nil {
-		items, total, err := vacancyRepo.ListFiltered(search, category, location, jobType, page, limit)
+		items, total, err := vacancyRepo.ListFiltered(search, category, location, jobType, skills, page, limit)
 		if err != nil {
 			response.Error(c, http.StatusInternalServerError, "failed to query vacancies")
 			return

@@ -74,10 +74,12 @@ func main() {
 
 	// Initialize background services
 	services.InitTelegramService()
-	if os.Getenv("ENABLE_SCRAPER") == "true" {
-		services.StartBackgroundAggregator(24 * time.Hour)
+	if aggCfg, ok := services.AggregatorConfigFromEnv(); !ok {
+		log.Println("[Aggregator] disabled (set HH_APP_TOKEN or HH_CLIENT_ID/HH_CLIENT_SECRET to import hh.uz vacancies)")
+	} else if os.Getenv("ENABLE_SCRAPER") == "false" {
+		log.Println("[Aggregator] disabled by ENABLE_SCRAPER=false")
 	} else {
-		log.Println("[Aggregator] disabled (set ENABLE_SCRAPER=true to enable)")
+		services.StartBackgroundAggregator(db, rdb, aggCfg)
 	}
 
 	if cfg.Server.Env == "production" {
@@ -153,6 +155,7 @@ func setupRoutes(r *gin.Engine) {
 		api.POST("/vacancies", middleware.AuthRequired(), handlers.CreateVacancy)
 		api.GET("/vacancies/:id", handlers.GetVacancy)
 		api.POST("/vacancies/:id/apply", middleware.AuthRequired(), handlers.ApplyToVacancy)
+		api.GET("/comments/recent", handlers.ListRecentComments)
 		api.GET("/vacancies/:id/comments", handlers.ListVacancyComments)
 		api.POST("/vacancies/:id/comments", middleware.OptionalAuth(), handlers.CreateVacancyComment)
 

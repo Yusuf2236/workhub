@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,6 +37,39 @@ func ListVacancyComments(c *gin.Context) {
 		"vacancy_id": vacancyID,
 		"comments":   []models.VacancyComment{},
 		"total":      0,
+	})
+}
+
+// ListRecentComments returns the newest vacancy comments across the portal (home feed).
+func ListRecentComments(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 50 {
+		limit = 10
+	}
+
+	if commentRepo == nil {
+		response.Success(c, http.StatusOK, gin.H{"comments": []models.VacancyComment{}, "total": 0, "has_more": false})
+		return
+	}
+
+	var categories []string
+	if cat := strings.TrimSpace(c.Query("category")); cat != "" {
+		categories = strings.Split(cat, ",")
+	}
+	comments, total, err := commentRepo.ListRecent(categories, limit, (page-1)*limit)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to query comments")
+		return
+	}
+	response.Success(c, http.StatusOK, gin.H{
+		"comments": comments,
+		"total":    total,
+		"page":     page,
+		"has_more": page*limit < total,
 	})
 }
 
