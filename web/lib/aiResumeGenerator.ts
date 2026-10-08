@@ -79,14 +79,60 @@ function formatProperCase(str: string): string {
     .join(' ');
 }
 
+// Placeholders the user must replace with their own facts before saving the resume
+export const RESUME_PLACEHOLDERS = {
+  fullName: '[Ism Familiya]',
+  email: '[email]',
+  phone: '[telefon]',
+  telegram: '[Telegram]',
+  company: '[Kompaniya nomi]',
+  period: '[yil – yil]',
+  institution: '[O‘quv yurti nomi]',
+  studyPeriod: '[o‘qigan yillar]',
+  certificate: '[Sertifikat nomi, yil]',
+};
+
+const TEMPLATE_NOTE =
+  '⚠️ NAMUNA: [ ] ichidagi joylarni hamda vazifalardagi raqam va natijalarni o‘zingizning haqiqiy ma’lumotlaringiz bilan almashtiring.';
+
+/** hasResumePlaceholders reports whether a generated template still has unfilled fields. */
+export function hasResumePlaceholders(text: string): boolean {
+  const lower = text.toLowerCase();
+  return Object.values(RESUME_PLACEHOLDERS).some((p) => lower.includes(p.toLowerCase())) || text.includes(TEMPLATE_NOTE);
+}
+
+/**
+ * generateResumeWithAI builds a resume template for the given profession. It never invents
+ * employers, schools or certificates: those come back as placeholders for the user to fill in.
+ */
 export function generateResumeWithAI(input: AIResumeInput): AIResumeOutput {
+  const draft = buildResumeDraft(input);
+  const workExperience = draft.workExperience.map((exp) => ({
+    ...exp,
+    company: RESUME_PLACEHOLDERS.company,
+    period: RESUME_PLACEHOLDERS.period,
+  }));
+  const education = draft.education.map((edu) => ({
+    ...edu,
+    institution: RESUME_PLACEHOLDERS.institution,
+    period: RESUME_PLACEHOLDERS.studyPeriod,
+  }));
+  const certificates = draft.certificates.length > 0 ? [RESUME_PLACEHOLDERS.certificate] : [];
+  const result = { ...draft, workExperience, education, certificates };
+  return {
+    ...result,
+    fullFormattedCV: `${TEMPLATE_NOTE}\n\n${buildFormattedCV(result)}`,
+  };
+}
+
+function buildResumeDraft(input: AIResumeInput): AIResumeOutput {
   const rawTitle = input.title || '';
   const norm = normalize(rawTitle);
-  const fullName = input.fullName?.trim() || 'Yusuf Usmonov';
-  const email = input.email?.trim() || 'usmonovyusuf693@gmail.com';
-  const phone = input.phone?.trim() || '+998 (90) 123-45-67';
+  const fullName = input.fullName?.trim() || RESUME_PLACEHOLDERS.fullName;
+  const email = input.email?.trim() || RESUME_PLACEHOLDERS.email;
+  const phone = input.phone?.trim() || RESUME_PLACEHOLDERS.phone;
   const location = input.location?.trim() || 'Toshkent shahri, O‘zbekiston';
-  const telegram = input.telegram?.trim() || '@usmonov_yusuf';
+  const telegram = input.telegram?.trim() || RESUME_PLACEHOLDERS.telegram;
 
   // 1. TEACHING & EDUCATION (Ta'lim & Fan - masalan: Matematika o'qituvchisi)
   if (

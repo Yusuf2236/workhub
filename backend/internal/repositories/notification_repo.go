@@ -27,7 +27,8 @@ func (r *postgresNotificationRepo) ListByUser(userID string) ([]models.Notificat
 		SELECT id, user_id, title, body, read_at, created_at
 		FROM notifications
 		WHERE user_id = $1
-		ORDER BY created_at DESC`
+		ORDER BY created_at DESC
+		LIMIT 100`
 	rows, err := r.db.Query(query, userID)
 	if err != nil {
 		return nil, err

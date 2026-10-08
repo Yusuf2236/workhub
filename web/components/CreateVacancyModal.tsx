@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   X,
   Plus,
@@ -12,7 +12,6 @@ import {
   Briefcase,
   DollarSign,
   MapPin,
-  Lightbulb,
   Check,
 } from 'lucide-react';
 import { api } from '../lib/api';
@@ -23,6 +22,8 @@ interface CreateVacancyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (newVacancy?: any) => void;
+  /** When set the modal edits this vacancy instead of creating a new one */
+  initialVacancy?: any | null;
   lang?: Language;
 }
 
@@ -51,7 +52,7 @@ const CATEGORIES_LIST = [
   'Servis & Xizmat ko‘rsatish',
 ];
 
-export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 'uz' }: CreateVacancyModalProps) {
+export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initialVacancy = null, lang = 'uz' }: CreateVacancyModalProps) {
   const t = translations[lang || 'uz'];
   const [title, setTitle] = useState('');
   const [company, setCompany] = useState('');
@@ -70,6 +71,26 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 
   const [aiSuccessMessage, setAiSuccessMessage] = useState<string | null>(null);
   const [aiInsights, setAiInsights] = useState<AIVacancyOutput['marketInsights'] | null>(null);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+
+  const isEditing = Boolean(initialVacancy?.id);
+
+  // Fill the form with the vacancy being edited, or reset it for a new one
+  useEffect(() => {
+    if (!isOpen) return;
+    const v = initialVacancy || {};
+    setTitle(v.title || '');
+    setCompany(v.company || '');
+    setLocation(v.location || 'Toshkent shahri');
+    setSalary(v.salary || '');
+    setCategory(v.category || 'Ta’lim & Fan');
+    setJobType(v.job_type || 'Full-time');
+    setExperience(v.experience || '1-3 yil');
+    setTags(v.tags || '');
+    setDescription(v.description || '');
+    setError(null);
+    setAiSuccessMessage(null);
+    setAiInsights(null);
+  }, [isOpen, initialVacancy]);
 
   if (!isOpen) return null;
 
@@ -97,10 +118,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 
           setDescription(result.description);
           setAiSuccessMessage('✨ AI talablar va vazifalar matnini qayta shakllantirdi!');
         } else {
+          // The company name is the employer's to enter; the AI does not make one up
           setTitle(result.title);
-          if (!company.trim()) {
-            setCompany(result.company);
-          }
           setCategory(result.category);
           setJobType(result.jobType);
           setExperience(result.experience);
@@ -145,7 +164,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 
     setLoading(true);
 
     try {
-      const res = await api.createVacancy({
+      const payload = {
         title,
         company: company.trim() || 'Maxfiy ish beruvchi',
         location: location.trim() || 'Toshkent shahri',
@@ -155,7 +174,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 
         experience,
         tags,
         description,
-      });
+      };
+      const res = isEditing ? await api.updateVacancy(initialVacancy.id, payload) : await api.createVacancy(payload);
 
       if (res.success && res.data) {
         onSuccess(res.data.vacancy);
@@ -187,7 +207,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-                Yangi vakansiya e‘lon qilish
+                {isEditing ? t.editVacancyTitle : 'Yangi vakansiya e‘lon qilish'}
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-950/60 dark:to-indigo-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                   AI Yordamchi
                 </span>
@@ -221,32 +241,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 
             </div>
           )}
 
-          {/* AI Banner / Tip */}
-          <div className="p-3 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl text-xs flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200 font-medium">
-              <Lightbulb size={16} className="text-amber-500 shrink-0" />
-              <span>
-                Lavozim nomini kiriting va <strong>{t.fillWithAi}</strong> tugmasini bosing — barcha talablar, maosh va vazifalar avtomatik to‘ldiriladi!
-              </span>
-            </div>
-          </div>
-
           {/* Job Title with AI Action Button */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-                Lavozim nomi *
-              </label>
-              <button
-                type="button"
-                onClick={() => handleAIFill(false)}
-                disabled={aiLoading}
-                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition disabled:opacity-50"
-              >
-                <Sparkles size={13} className={aiLoading ? 'animate-spin' : 'animate-pulse text-amber-300'} />
-                <span>{aiLoading ? '...' : `✨ ${t.fillWithAi}`}</span>
-              </button>
-            </div>
+            <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+              Lavozim nomi *
+            </label>
 
             <div className="relative">
               <input
@@ -258,6 +257,16 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 
                 className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
               />
             </div>
+
+            <button
+              type="button"
+              onClick={() => handleAIFill(false)}
+              disabled={aiLoading}
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md active:scale-95 transition disabled:opacity-50"
+            >
+              <Sparkles size={13} className={aiLoading ? 'animate-spin' : 'text-amber-300'} />
+              <span>{aiLoading ? '...' : t.fillWithAi}</span>
+            </button>
 
             {/* Quick Sample Role Chips */}
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -472,7 +481,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, lang = 
               className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50"
             >
               <Plus size={16} />
-              <span>{loading ? 'Joylashtirilmoqda...' : 'Vakansiyani e‘lon qilish'}</span>
+              <span>{loading ? 'Joylashtirilmoqda...' : isEditing ? t.saveChangesBtn : 'Vakansiyani e‘lon qilish'}</span>
             </button>
           </div>
         </form>

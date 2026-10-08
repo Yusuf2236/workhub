@@ -12,15 +12,16 @@ import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
+import com.workhub.app.BuildConfig
 import java.net.HttpURLConnection
 import java.net.URL
 
 object ApiClient {
     private const val TAG = "ApiClient"
 
-    // 10.0.2.2 maps to host localhost from Android emulator
-    const val BASE_URL = "http://10.0.2.2:8080"
-    const val WS_URL = "ws://10.0.2.2:8080/api/v1/ws"
+    // Set at build time (see app/build.gradle.kts); defaults to the host machine from the emulator
+    val BASE_URL: String = BuildConfig.API_BASE_URL.trimEnd('/')
+    val WS_URL: String = BASE_URL.replaceFirst("http", "ws") + "/api/v1/ws"
 
     var authToken: String? = null
     var currentUser: User? = null

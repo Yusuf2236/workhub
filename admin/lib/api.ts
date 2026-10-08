@@ -1,4 +1,14 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+// Without NEXT_PUBLIC_API_URL the admin talks to the API on the same host: the backend
+// port locally, and the nginx /api/v1 route on a server.
+function resolveApiBase(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window === 'undefined') return 'http://localhost:8080/api/v1';
+  const { protocol, hostname } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return `${protocol}//${hostname}:8080/api/v1`;
+  return `${protocol}//${hostname}/api/v1`;
+}
+
+const API_BASE = resolveApiBase();
 
 export interface AnalyticsData {
   total_users: number;
@@ -14,6 +24,9 @@ export interface Vacancy {
   location: string;
   salary: string;
   description: string;
+  source?: string;
+  is_verified?: boolean;
+  is_featured?: boolean;
   created_at: string;
 }
 
@@ -31,7 +44,14 @@ export interface Application {
   vacancy_id: string;
   status: string;
   created_at: string;
+  cover_letter?: string;
+  vacancy_title?: string;
+  vacancy_company?: string;
+  applicant_name?: string;
+  applicant_email?: string;
 }
+
+export const APPLICATION_STATUSES = ['submitted', 'reviewing', 'interview', 'accepted', 'rejected'] as const;
 
 export function getAdminToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -126,9 +146,11 @@ export async function fetchAnalytics(token?: string): Promise<AnalyticsData> {
   }
 }
 
-export async function fetchVacancies(): Promise<Vacancy[]> {
+export async function fetchVacancies(query = ''): Promise<Vacancy[]> {
   try {
-    const res = await fetch(`${API_BASE}/vacancies?limit=100`, { cache: 'no-store' });
+    const params = new URLSearchParams({ limit: '100' });
+    if (query.trim()) params.set('q', query.trim());
+    const res = await fetch(`${API_BASE}/vacancies?${params.toString()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     return json.data?.vacancies || [];
@@ -136,4 +158,31 @@ export async function fetchVacancies(): Promise<Vacancy[]> {
     console.error('Failed to fetch vacancies:', err);
     return [];
   }
+}
+
+async function sendJSON(method: string, path: string, body?: unknown): Promise<{ ok: boolean; data?: any; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.success) return { ok: false, error: json.error || `HTTP ${res.status}` };
+    return { ok: true, data: json.data };
+  } catch (err: any) {
+    return { ok: false, error: err.message || 'Network error' };
+  }
+}
+
+export async function updateVacancy(id: string, changes: Partial<Vacancy>) {
+  return sendJSON('PUT', `/vacancies/${id}`, changes);
+}
+
+export async function deleteVacancy(id: string) {
+  return sendJSON('DELETE', `/vacancies/${id}`);
+}
+
+export async function updateApplicationStatus(id: string, status: string) {
+  return sendJSON('PATCH', `/applications/${id}/status`, { status });
 }

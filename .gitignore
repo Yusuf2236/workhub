@@ -44,3 +44,6 @@ coverage/
 web/.next/
 admin/.next/
 
+
+# Database dumps from the backup service
+backups/

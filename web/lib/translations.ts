@@ -90,6 +90,13 @@ export interface TranslationDictionary {
   heroWelcomeBadge: string;
   heroMainHeading: string;
   heroMainDesc: string;
+  heroWhatLabel: string;
+  heroWhatPlaceholder: string;
+  heroWhereLabel: string;
+  heroSearchBtn: string;
+  heroPopularSearches: string;
+  heroPostResumeHint: string;
+  heroPostResumeLink: string;
 
   // Endless Feed Stream Keys
   streamTitle: string;
@@ -265,6 +272,50 @@ export interface TranslationDictionary {
   totalCountSuffix: string;
   noApplicationsSub: string;
   defaultAppTitle: string;
+  deleteVacancyConfirm: string;
+  deleteResumeConfirm: string;
+  deleteFailed: string;
+  editBtn: string;
+  deleteBtn: string;
+  linkCopied: string;
+  myApplicationsTab: string;
+  receivedApplicationsTab: string;
+  noReceivedApplications: string;
+  coverLetterLabel: string;
+  resumeLabel: string;
+  openResumeFile: string;
+  chatWithApplicant: string;
+  statusLabel: string;
+  applyResumeLabel: string;
+  applyWithoutResume: string;
+  applyError: string;
+  networkError: string;
+  editVacancyTitle: string;
+  editResumeTitle: string;
+  saveChangesBtn: string;
+  uploadResumeFileLabel: string;
+  resumeFileAttached: string;
+  contactsHiddenNote: string;
+  forgotPasswordLink: string;
+  forgotPasswordTitle: string;
+  forgotPasswordHint: string;
+  sendResetLink: string;
+  resetLinkSent: string;
+  backToLogin: string;
+  newPasswordTitle: string;
+  newPasswordLabel: string;
+  repeatPasswordLabel: string;
+  passwordsDontMatch: string;
+  savePasswordBtn: string;
+  passwordResetDone: string;
+  emailVerifiedNotice: string;
+  verifyEmailBanner: string;
+  resendVerification: string;
+  verificationSent: string;
+  recommendedTitle: string;
+  recommendedNeedsSkills: string;
+  recommendedAddSkills: string;
+  recommendedEmpty: string;
   applicationIdLabel: string;
   viewVacancyDetail: string;
 
@@ -382,7 +433,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     appName: 'WZone',
     appTagline: 'Ish va faoliyat portali',
     searchPlaceholder: 'Kasb, lavozim, ko‘nikma yoki kompaniya bo‘yicha qidiring...',
-    addListing: '+ E’lon berish',
+    addListing: 'E’lon berish',
     createVacancy: 'Vakansiya yaratish',
     createVacancySub: 'Yangi ish o‘rnini e’lon qilish',
     createResume: 'Rezyume joylashtirish',
@@ -459,7 +510,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     feedHeroBadge: '✨ WZone 2026',
     feedHeroTitle: 'O‘zbekistondagi eng yirik ish platformasi',
     feedHeroSub: 'Vakansiyalar, OneID davlat verifikatsiyasi va mutaxassislar bilan muloqot.',
-    feedHeroBtn: 'Barcha vakansiyalar →',
+    feedHeroBtn: 'Barcha vakansiyalar',
     topCompaniesTitle: 'Top Kompaniyalar',
     pollTitle: '📊 Haftaning So‘rovnomasi',
     pollTotalVotes: 'Jami ovozlar',
@@ -502,6 +553,13 @@ export const translations: Record<Language, TranslationDictionary> = {
     heroWelcomeBadge: '✨ WZone 2026 Raqamli Mehnat Bozoriga Xush Kelibsiz!',
     heroMainHeading: 'Karyerangizni yangi bosqichga olib chiqing',
     heroMainDesc: 'O‘zbekiston bo‘yicha eng so‘nggi vakansiyalar, mutaxassislar bilan muloqot va sun’iy intellekt rezyume tekshiruvi.',
+    heroWhatLabel: 'Nima?',
+    heroWhatPlaceholder: 'Lavozim, ko‘nikma yoki kompaniya',
+    heroWhereLabel: 'Qayerda?',
+    heroSearchBtn: 'Qidirish',
+    heroPopularSearches: 'Mashhur qidiruvlar:',
+    heroPostResumeHint: 'Ish beruvchilar sizni topsin:',
+    heroPostResumeLink: 'Rezyume joylash',
 
     // Endless Feed Stream Keys
     streamTitle: 'Lenta: vakansiyalar va izohlar',
@@ -671,6 +729,50 @@ export const translations: Record<Language, TranslationDictionary> = {
     totalCountSuffix: 'ta',
     noApplicationsSub: 'Bosh sahifadagi vakansiyalarni ko‘rib chiqing va 1 klikda ariza jo‘nating.',
     defaultAppTitle: 'Vakansiya arizasi',
+    deleteVacancyConfirm: 'Vakansiyani o‘chirasizmi? Unga kelgan arizalar va izohlar ham o‘chadi.',
+    deleteResumeConfirm: 'Rezyumeni o‘chirasizmi?',
+    deleteFailed: 'O‘chirishda xatolik yuz berdi',
+    editBtn: 'Tahrirlash',
+    deleteBtn: 'O‘chirish',
+    linkCopied: 'Havola nusxalandi!',
+    myApplicationsTab: 'Mening arizalarim',
+    receivedApplicationsTab: 'Kelgan arizalar',
+    noReceivedApplications: 'Vakansiyalaringizga hali ariza kelmagan',
+    coverLetterLabel: 'Kuzatuv xati',
+    resumeLabel: 'Rezyume',
+    openResumeFile: 'Rezyume faylini ochish',
+    chatWithApplicant: 'Nomzod bilan yozishish',
+    statusLabel: 'Holat',
+    applyResumeLabel: 'Rezyume tanlang',
+    applyWithoutResume: 'Rezyumesiz yuborish',
+    applyError: 'Arizani yuborishda xatolik yuz berdi',
+    networkError: 'Server bilan aloqa uzildi',
+    editVacancyTitle: 'Vakansiyani tahrirlash',
+    editResumeTitle: 'Rezyumeni tahrirlash',
+    saveChangesBtn: 'O‘zgarishlarni saqlash',
+    uploadResumeFileLabel: 'Yoki tayyor rezyume faylini yuklang (PDF, DOC, DOCX)',
+    resumeFileAttached: 'Fayl biriktirildi',
+    contactsHiddenNote: 'Kontaktlar yashirilgan — nomzod bilan chat orqali bog‘laning',
+    forgotPasswordLink: 'Parolni unutdingizmi?',
+    forgotPasswordTitle: 'Parolni tiklash',
+    forgotPasswordHint: 'Emailingizni kiriting — parolni tiklash havolasini yuboramiz.',
+    sendResetLink: 'Havolani yuborish',
+    resetLinkSent: 'Agar bu email ro‘yxatdan o‘tgan bo‘lsa, unga havola yuborildi. Pochtangizni tekshiring.',
+    backToLogin: 'Kirishga qaytish',
+    newPasswordTitle: 'Yangi parol o‘rnatish',
+    newPasswordLabel: 'Yangi parol (kamida 8 belgi)',
+    repeatPasswordLabel: 'Parolni takrorlang',
+    passwordsDontMatch: 'Parollar mos kelmadi',
+    savePasswordBtn: 'Parolni saqlash',
+    passwordResetDone: 'Parol yangilandi. Endi yangi parol bilan kiring.',
+    emailVerifiedNotice: 'Emailingiz tasdiqlandi ✓',
+    verifyEmailBanner: 'Emailingiz hali tasdiqlanmagan. Pochtangizdagi havolani oching.',
+    resendVerification: 'Qayta yuborish',
+    verificationSent: 'Havola yuborildi',
+    recommendedTitle: 'Sizga mos vakansiyalar',
+    recommendedNeedsSkills: 'Profilingizga ko‘nikmalaringizni qo‘shing — mos vakansiyalarni topib beramiz.',
+    recommendedAddSkills: 'Ko‘nikmalarni qo‘shish →',
+    recommendedEmpty: 'Hozircha ko‘nikmalaringizga mos vakansiya topilmadi.',
     applicationIdLabel: 'Ariza ID',
     viewVacancyDetail: 'Vakansiyani ko‘rish',
 
@@ -725,7 +827,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     profilePrivacySecurity: 'Maxfiylik va Xavfsizlik',
 
     // Modals (Vacancy, Resume, OneID)
-    fillWithAi: '«AI bilan to‘ldirish»',
+    fillWithAi: 'AI bilan to‘ldirish',
     popularExamples: 'Ommabop namunalar:',
     jobTypeFullTime: 'To‘liq stavka (Full-time)',
     jobTypePartTime: 'Yarim stavka (Part-time)',
@@ -787,7 +889,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     appName: 'WZone',
     appTagline: 'Портал работы и вакансий',
     searchPlaceholder: 'Поиск по профессии, должности, навыкам или компании...',
-    addListing: '+ Разместить',
+    addListing: 'Разместить',
     createVacancy: 'Создать вакансию',
     createVacancySub: 'Опубликовать новую вакансию',
     createResume: 'Разместить резюме',
@@ -864,7 +966,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     feedHeroBadge: '✨ WZone 2026',
     feedHeroTitle: 'Крупнейшая платформа карьеры и вакансий в Узбекистане',
     feedHeroSub: 'Вакансии, государственная верификация OneID и общение со специалистами.',
-    feedHeroBtn: 'Все вакансии →',
+    feedHeroBtn: 'Все вакансии',
     topCompaniesTitle: 'Топ Компании',
     pollTitle: '📊 Опрос Недели',
     pollTotalVotes: 'Всего голосов',
@@ -907,6 +1009,13 @@ export const translations: Record<Language, TranslationDictionary> = {
     heroWelcomeBadge: '✨ Добро пожаловать на цифровую платформу WZone 2026!',
     heroMainHeading: 'Выведите вашу карьеру на новый уровень',
     heroMainDesc: 'Свежие вакансии Узбекистана, общение со специалистами и AI-аудит резюме.',
+    heroWhatLabel: 'Что?',
+    heroWhatPlaceholder: 'Должность, навык или компания',
+    heroWhereLabel: 'Где?',
+    heroSearchBtn: 'Найти',
+    heroPopularSearches: 'Популярные запросы:',
+    heroPostResumeHint: 'Пусть работодатели найдут вас:',
+    heroPostResumeLink: 'Разместить резюме',
 
     // Endless Feed Stream Keys
     streamTitle: 'Лента: вакансии и комментарии',
@@ -1076,6 +1185,50 @@ export const translations: Record<Language, TranslationDictionary> = {
     totalCountSuffix: 'шт',
     noApplicationsSub: 'Изучите вакансии на главной странице и отправьте отклик в 1 клик.',
     defaultAppTitle: 'Отклик на вакансию',
+    deleteVacancyConfirm: 'Удалить вакансию? Отклики и комментарии к ней тоже будут удалены.',
+    deleteResumeConfirm: 'Удалить резюме?',
+    deleteFailed: 'Не удалось удалить',
+    editBtn: 'Изменить',
+    deleteBtn: 'Удалить',
+    linkCopied: 'Ссылка скопирована!',
+    myApplicationsTab: 'Мои отклики',
+    receivedApplicationsTab: 'Полученные отклики',
+    noReceivedApplications: 'На ваши вакансии пока нет откликов',
+    coverLetterLabel: 'Сопроводительное письмо',
+    resumeLabel: 'Резюме',
+    openResumeFile: 'Открыть файл резюме',
+    chatWithApplicant: 'Написать кандидату',
+    statusLabel: 'Статус',
+    applyResumeLabel: 'Выберите резюме',
+    applyWithoutResume: 'Отправить без резюме',
+    applyError: 'Не удалось отправить отклик',
+    networkError: 'Нет связи с сервером',
+    editVacancyTitle: 'Редактирование вакансии',
+    editResumeTitle: 'Редактирование резюме',
+    saveChangesBtn: 'Сохранить изменения',
+    uploadResumeFileLabel: 'Или загрузите готовый файл резюме (PDF, DOC, DOCX)',
+    resumeFileAttached: 'Файл прикреплён',
+    contactsHiddenNote: 'Контакты скрыты — свяжитесь с кандидатом через чат',
+    forgotPasswordLink: 'Забыли пароль?',
+    forgotPasswordTitle: 'Восстановление пароля',
+    forgotPasswordHint: 'Введите email — мы отправим ссылку для восстановления пароля.',
+    sendResetLink: 'Отправить ссылку',
+    resetLinkSent: 'Если этот email зарегистрирован, на него отправлена ссылка. Проверьте почту.',
+    backToLogin: 'Вернуться ко входу',
+    newPasswordTitle: 'Установка нового пароля',
+    newPasswordLabel: 'Новый пароль (минимум 8 символов)',
+    repeatPasswordLabel: 'Повторите пароль',
+    passwordsDontMatch: 'Пароли не совпадают',
+    savePasswordBtn: 'Сохранить пароль',
+    passwordResetDone: 'Пароль обновлён. Войдите с новым паролем.',
+    emailVerifiedNotice: 'Ваш email подтверждён ✓',
+    verifyEmailBanner: 'Ваш email ещё не подтверждён. Откройте ссылку из письма.',
+    resendVerification: 'Отправить снова',
+    verificationSent: 'Ссылка отправлена',
+    recommendedTitle: 'Подходящие вам вакансии',
+    recommendedNeedsSkills: 'Добавьте навыки в профиль — мы подберём подходящие вакансии.',
+    recommendedAddSkills: 'Добавить навыки →',
+    recommendedEmpty: 'Пока нет вакансий под ваши навыки.',
     applicationIdLabel: 'ID заявки',
     viewVacancyDetail: 'Посмотреть вакансию',
 
@@ -1130,7 +1283,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     profilePrivacySecurity: 'Конфиденциальность и безопасность',
 
     // Modals (Vacancy, Resume, OneID)
-    fillWithAi: '«Заполнить с помощью AI»',
+    fillWithAi: 'Заполнить с помощью AI',
     popularExamples: 'Популярные примеры:',
     jobTypeFullTime: 'Полная занятость (Full-time)',
     jobTypePartTime: 'Частичная занятость (Part-time)',
@@ -1192,7 +1345,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     appName: 'WZone',
     appTagline: 'Career & Jobs Platform',
     searchPlaceholder: 'Search jobs, titles, skills, or companies...',
-    addListing: '+ Post Job',
+    addListing: 'Post Job',
     createVacancy: 'Create Vacancy',
     createVacancySub: 'Post a new job opening',
     createResume: 'Post Resume',
@@ -1269,7 +1422,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     feedHeroBadge: '✨ WZone 2026',
     feedHeroTitle: 'The Premier Career & Jobs Platform in Uzbekistan',
     feedHeroSub: 'Vacancies, OneID verification and chat with professionals.',
-    feedHeroBtn: 'All Vacancies →',
+    feedHeroBtn: 'All Vacancies',
     topCompaniesTitle: 'Top Companies',
     pollTitle: '📊 Weekly Career Poll',
     pollTotalVotes: 'Total votes',
@@ -1312,6 +1465,13 @@ export const translations: Record<Language, TranslationDictionary> = {
     heroWelcomeBadge: '✨ Welcome to WZone 2026 Digital Labor Market!',
     heroMainHeading: 'Take your career to the next level',
     heroMainDesc: 'The latest jobs in Uzbekistan, chat with professionals and AI-powered resume screening.',
+    heroWhatLabel: 'What?',
+    heroWhatPlaceholder: 'Job title, skill or company',
+    heroWhereLabel: 'Where?',
+    heroSearchBtn: 'Find jobs',
+    heroPopularSearches: 'Popular searches:',
+    heroPostResumeHint: 'Let employers find you:',
+    heroPostResumeLink: 'Post your resume',
 
     // Endless Feed Stream Keys
     streamTitle: 'Feed: vacancies & comments',
@@ -1481,6 +1641,50 @@ export const translations: Record<Language, TranslationDictionary> = {
     totalCountSuffix: '',
     noApplicationsSub: 'Explore vacancies on the home page and submit your application with 1 click.',
     defaultAppTitle: 'Job Application',
+    deleteVacancyConfirm: 'Delete this vacancy? Its applications and comments will be deleted too.',
+    deleteResumeConfirm: 'Delete this resume?',
+    deleteFailed: 'Delete failed',
+    editBtn: 'Edit',
+    deleteBtn: 'Delete',
+    linkCopied: 'Link copied!',
+    myApplicationsTab: 'My applications',
+    receivedApplicationsTab: 'Received applications',
+    noReceivedApplications: 'No one has applied to your vacancies yet',
+    coverLetterLabel: 'Cover letter',
+    resumeLabel: 'Resume',
+    openResumeFile: 'Open resume file',
+    chatWithApplicant: 'Message candidate',
+    statusLabel: 'Status',
+    applyResumeLabel: 'Choose a resume',
+    applyWithoutResume: 'Apply without a resume',
+    applyError: 'Could not submit the application',
+    networkError: 'Could not reach the server',
+    editVacancyTitle: 'Edit vacancy',
+    editResumeTitle: 'Edit resume',
+    saveChangesBtn: 'Save changes',
+    uploadResumeFileLabel: 'Or upload a ready resume file (PDF, DOC, DOCX)',
+    resumeFileAttached: 'File attached',
+    contactsHiddenNote: 'Contacts are hidden — reach the candidate through chat',
+    forgotPasswordLink: 'Forgot password?',
+    forgotPasswordTitle: 'Reset password',
+    forgotPasswordHint: 'Enter your email and we will send you a reset link.',
+    sendResetLink: 'Send link',
+    resetLinkSent: 'If this email is registered, a link has been sent. Check your inbox.',
+    backToLogin: 'Back to sign in',
+    newPasswordTitle: 'Set a new password',
+    newPasswordLabel: 'New password (at least 8 characters)',
+    repeatPasswordLabel: 'Repeat password',
+    passwordsDontMatch: 'Passwords do not match',
+    savePasswordBtn: 'Save password',
+    passwordResetDone: 'Password updated. Sign in with your new password.',
+    emailVerifiedNotice: 'Your email is verified ✓',
+    verifyEmailBanner: 'Your email is not verified yet. Open the link we sent you.',
+    resendVerification: 'Resend',
+    verificationSent: 'Link sent',
+    recommendedTitle: 'Recommended for you',
+    recommendedNeedsSkills: 'Add your skills to your profile and we will find matching vacancies.',
+    recommendedAddSkills: 'Add skills →',
+    recommendedEmpty: 'No vacancies match your skills yet.',
     applicationIdLabel: 'Application ID',
     viewVacancyDetail: 'View Vacancy',
 
@@ -1535,7 +1739,7 @@ export const translations: Record<Language, TranslationDictionary> = {
     profilePrivacySecurity: 'Privacy & Security',
 
     // Modals (Vacancy, Resume, OneID)
-    fillWithAi: '«Auto-fill with AI»',
+    fillWithAi: 'Auto-fill with AI',
     popularExamples: 'Popular examples:',
     jobTypeFullTime: 'Full-time',
     jobTypePartTime: 'Part-time',

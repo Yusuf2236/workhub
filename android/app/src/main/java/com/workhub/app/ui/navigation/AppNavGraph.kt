@@ -1,5 +1,6 @@
 package com.workhub.app.ui.navigation
 
+import com.workhub.app.BuildConfig
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -89,7 +90,7 @@ fun MainTabsContainer(
     if (isWebMirrorMode) {
         Box(modifier = Modifier.fillMaxSize()) {
             WebBridgeScreen(
-                url = "http://10.0.2.2:3000",
+                url = BuildConfig.WEB_URL,
                 onSwitchToNative = { isWebMirrorMode = false }
             )
 

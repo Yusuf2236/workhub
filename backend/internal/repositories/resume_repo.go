@@ -27,9 +27,13 @@ func NewPostgresResumeRepo(db *sql.DB) ResumeRepo {
 
 func (r *postgresResumeRepo) ListAll() ([]models.Resume, error) {
 	query := `
-		SELECT id, user_id, title, COALESCE(summary, ''), COALESCE(file_url, ''), created_at, updated_at
-		FROM resumes
-		ORDER BY created_at DESC`
+		SELECT r.id, r.user_id, r.title, COALESCE(r.summary, ''), COALESCE(r.file_url, ''), r.created_at, r.updated_at
+		FROM resumes r
+		LEFT JOIN profiles p ON p.user_id = r.user_id
+		-- Users who switched "profile public" off are hidden from the candidate pool
+		WHERE COALESCE(p.settings->>'profile_public', 'true') <> 'false'
+		ORDER BY r.created_at DESC
+		LIMIT 500`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err

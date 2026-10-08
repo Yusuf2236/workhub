@@ -2,13 +2,10 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Sparkles,
   Briefcase,
-  ArrowRight,
+  Search,
   MapPin,
-  CheckCircle2,
   DollarSign,
-  Plus,
   Bookmark,
   RefreshCw,
   Check,
@@ -49,8 +46,17 @@ interface HomeFeedViewProps {
   onToggleSave?: (vacancy: any) => void;
   currentUser: any;
   onNavigateToTab?: (tab: NavTab) => void;
+  /** Hero search: runs a vacancy search for the keyword and region */
+  onSearch?: (query: string, region: string) => void;
+  regions?: string[];
   lang?: Language;
 }
+
+const POPULAR_SEARCHES: Record<Language, string[]> = {
+  uz: ['Dasturchi', 'Buxgalter', 'O‘qituvchi', 'Sotuv menejeri', 'Haydovchi', 'Dizayner'],
+  ru: ['Программист', 'Бухгалтер', 'Учитель', 'Менеджер по продажам', 'Водитель', 'Дизайнер'],
+  en: ['Developer', 'Accountant', 'Teacher', 'Sales manager', 'Driver', 'Designer'],
+};
 
 const VACANCIES_PER_PAGE = 3;
 const COMMENTS_PER_PAGE = 2;
@@ -92,9 +98,17 @@ export default function HomeFeedView({
   isSaved,
   onToggleSave,
   currentUser,
+  onSearch,
+  regions = [],
   lang = 'uz',
 }: HomeFeedViewProps) {
   const t = translations[lang] || translations.uz;
+  const [heroQuery, setHeroQuery] = useState('');
+  const [heroRegion, setHeroRegion] = useState(regions[0] || '');
+  const runSearch = (q: string) => {
+    if (onSearch) onSearch(q.trim(), heroRegion);
+    else onNavigateToVacancies();
+  };
 
   // Feed personalization from the interests survey (left sidebar)
   const surveyFilters = survey ? surveyVacancyFilters(survey) : {};
@@ -270,55 +284,85 @@ export default function HomeFeedView({
 
   return (
     <div className="space-y-6 pb-24">
-      {/* 1. HERO BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-900 text-white p-6 sm:p-8 shadow-xl shadow-blue-900/20 border border-blue-500/30">
-        <div className="absolute -right-20 -top-20 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+      {/* 1. HERO SEARCH — what + where, like a classic job board */}
+      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          {t.heroMainHeading}
+        </h1>
+        {Boolean(totalVacancies) && (
+          <p className="mt-1 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+            {totalVacancies!.toLocaleString('ru-RU')} {t.vacanciesCount}
+          </p>
+        )}
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-bold text-blue-200">
-              <Sparkles size={14} className="text-yellow-400" />
-              <span>{t.heroWelcomeBadge}</span>
-            </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            runSearch(heroQuery);
+          }}
+          className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-0 sm:rounded-xl sm:border sm:border-slate-300 sm:dark:border-slate-700 sm:bg-white sm:dark:bg-slate-900 sm:p-1.5 sm:focus-within:ring-2 sm:focus-within:ring-blue-500/30"
+        >
+          <label className="flex items-center gap-2 flex-1 min-w-0 px-3 py-2.5 sm:py-1.5 rounded-xl sm:rounded-none border sm:border-0 border-slate-300 dark:border-slate-700">
+            <Search size={17} className="text-slate-400 shrink-0" />
+            <span className="sr-only">{t.heroWhatLabel}</span>
+            <input
+              type="text"
+              value={heroQuery}
+              onChange={(e) => setHeroQuery(e.target.value)}
+              placeholder={t.heroWhatPlaceholder}
+              className="w-full bg-transparent text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+            />
+          </label>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight">
-              {t.heroMainHeading}
-            </h1>
+          {regions.length > 0 && (
+            <label className="flex items-center gap-2 sm:w-56 px-3 py-2.5 sm:py-1.5 rounded-xl sm:rounded-none border sm:border-0 sm:border-l border-slate-300 dark:border-slate-700">
+              <MapPin size={17} className="text-slate-400 shrink-0" />
+              <span className="sr-only">{t.heroWhereLabel}</span>
+              <select
+                value={heroRegion}
+                onChange={(e) => setHeroRegion(e.target.value)}
+                className="w-full bg-transparent text-sm font-medium text-slate-900 dark:text-white focus:outline-none"
+              >
+                {regions.map((r) => (
+                  <option key={r} value={r}>
+                    {t.regions?.[r] || r}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
-            <p className="text-sm text-blue-100/90 leading-relaxed font-medium">{t.heroMainDesc}</p>
+          <button
+            type="submit"
+            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-bold transition"
+          >
+            {t.heroSearchBtn}
+          </button>
+        </form>
 
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              {Boolean(totalVacancies) && (
-                <span className="px-3 py-1 rounded-xl bg-white/10 backdrop-blur text-xs font-bold text-white border border-white/10 flex items-center gap-1.5">
-                  <Briefcase size={13} className="text-emerald-400" />
-                  {totalVacancies!.toLocaleString('ru-RU')} {t.vacanciesCount}
-                </span>
-              )}
-              <span className="px-3 py-1 rounded-xl bg-white/10 backdrop-blur text-xs font-bold text-white border border-white/10 flex items-center gap-1.5">
-                <CheckCircle2 size={13} className="text-amber-300" />
-                {t.oneidVerifiedBadge}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row md:flex-col gap-3 w-full md:w-auto shrink-0">
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
+          <span className="font-semibold text-slate-500 dark:text-slate-400">{t.heroPopularSearches}</span>
+          {(POPULAR_SEARCHES[lang] || POPULAR_SEARCHES.uz).map((term) => (
             <button
-              onClick={onNavigateToVacancies}
-              className="px-5 py-3 rounded-2xl bg-white text-blue-700 hover:bg-blue-50 font-black text-xs shadow-lg shadow-black/10 flex items-center justify-center gap-2 transition group"
+              key={term}
+              type="button"
+              onClick={() => {
+                setHeroQuery(term);
+                runSearch(term);
+              }}
+              className="px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition"
             >
-              <span>{t.feedHeroBtn}</span>
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition" />
+              {term}
             </button>
-            <button
-              onClick={onOpenCreateResume}
-              className="px-5 py-3 rounded-2xl bg-blue-600/60 hover:bg-blue-600 text-white font-bold text-xs border border-white/20 backdrop-blur flex items-center justify-center gap-2 transition"
-            >
-              <Plus size={16} />
-              <span>{t.createResume}</span>
-            </button>
-          </div>
+          ))}
         </div>
+
+        <p className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+          {t.heroPostResumeHint}{' '}
+          <button type="button" onClick={onOpenCreateResume} className="font-bold text-blue-600 dark:text-blue-400 hover:underline">
+            {t.heroPostResumeLink}
+          </button>
+        </p>
       </div>
 
       {/* 2. INTERESTS SURVEY — on desktop it lives in the left sidebar */}

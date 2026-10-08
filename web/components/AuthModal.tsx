@@ -55,6 +55,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
   const [error, setError] = useState<string | null>(null);
   const [showOneIDPortal, setShowOneIDPortal] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  // "Forgot password" view: email form, then a confirmation message
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   useEffect(() => {
     const handleOneIDMessage = async (event: MessageEvent) => {
@@ -374,6 +377,19 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
 
 
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await api.forgotPassword(email.trim());
+      if (res.success) setForgotSent(true);
+      else setError(res.error || t.networkError);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -506,7 +522,51 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
             </button>
           </div>
 
-          {/* Form */}
+          {/* Forgot password */}
+          {forgotMode ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">{t.forgotPasswordTitle}</h4>
+              {forgotSent ? (
+                <p className="text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl p-3">
+                  {t.resetLinkSent}
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t.forgotPasswordHint}</p>
+                  {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                    <input
+                      type="email"
+                      required
+                      placeholder="pochta@misol.uz"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl shadow-lg shadow-blue-500/25 transition disabled:opacity-50"
+                  >
+                    {loading ? '...' : t.sendResetLink}
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotMode(false);
+                  setForgotSent(false);
+                  setError(null);
+                }}
+                className="w-full text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {t.backToLogin}
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleStandardAuth} className="space-y-4">
             {tab === 'register' && (
               <div>
@@ -559,6 +619,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              {tab === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotMode(true);
+                    setError(null);
+                  }}
+                  className="mt-1.5 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {t.forgotPasswordLink}
+                </button>
+              )}
             </div>
 
             <button
@@ -573,6 +645,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
                 : (lang === 'ru' ? 'Создать аккаунт' : lang === 'en' ? 'Create Account' : 'Hisob yaratish')}
             </button>
           </form>
+          )}
         </div>
       </div>
 

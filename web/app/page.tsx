@@ -19,6 +19,7 @@ import ChatModal from '../components/ChatModal';
 import NotificationsModal from '../components/NotificationsModal';
 import AiResumeAuditView from '../components/AiResumeAuditView';
 import ChatIntroModal from '../components/ChatIntroModal';
+import ResetPasswordModal from '../components/ResetPasswordModal';
 import { SurveyAnswers, EMPTY_SURVEY, loadSurvey, saveSurvey } from '../lib/survey';
 import { api, getAuthToken, setAuthToken, getCurrentUser, removeAuthToken, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
@@ -94,6 +95,16 @@ export default function WZonePortal() {
   // Interactive Saved & Applications & Notifications
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
+  // Applications sent to vacancies the user posted (employer view)
+  const [receivedApplications, setReceivedApplications] = useState<any[]>([]);
+  // Saved / my-vacancies tabs load their own lists, independent of the paginated feed
+  const [tabVacancies, setTabVacancies] = useState<any[]>([]);
+  const [tabLoading, setTabLoading] = useState(false);
+  const [editingVacancy, setEditingVacancy] = useState<any | null>(null);
+  const [editingResume, setEditingResume] = useState<any | null>(null);
+  // Emailed links: /?reset_token=... and /?verify_email=...
+  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [verificationResent, setVerificationResent] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
 
   // Modals
@@ -105,6 +116,8 @@ export default function WZonePortal() {
   const [chatTargetUser, setChatTargetUser] = useState<any | null>(null);
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
   const [selectedVacancyForDetail, setSelectedVacancyForDetail] = useState<any | null>(null);
+  // Desktop split view (list + detail side by side) on vacancy list tabs
+  const [paneVacancyId, setPaneVacancyId] = useState<string | null>(null);
   const [selectedVacancyForApply, setSelectedVacancyForApply] = useState<any | null>(null);
   const [oneidNotice, setOneidNotice] = useState<string | null>(null);
   const [chatIntroOpen, setChatIntroOpen] = useState(false);
@@ -221,6 +234,38 @@ export default function WZonePortal() {
 
         const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const searchParams = new URLSearchParams(window.location.search);
+
+        // Password reset link from email
+        const urlResetToken = searchParams.get('reset_token');
+        if (urlResetToken) {
+          window.history.replaceState(null, '', window.location.pathname);
+          setResetToken(urlResetToken);
+        }
+
+        // Email verification link
+        const urlVerifyToken = searchParams.get('verify_email');
+        if (urlVerifyToken) {
+          window.history.replaceState(null, '', window.location.pathname);
+          api.verifyEmail(urlVerifyToken).then(async (res) => {
+            setOneidNotice(res.success ? (translations[savedLang] || translations.uz).emailVerifiedNotice : res.error || 'Xatolik');
+            setTimeout(() => setOneidNotice(null), 6000);
+            if (res.success && getAuthToken()) {
+              const me = await api.getMe();
+              if (me.success && me.data?.user) {
+                setUser(me.data.user);
+                setCurrentUser(me.data.user);
+              }
+            }
+          });
+        }
+
+        // Shared vacancy link (/?vacancy=<id>)
+        const sharedVacancyId = searchParams.get('vacancy');
+        if (sharedVacancyId) {
+          api.getVacancy(sharedVacancyId).then((res) => {
+            if (res.success && res.data?.vacancy) setSelectedVacancyForDetail(res.data.vacancy);
+          });
+        }
         
         // Handle OneID query callback (/ ?oneid_code=...)
         const urlOneIDCode = searchParams.get('oneid_code') || 
@@ -464,7 +509,7 @@ export default function WZonePortal() {
 
   // Observer for automatic infinite scroll
   useEffect(() => {
-    if (currentTab !== 'feed') return;
+    if (currentTab !== 'vacancies') return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
@@ -510,12 +555,16 @@ export default function WZonePortal() {
   const fetchUserData = useCallback(async () => {
     if (user) {
       try {
-        const [appRes, notifRes] = await Promise.all([
+        const [appRes, notifRes, receivedRes] = await Promise.all([
           api.getApplications(),
           api.getNotifications(),
+          api.getReceivedApplications(),
         ]);
         if (appRes.success && appRes.data?.applications) {
           setApplications(appRes.data.applications);
+        }
+        if (receivedRes.success && receivedRes.data?.applications) {
+          setReceivedApplications(receivedRes.data.applications);
         }
         if (notifRes.success && notifRes.data?.notifications) {
           setNotifications(notifRes.data.notifications);
@@ -523,8 +572,87 @@ export default function WZonePortal() {
       } catch (err) {
         console.error('Error fetching user data', err);
       }
+    } else {
+      setApplications([]);
+      setReceivedApplications([]);
+      setNotifications([]);
     }
   }, [user]);
+
+  // Saved ids are read through a ref so toggling a bookmark does not refetch the list
+  const savedIdsRef = useRef<string[]>([]);
+  savedIdsRef.current = savedIds;
+
+  const fetchTabVacancies = useCallback(async () => {
+    if (currentTab !== 'saved' && currentTab !== 'my-vacancies') return;
+    if (currentTab === 'my-vacancies' && !user) {
+      setTabVacancies([]);
+      return;
+    }
+    setTabLoading(true);
+    try {
+      const res =
+        currentTab === 'saved'
+          ? await api.getVacanciesByIds(savedIdsRef.current)
+          : await api.getMyVacancies();
+      setTabVacancies(res.success && res.data?.vacancies ? res.data.vacancies : []);
+    } finally {
+      setTabLoading(false);
+    }
+  }, [currentTab, user]);
+
+  useEffect(() => {
+    fetchTabVacancies();
+  }, [fetchTabVacancies]);
+
+  const handleUpdateApplicationStatus = async (applicationId: string, status: string) => {
+    const res = await api.updateApplicationStatus(applicationId, status);
+    if (res.success) {
+      setReceivedApplications((list) => list.map((a) => (a.id === applicationId ? { ...a, status } : a)));
+    }
+    return res;
+  };
+
+  // Vacancy owner actions (edit / delete)
+  const handleEditVacancy = (v: any) => {
+    setSelectedVacancyForDetail(null);
+    setEditingVacancy(v);
+    setCreateVacancyModalOpen(true);
+  };
+
+  const handleDeleteVacancy = async (v: any) => {
+    if (!window.confirm(t.deleteVacancyConfirm)) return;
+    const res = await api.deleteVacancy(v.id);
+    if (!res.success) {
+      window.alert(res.error || t.deleteFailed);
+      return;
+    }
+    setSelectedVacancyForDetail(null);
+    setVacancies((list) => list.filter((x) => x.id !== v.id));
+    setTabVacancies((list) => list.filter((x) => x.id !== v.id));
+    fetchUserData();
+  };
+
+  const handleDeleteResume = async (r: any) => {
+    if (!window.confirm(t.deleteResumeConfirm)) return;
+    const res = await api.deleteResume(r.id);
+    if (!res.success) {
+      window.alert(res.error || t.deleteFailed);
+      return;
+    }
+    fetchResumes();
+  };
+
+  // Open a vacancy from the applications list, loading it when it is not in the feed
+  const openVacancyById = async (id: string) => {
+    const loaded = vacancies.find((v) => v.id === id) || tabVacancies.find((v) => v.id === id);
+    if (loaded) {
+      setSelectedVacancyForDetail(loaded);
+      return;
+    }
+    const res = await api.getVacancy(id);
+    if (res.success && res.data?.vacancy) setSelectedVacancyForDetail(res.data.vacancy);
+  };
 
   useEffect(() => {
     fetchVacancies();
@@ -552,6 +680,11 @@ export default function WZonePortal() {
 
   // Handle Apply Click
   const handleApplyClick = (v: any) => {
+    // Imported vacancies are applied to on the original site; nobody reads WZone applications for them
+    if (!v.created_by && typeof v.source_url === 'string' && v.source_url.startsWith('https://')) {
+      window.open(v.source_url, '_blank', 'noopener,noreferrer');
+      return;
+    }
     if (!user) {
       setAuthModalOpen(true);
       return;
@@ -586,13 +719,22 @@ export default function WZonePortal() {
   // Filtered lists for saved / my-vacancies
   const displayedVacancies = () => {
     if (currentTab === 'saved') {
-      return vacancies.filter((v) => savedIds.includes(v.id));
+      return tabVacancies.filter((v) => savedIds.includes(v.id));
     }
     if (currentTab === 'my-vacancies') {
-      if (!user) return [];
-      return vacancies.filter((v) => v.created_by === user.id);
+      return user ? tabVacancies : [];
     }
     return vacancies;
+  };
+
+  const isListTab = currentTab === 'vacancies' || currentTab === 'saved' || currentTab === 'my-vacancies';
+  const listLoading = currentTab === 'saved' || currentTab === 'my-vacancies' ? tabLoading : loading;
+  const paneVacancy = isListTab
+    ? displayedVacancies().find((v) => v.id === paneVacancyId) ?? displayedVacancies()[0] ?? null
+    : null;
+  const openVacancy = (v: any) => {
+    if (isListTab && window.matchMedia('(min-width: 1280px)').matches) setPaneVacancyId(v.id);
+    else setSelectedVacancyForDetail(v);
   };
 
   return (
@@ -607,6 +749,7 @@ export default function WZonePortal() {
         onOpenNotifications={() => setNotificationsModalOpen(true)}
         unreadNotificationsCount={unreadCount}
         searchQuery={searchQuery}
+        showSearch={currentTab !== 'feed'}
         onSearchChange={(q) => {
           setSearchQuery(q);
           if (q.trim() && currentTab === 'feed') {
@@ -621,6 +764,26 @@ export default function WZonePortal() {
       />
 
       {/* OneID Verification Alert / Toast Banner */}
+      {/* Email not verified yet (only for accounts that report the flag) */}
+      {user && user.email_verified === false && (
+        <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200 px-4 py-2 text-xs font-semibold text-center flex flex-wrap items-center justify-center gap-2">
+          <span>{t.verifyEmailBanner}</span>
+          {verificationResent ? (
+            <span className="text-emerald-700 dark:text-emerald-300">✓ {t.verificationSent}</span>
+          ) : (
+            <button
+              onClick={async () => {
+                const res = await api.resendVerification();
+                if (res.success) setVerificationResent(true);
+              }}
+              className="underline font-bold hover:text-amber-950 dark:hover:text-white"
+            >
+              {t.resendVerification}
+            </button>
+          )}
+        </div>
+      )}
+
       {oneidNotice && (
         <div className="bg-gradient-to-r from-blue-700 via-indigo-600 to-sky-600 text-white px-4 py-2.5 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-md animate-fadeIn">
           <ShieldCheck size={17} className="text-blue-200" />
@@ -656,10 +819,13 @@ export default function WZonePortal() {
           {currentTab === 'applications' ? (
             <ApplicationsView
               applications={applications}
-              onSelectVacancy={(id) => {
-                const target = vacancies.find((v) => v.id === id);
-                if (target) setSelectedVacancyForDetail(target);
+              receivedApplications={receivedApplications}
+              onUpdateStatus={handleUpdateApplicationStatus}
+              onOpenApplicantChat={(app) => {
+                setChatTargetUser({ id: app.user_id, name: app.applicant_name || 'Nomzod' });
+                setChatModalOpen(true);
               }}
+              onSelectVacancy={openVacancyById}
               onOpenChat={() => setChatModalOpen(true)}
               lang={lang}
             />
@@ -680,6 +846,12 @@ export default function WZonePortal() {
               }}
               onRefresh={fetchResumes}
               loading={resumesLoading}
+              currentUserId={user?.id}
+              onEditResume={(r) => {
+                setEditingResume(r);
+                setCreateResumeModalOpen(true);
+              }}
+              onDeleteResume={handleDeleteResume}
               lang={lang}
             />
           ) : currentTab === 'ai-audit' ? (
@@ -738,7 +910,7 @@ export default function WZonePortal() {
               resumes={resumes}
               onRefreshResumes={fetchResumes}
               onLogout={() => {
-                removeAuthToken();
+                api.logout();
                 setUser(null);
                 setCurrentTab('feed');
               }}
@@ -804,6 +976,12 @@ export default function WZonePortal() {
               onNavigateToTab={(tab) => {
                 if (tab === 'chat') goToChat();
                 else setCurrentTab(tab);
+              }}
+              regions={REGIONS}
+              onSearch={(q, region) => {
+                setSearchQuery(q);
+                setSelectedLocation(region || 'Barcha hududlar');
+                setCurrentTab('vacancies');
               }}
               lang={lang}
             />
@@ -877,12 +1055,12 @@ export default function WZonePortal() {
                       {displayedVacancies().length} {t.vacanciesCount}
                     </span>
                     <button
-                      onClick={handleRefreshVacancies}
-                      disabled={loading}
+                      onClick={isListTab && currentTab !== 'vacancies' ? fetchTabVacancies : handleRefreshVacancies}
+                      disabled={listLoading}
                       title={t.refresh}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60 transition"
                     >
-                      <RefreshCw size={14} className={loading ? 'animate-spin text-blue-600' : ''} />
+                      <RefreshCw size={14} className={listLoading ? 'animate-spin text-blue-600' : ''} />
                       <span>{t.refreshBtn}</span>
                     </button>
                   </div>
@@ -890,7 +1068,7 @@ export default function WZonePortal() {
               </div>
 
               {/* Vacancy Feed Cards */}
-              {loading && vacancies.length === 0 ? (
+              {listLoading && displayedVacancies().length === 0 ? (
                 <div className="space-y-4">
                   {[1, 2, 3, 4].map((i) => (
                     <div
@@ -918,17 +1096,24 @@ export default function WZonePortal() {
                   </p>
                 </div>
               ) : (
+                <div className="xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
                 <div className="space-y-3.5">
                   {displayedVacancies().map((v) => (
-                    <VacancyCard
+                    <div
                       key={v.id}
-                      vacancy={v}
-                      isSaved={savedIds.includes(v.id)}
-                      onToggleSave={handleToggleSave}
-                      onApply={handleApplyClick}
-                      onSelect={(vac) => setSelectedVacancyForDetail(vac)}
-                      lang={lang}
-                    />
+                      className={`rounded-2xl transition ${
+                        paneVacancy?.id === v.id ? 'xl:ring-2 xl:ring-blue-500' : ''
+                      }`}
+                    >
+                      <VacancyCard
+                        vacancy={v}
+                        isSaved={savedIds.includes(v.id)}
+                        onToggleSave={handleToggleSave}
+                        onApply={handleApplyClick}
+                        onSelect={openVacancy}
+                        lang={lang}
+                      />
+                    </div>
                   ))}
 
                   {/* Infinite Scroll Trigger Sentinel & Loading Indicator */}
@@ -948,14 +1133,35 @@ export default function WZonePortal() {
                     </div>
                   )}
                 </div>
+
+                {/* Detail pane (desktop only) */}
+                <div className="hidden xl:block">
+                  <VacancyDetailModal
+                    variant="pane"
+                    vacancy={paneVacancy}
+                    onClose={() => {}}
+                    onApply={handleApplyClick}
+                    onEdit={handleEditVacancy}
+                    onDelete={handleDeleteVacancy}
+                    currentUser={user}
+                    lang={lang}
+                  />
+                </div>
+                </div>
               )}
             </>
           )}
         </main>
 
         {/* Right Info & Widgets Sidebar */}
-        {currentTab !== 'chat' && currentTab !== 'profile' && (
-          <RightSidebar vacanciesCount={totalVacancies || vacancies.length} lang={lang} />
+        {currentTab !== 'chat' && currentTab !== 'profile' && !isListTab && (
+          <RightSidebar
+            vacanciesCount={totalVacancies || vacancies.length}
+            user={user}
+            onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
+            onOpenProfile={() => setCurrentTab('profile')}
+            lang={lang}
+          />
         )}
       </div>
 
@@ -1112,6 +1318,8 @@ export default function WZonePortal() {
           setSelectedVacancyForDetail(null);
           handleApplyClick(v);
         }}
+        onEdit={handleEditVacancy}
+        onDelete={handleDeleteVacancy}
         currentUser={user}
         lang={lang}
       />
@@ -1126,31 +1334,61 @@ export default function WZonePortal() {
         onSuccess={() => {
           fetchUserData();
         }}
+        resumes={resumes.filter((r) => user && r.user_id === user.id)}
         lang={lang}
       />
 
       <CreateVacancyModal
         isOpen={createVacancyModalOpen}
-        onClose={() => setCreateVacancyModalOpen(false)}
-        onSuccess={(newVac) => {
-          if (newVac?.category) {
-            setSelectedCategory(newVac.category);
+        initialVacancy={editingVacancy}
+        onClose={() => {
+          setCreateVacancyModalOpen(false);
+          setEditingVacancy(null);
+        }}
+        onSuccess={(savedVac) => {
+          if (editingVacancy) {
+            const merge = (list: any[]) => list.map((v) => (v.id === savedVac?.id ? { ...v, ...savedVac } : v));
+            setVacancies(merge);
+            setTabVacancies(merge);
+            return;
+          }
+          if (savedVac?.category) {
+            setSelectedCategory(savedVac.category);
           } else {
             setSelectedCategory('Barchasi');
           }
           fetchVacancies();
+          fetchTabVacancies();
         }}
         lang={lang}
       />
 
       <CreateResumeModal
         isOpen={createResumeModalOpen}
-        onClose={() => setCreateResumeModalOpen(false)}
+        initialResume={editingResume}
+        onClose={() => {
+          setCreateResumeModalOpen(false);
+          setEditingResume(null);
+        }}
         onSuccess={() => {
           fetchResumes();
           setCurrentTab('resumes');
         }}
         currentUser={user}
+        lang={lang}
+      />
+
+      <ResetPasswordModal
+        token={resetToken}
+        onClose={() => setResetToken(null)}
+        onDone={() => {
+          setResetToken(null);
+          removeAuthToken();
+          setUser(null);
+          setOneidNotice(t.passwordResetDone);
+          setTimeout(() => setOneidNotice(null), 6000);
+          setAuthModalOpen(true);
+        }}
         lang={lang}
       />
 

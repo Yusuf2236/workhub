@@ -18,6 +18,7 @@ type OneIDTab = 'qr' | 'sso' | 'demo';
 export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'uz' }: OneIDPortalModalProps) {
   const t = translations[lang || 'uz'];
   const [tab, setTab] = useState<OneIDTab>('qr');
+  const [qrEnabled, setQrEnabled] = useState(true);
 
   // What the backend supports (real SSO credentials / local demo mode)
   const [ssoUrl, setSsoUrl] = useState<string | null>(null);
@@ -47,6 +48,9 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
         setSsoUrl(res.data.auth_url);
         setSsoConfigured(Boolean(res.data.is_live_configured));
         setDemoMode(Boolean(res.data.demo_mode));
+        const qr = res.data.qr_enabled !== false;
+        setQrEnabled(qr);
+        if (!qr) setTab(res.data.is_live_configured ? 'sso' : 'demo');
       }
     });
   }, [isOpen]);
@@ -189,7 +193,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
   };
 
   const tabs: { id: OneIDTab; label: string; icon: React.ReactNode; visible: boolean }[] = [
-    { id: 'qr', label: t.oneIdTabQr, icon: <QrCode size={14} />, visible: true },
+    { id: 'qr', label: t.oneIdTabQr, icon: <QrCode size={14} />, visible: qrEnabled },
     { id: 'sso', label: 'id.egov.uz', icon: <ExternalLink size={14} />, visible: ssoConfigured },
     { id: 'demo', label: 'Demo (dev)', icon: <FlaskConical size={14} />, visible: demoMode },
   ];

@@ -10,7 +10,7 @@ struct WorkHubWebView: UIViewRepresentable {
     let url: URL
     @Binding var isLoading: Bool
 
-    init(url: URL = URL(string: "http://localhost:3000")!, isLoading: Binding<Bool> = .constant(false)) {
+    init(url: URL = APIConfig.webURL, isLoading: Binding<Bool> = .constant(false)) {
         self.url = url
         self._isLoading = isLoading
     }

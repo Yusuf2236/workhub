@@ -18,6 +18,13 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Server addresses: pass -Pwzone.apiUrl=https://api.example.uz -Pwzone.webUrl=https://example.uz
+        // (or put them in gradle.properties). The defaults reach the host machine from the emulator.
+        val apiUrl = (project.findProperty("wzone.apiUrl") as String?) ?: "http://10.0.2.2:8080"
+        val webUrl = (project.findProperty("wzone.webUrl") as String?) ?: "http://10.0.2.2:3000"
+        buildConfigField("String", "API_BASE_URL", "\"$apiUrl\"")
+        buildConfigField("String", "WEB_URL", "\"$webUrl\"")
     }
 
     buildTypes {
@@ -41,6 +48,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {

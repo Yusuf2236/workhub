@@ -11,7 +11,7 @@ struct ContentView: View {
             if isWebMirrorMode {
                 ZStack(alignment: .topTrailing) {
                     WorkHubWebView(
-                        url: URL(string: "http://localhost:3000")!,
+                        url: APIConfig.webURL,
                         isLoading: $isWebLoading
                     )
                     .ignoresSafeArea(.all, edges: .bottom)

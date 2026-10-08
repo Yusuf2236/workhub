@@ -3,17 +3,25 @@
 import React from 'react';
 import { Send, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
+import RecommendationsWidget from './RecommendationsWidget';
 
 interface RightSidebarProps {
   vacanciesCount: number;
+  user?: any;
+  onSelectVacancy?: (vacancy: any) => void;
+  onOpenProfile?: () => void;
   lang?: Language;
 }
 
-export default function RightSidebar({ vacanciesCount, lang = 'uz' }: RightSidebarProps) {
+export default function RightSidebar({ vacanciesCount, user, onSelectVacancy, onOpenProfile, lang = 'uz' }: RightSidebarProps) {
   const t = translations[lang] || translations.uz;
 
   return (
     <aside className="w-80 shrink-0 hidden xl:block sticky top-20 self-start space-y-4">
+      {user && onSelectVacancy && onOpenProfile && (
+        <RecommendationsWidget user={user} onSelectVacancy={onSelectVacancy} onOpenProfile={onOpenProfile} lang={lang} />
+      )}
+
       {/* Telegram Bot Card */}
       <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
         <div className="flex items-center gap-3 mb-2.5">

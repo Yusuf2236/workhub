@@ -96,7 +96,15 @@ func OneIDLogin(c *gin.Context) {
 		"state":              state,
 		"is_live_configured": os.Getenv("ONEID_CLIENT_SECRET") != "",
 		"demo_mode":          oneIDDemoMode(),
+		"qr_enabled":         oneIDQREnabled(),
 	})
+}
+
+// oneIDQREnabled reports whether QR sign-in is offered. It relies on id.egov.uz endpoints
+// that are not part of the documented OneID API, so it can be switched off with
+// ONEID_QR_ENABLED=false (e.g. once official SSO credentials are configured).
+func oneIDQREnabled() bool {
+	return !strings.EqualFold(strings.TrimSpace(os.Getenv("ONEID_QR_ENABLED")), "false")
 }
 
 // consumeOneIDState validates and invalidates the OAuth state issued by OneIDLogin.
@@ -447,6 +455,10 @@ func OneIDCallback(c *gin.Context) {
 
 // OneIDQRCheck checks if citizen confirmed login in OneID mobile app
 func OneIDQRCheck(c *gin.Context) {
+	if !oneIDQREnabled() {
+		response.Error(c, http.StatusNotFound, "OneID QR orqali kirish o‘chirilgan")
+		return
+	}
 	var req struct {
 		Code string `json:"code" binding:"required"`
 		Hash string `json:"hash" binding:"required"`

@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -19,6 +21,14 @@ var allowedApplicationStatuses = map[string]bool{
 	"interview": true,
 	"accepted":  true,
 	"rejected":  true,
+}
+
+var applicationStatusLabels = map[string]string{
+	"submitted": "Yuborildi",
+	"reviewing": "Ko‘rib chiqilmoqda",
+	"interview": "Suhbatga taklif qilindi",
+	"accepted":  "Qabul qilindi",
+	"rejected":  "Rad etildi",
 }
 
 // ListApplications returns the caller's own applications (admins see all).
@@ -49,6 +59,32 @@ func ListApplications(c *gin.Context) {
 	response.Success(c, http.StatusOK, gin.H{"applications": items})
 }
 
+// ListReceivedApplications returns applications sent to vacancies the caller posted.
+func ListReceivedApplications(c *gin.Context) {
+	userID := currentUserID(c)
+	if applicationRepo != nil {
+		items, err := applicationRepo.ListForVacancyOwner(userID)
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "failed to query applications")
+			return
+		}
+		response.Success(c, http.StatusOK, gin.H{"applications": items})
+		return
+	}
+
+	items := make([]models.Application, 0)
+	for _, app := range applications {
+		if v, ok := vacancies[app.VacancyID]; ok && v.CreatedBy != "" && v.CreatedBy == userID {
+			app.VacancyTitle = v.Title
+			app.VacancyCompany = v.Company
+			items = append(items, app)
+		}
+	}
+	response.Success(c, http.StatusOK, gin.H{"applications": items})
+}
+
+const maxCoverLetterLen = 5000
+
 func ApplyToVacancy(c *gin.Context) {
 	vacancyID := c.Param("id")
 	userID, ok := c.Get("user_id")
@@ -57,39 +93,68 @@ func ApplyToVacancy(c *gin.Context) {
 		return
 	}
 
+	// The body is optional: an empty request applies without a letter or resume
+	var payload struct {
+		ResumeID    string `json:"resume_id"`
+		CoverLetter string `json:"cover_letter"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil && !errors.Is(err, io.EOF) {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	payload.CoverLetter = strings.TrimSpace(payload.CoverLetter)
+	payload.ResumeID = strings.TrimSpace(payload.ResumeID)
+	if len([]rune(payload.CoverLetter)) > maxCoverLetterLen {
+		response.Error(c, http.StatusBadRequest, "Kuzatuv xati juda uzun (maksimum 5000 belgi)")
+		return
+	}
+	if payload.ResumeID != "" {
+		resume, err := findResume(payload.ResumeID)
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "database error")
+			return
+		}
+		if resume == nil || resume.UserID != userID.(string) {
+			response.Error(c, http.StatusBadRequest, "Tanlangan rezyume topilmadi")
+			return
+		}
+	}
+
+	var vacancy *models.Vacancy
 	if vacancyRepo != nil {
 		v, err := vacancyRepo.Get(vacancyID)
 		if err != nil {
 			response.Error(c, http.StatusInternalServerError, "database error")
 			return
 		}
-		if v == nil {
-			response.Error(c, http.StatusNotFound, "vacancy not found")
-			return
-		}
-		if v.CreatedBy != "" && v.CreatedBy == userID.(string) {
-			response.Error(c, http.StatusBadRequest, "O‘zingiz joylagan vakansiyaga ariza topshira olmaysiz")
-			return
-		}
-	} else {
-		if _, exists := vacancies[vacancyID]; !exists {
-			response.Error(c, http.StatusNotFound, "vacancy not found")
-			return
-		}
+		vacancy = v
+	} else if v, exists := vacancies[vacancyID]; exists {
+		vacancy = &v
+	}
+	if vacancy == nil {
+		response.Error(c, http.StatusNotFound, "vacancy not found")
+		return
+	}
+	if vacancy.CreatedBy == "" && vacancy.SourceURL != "" {
+		// Imported vacancies have no employer on WZone to read the application
+		response.Error(c, http.StatusBadRequest, "Bu vakansiyaga "+vacancy.Source+" saytida ariza topshiriladi")
+		return
+	}
+	if vacancy.CreatedBy != "" && vacancy.CreatedBy == userID.(string) {
+		response.Error(c, http.StatusBadRequest, "O‘zingiz joylagan vakansiyaga ariza topshira olmaysiz")
+		return
 	}
 
 	// Prevent duplicate applications to the same vacancy
 	if applicationRepo != nil {
-		existing, err := applicationRepo.ListByUser(userID.(string))
+		exists, err := applicationRepo.Exists(userID.(string), vacancyID)
 		if err != nil {
 			response.Error(c, http.StatusInternalServerError, "database error")
 			return
 		}
-		for _, a := range existing {
-			if a.VacancyID == vacancyID {
-				response.Error(c, http.StatusConflict, "Siz bu vakansiyaga allaqachon ariza topshirgansiz")
-				return
-			}
+		if exists {
+			response.Error(c, http.StatusConflict, "Siz bu vakansiyaga allaqachon ariza topshirgansiz")
+			return
 		}
 	} else {
 		for _, a := range applications {
@@ -101,12 +166,16 @@ func ApplyToVacancy(c *gin.Context) {
 	}
 
 	app := models.Application{
-		ID:        uuid.NewString(),
-		UserID:    userID.(string),
-		VacancyID: vacancyID,
-		Status:    "submitted",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		ID:             uuid.NewString(),
+		UserID:         userID.(string),
+		VacancyID:      vacancyID,
+		ResumeID:       payload.ResumeID,
+		CoverLetter:    payload.CoverLetter,
+		Status:         "submitted",
+		CreatedAt:      time.Now().UTC(),
+		UpdatedAt:      time.Now().UTC(),
+		VacancyTitle:   vacancy.Title,
+		VacancyCompany: vacancy.Company,
 	}
 
 	if applicationRepo != nil {
@@ -115,35 +184,37 @@ func ApplyToVacancy(c *gin.Context) {
 			return
 		}
 
-		// Trigger in-app notification to candidate
-		if notificationRepo != nil {
-			_ = notificationRepo.Create(models.Notification{
-				ID:        uuid.NewString(),
-				UserID:    userID.(string),
-				Title:     "Ariza topshirildi",
-				Body:      "Vakansiyaga arizangiz muvaffaqiyatli qabul qilindi.",
-				CreatedAt: time.Now().UTC(),
-			})
+		candidateName := "Nomzod"
+		if userRepo != nil {
+			if u, _ := userRepo.GetByID(userID.(string)); u != nil && u.Name != "" {
+				candidateName = u.Name
+			}
 		}
 
-		// Trigger telegram notification
-		go func() {
-			candidateName := "Nomzod"
-			if userRepo != nil {
-				if u, _ := userRepo.GetByID(userID.(string)); u != nil && u.Name != "" {
-					candidateName = u.Name
-				}
+		// In-app notifications to the candidate and to the employer who posted the vacancy
+		if notificationRepo != nil {
+			if userWantsNotification(userID.(string), "notify_app_status") {
+				_ = notificationRepo.Create(models.Notification{
+					ID:        uuid.NewString(),
+					UserID:    userID.(string),
+					Title:     "Ariza topshirildi",
+					Body:      fmt.Sprintf("«%s» vakansiyasiga arizangiz qabul qilindi.", vacancy.Title),
+					CreatedAt: time.Now().UTC(),
+				})
 			}
-			vacTitle := "Vakansiya"
-			compName := "WZone Ish beruvchi"
-			if vacancyRepo != nil {
-				if v, _ := vacancyRepo.Get(vacancyID); v != nil {
-					vacTitle = v.Title
-					compName = v.Company
-				}
+			if vacancy.CreatedBy != "" && userWantsNotification(vacancy.CreatedBy, "notify_app_status") {
+				_ = notificationRepo.Create(models.Notification{
+					ID:        uuid.NewString(),
+					UserID:    vacancy.CreatedBy,
+					Title:     "Yangi ariza",
+					Body:      fmt.Sprintf("%s «%s» vakansiyangizga ariza topshirdi.", candidateName, vacancy.Title),
+					CreatedAt: time.Now().UTC(),
+				})
 			}
-			services.GetTelegramService().NotifyNewApplication(candidateName, vacTitle, compName)
-		}()
+		}
+
+		vacTitle, compName := vacancy.Title, vacancy.Company
+		go services.GetTelegramService().NotifyNewApplication(candidateName, vacTitle, compName)
 	} else {
 		applications[app.ID] = app
 	}
@@ -199,12 +270,12 @@ func UpdateApplicationStatus(c *gin.Context) {
 		existing.UpdatedAt = time.Now().UTC()
 
 		// Trigger notification to candidate
-		if notificationRepo != nil {
+		if notificationRepo != nil && userWantsNotification(existing.UserID, "notify_app_status") {
 			_ = notificationRepo.Create(models.Notification{
 				ID:        uuid.NewString(),
 				UserID:    existing.UserID,
 				Title:     "Ariza holati yangilandi",
-				Body:      fmt.Sprintf("Arizangiz holati yangilandi: %s", payload.Status),
+				Body:      fmt.Sprintf("«%s» vakansiyasiga arizangiz holati: %s", existing.VacancyTitle, applicationStatusLabels[payload.Status]),
 				CreatedAt: time.Now().UTC(),
 			})
 		}

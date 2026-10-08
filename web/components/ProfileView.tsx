@@ -180,18 +180,23 @@ export default function ProfileView({
           if (p.website) setWebsite(p.website);
           if (p.avatar_url) setAvatarUrl(p.avatar_url);
 
-          if (p.skills) {
-            const list = p.skills
+          setSkillsList(
+            (p.skills || '')
               .split(',')
               .map((s: string) => s.trim())
-              .filter(Boolean);
-            setSkillsList(list);
-          } else {
-            // Default skills if none set
-            setSkillsList(['Go', 'Next.js', 'PostgreSQL', 'Docker']);
-          }
+              .filter(Boolean)
+          );
+
+          // Settings are stored server-side; switches missing from the profile stay on their defaults
+          const st = p.settings || {};
+          if (typeof st.notify_job_alerts === 'boolean') setNotifyJobAlerts(st.notify_job_alerts);
+          if (typeof st.notify_app_status === 'boolean') setNotifyAppStatus(st.notify_app_status);
+          if (typeof st.notify_chat_messages === 'boolean') setNotifyChatMessages(st.notify_chat_messages);
+          if (typeof st.notify_telegram === 'boolean') setNotifyTelegram(st.notify_telegram);
+          if (typeof st.profile_public === 'boolean') setProfilePublic(st.profile_public);
+          if (typeof st.phone_verified_only === 'boolean') setPhoneVerifiedOnly(st.phone_verified_only);
         } else {
-          setSkillsList(['Go', 'Next.js', 'PostgreSQL', 'Docker']);
+          setSkillsList([]);
         }
       }
     }
@@ -336,18 +341,19 @@ export default function ProfileView({
     setErrorMessage(null);
 
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(
-          'workhub_user_settings',
-          JSON.stringify({
-            notifyJobAlerts,
-            notifyAppStatus,
-            notifyChatMessages,
-            notifyTelegram,
-            profilePublic,
-            phoneVerifiedOnly,
-          })
-        );
+      const res = await api.updateProfile({
+        settings: {
+          notify_job_alerts: notifyJobAlerts,
+          notify_app_status: notifyAppStatus,
+          notify_chat_messages: notifyChatMessages,
+          notify_telegram: notifyTelegram,
+          profile_public: profilePublic,
+          phone_verified_only: phoneVerifiedOnly,
+        },
+      });
+      if (!res.success) {
+        setErrorMessage(res.error || 'Server xatosi');
+        return;
       }
       setSettingsSavedSuccess(true);
       setTimeout(() => setSettingsSavedSuccess(false), 3500);

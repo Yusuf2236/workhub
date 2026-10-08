@@ -69,8 +69,7 @@ go run ./cmd/api
 PORT=8080
 APP_ENV=development
 JWT_SECRET=super-secret-key
-JWT_ACCESS_TTL=15m
-JWT_REFRESH_TTL=168h
+JWT_TTL=168h
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres

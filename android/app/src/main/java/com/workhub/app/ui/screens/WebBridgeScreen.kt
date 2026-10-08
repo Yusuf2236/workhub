@@ -1,5 +1,6 @@
 package com.workhub.app.ui.screens
 
+import com.workhub.app.BuildConfig
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
@@ -34,7 +35,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebBridgeScreen(
-    url: String = "http://10.0.2.2:3000",
+    url: String = BuildConfig.WEB_URL,
     onSwitchToNative: (() -> Unit)? = null
 ) {
     var webViewInstance by remember { mutableStateOf<WebView?>(null) }

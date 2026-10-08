@@ -27,6 +27,7 @@ import { api } from '../lib/api';
 import {
   generateResumeWithAI,
   analyzeResumeText,
+  hasResumePlaceholders,
   AIResumeOutput,
   AIResumeAnalysis,
 } from '../lib/aiResumeGenerator';
@@ -37,6 +38,8 @@ interface CreateResumeModalProps {
   onClose: () => void;
   onSuccess: () => void;
   currentUser?: any;
+  /** When set the modal edits this resume instead of creating a new one */
+  initialResume?: any | null;
   lang?: Language;
 }
 
@@ -56,6 +59,7 @@ export default function CreateResumeModal({
   onClose,
   onSuccess,
   currentUser,
+  initialResume = null,
   lang = 'uz',
 }: CreateResumeModalProps) {
   const t = translations[lang || 'uz'];
@@ -63,12 +67,14 @@ export default function CreateResumeModal({
 
   // Form Fields
   const [title, setTitle] = useState('');
-  const [fullName, setFullName] = useState(currentUser?.name || 'Yusuf Usmonov');
-  const [phone, setPhone] = useState('+998 (90) 123-45-67');
-  const [email, setEmail] = useState(currentUser?.email || 'usmonovyusuf693@gmail.com');
+  const [fullName, setFullName] = useState(currentUser?.name || '');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState(currentUser?.email || '');
   const [location, setLocation] = useState('Toshkent shahri');
   const [summary, setSummary] = useState('');
   const [fileUrl, setFileUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const isEditing = Boolean(initialResume?.id);
 
   // AI states
   const [aiLoading, setAiLoading] = useState(false);
@@ -84,6 +90,37 @@ export default function CreateResumeModal({
     if (currentUser?.name) setFullName(currentUser.name);
     if (currentUser?.email) setEmail(currentUser.email);
   }, [currentUser]);
+
+  // Load the resume being edited, or reset the form for a new one
+  useEffect(() => {
+    if (!isOpen) return;
+    setError(null);
+    setTitle(initialResume?.title || '');
+    setSummary(initialResume?.summary || '');
+    setFileUrl(initialResume?.file_url || '');
+    setActiveTab('edit');
+  }, [isOpen, initialResume]);
+
+  // Uploads a PDF/DOC file: a new resume when creating, the edited resume's attachment otherwise
+  const handleFileUpload = async (file: File) => {
+    setError(null);
+    setUploading(true);
+    try {
+      const res = await api.uploadResumeFile(file, title.trim() || undefined, initialResume?.id);
+      if (res.success && res.data?.file_url) {
+        if (isEditing) {
+          setFileUrl(res.data.file_url);
+        } else {
+          onSuccess();
+          onClose();
+        }
+      } else {
+        setError(res.error || t.applyError);
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -158,12 +195,21 @@ export default function CreateResumeModal({
     setError(null);
     setLoading(true);
 
+    if (hasResumePlaceholders(summary)) {
+      setError('Shablondagi [ ] ichidagi joylarni va namunaviy natijalarni o‘z ma’lumotlaringiz bilan to‘ldiring, so‘ng izohni o‘chiring.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await api.createResume({
+      const payload = {
         title: title.trim() || 'Malakali Mutaxassis',
         summary: summary.trim(),
         file_url: fileUrl.trim() || undefined,
-      });
+      };
+      const res = isEditing
+        ? await api.updateResume(initialResume.id, { ...payload, file_url: fileUrl.trim() })
+        : await api.createResume(payload);
 
       if (res.success) {
         onSuccess();
@@ -195,7 +241,7 @@ export default function CreateResumeModal({
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-                Yangi rezyume joylashtirish
+                {isEditing ? t.editResumeTitle : 'Yangi rezyume joylashtirish'}
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-950/60 dark:to-indigo-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                   AI Tahlilchi
                 </span>
@@ -306,20 +352,9 @@ export default function CreateResumeModal({
             <div className="space-y-4 animate-fadeIn">
               {/* Job Title with AI Action Button */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Kasbiy mutaxassislik / Lavozim nomi *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => handleAIGenerate()}
-                    disabled={aiLoading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition disabled:opacity-50"
-                  >
-                    <Sparkles size={13} className={aiLoading ? 'animate-spin' : 'animate-pulse text-amber-300'} />
-                    <span>{aiLoading ? 'AI rezyume tuzmoqda...' : '✨ AI bilan to‘ldirish'}</span>
-                  </button>
-                </div>
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                  Kasbiy mutaxassislik / Lavozim nomi *
+                </label>
 
                 <input
                   type="text"
@@ -329,6 +364,16 @@ export default function CreateResumeModal({
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
                 />
+
+                <button
+                  type="button"
+                  onClick={() => handleAIGenerate()}
+                  disabled={aiLoading}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md active:scale-95 transition disabled:opacity-50"
+                >
+                  <Sparkles size={13} className={aiLoading ? 'animate-spin' : 'text-amber-300'} />
+                  <span>{aiLoading ? 'AI rezyume tuzmoqda...' : 'AI bilan to‘ldirish'}</span>
+                </button>
 
                 {/* Sample Chips */}
                 <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -416,11 +461,33 @@ export default function CreateResumeModal({
                 </label>
                 <input
                   type="text"
-                  placeholder="https://... yoki /uploads/resumes/my_cv.pdf"
+                  placeholder="https://..."
                   value={fileUrl}
                   onChange={(e) => setFileUrl(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
                 />
+              </div>
+
+              {/* Upload a ready-made resume file */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {t.uploadResumeFileLabel}
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                    e.target.value = '';
+                  }}
+                  className="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-bold hover:file:bg-blue-100 disabled:opacity-50"
+                />
+                {uploading && <p className="text-[11px] text-slate-500 mt-1">Yuklanmoqda...</p>}
+                {isEditing && fileUrl.startsWith('/uploads/') && (
+                  <p className="text-[11px] text-emerald-600 mt-1">✓ {t.resumeFileAttached}</p>
+                )}
               </div>
             </div>
           )}
@@ -432,7 +499,7 @@ export default function CreateResumeModal({
                 {/* CV Header */}
                 <div className="border-b border-slate-200 dark:border-slate-800 pb-5">
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
-                    {fullName || 'Yusuf Usmonov'}
+                    {fullName || '[Ism Familiya]'}
                   </h2>
                   <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-0.5">
                     {title || 'Malakali Mutaxassis'}
@@ -658,7 +725,7 @@ export default function CreateResumeModal({
               className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50"
             >
               <Plus size={16} />
-              <span>{loading ? 'Saqlanmoqda...' : 'Rezyumeni saqlash va e‘lon qilish'}</span>
+              <span>{loading ? 'Saqlanmoqda...' : isEditing ? t.saveChangesBtn : 'Rezyumeni saqlash va e‘lon qilish'}</span>
             </button>
           </div>
         </form>

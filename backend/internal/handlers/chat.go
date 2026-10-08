@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Yusuf2236/workhub/backend/internal/middleware"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
-	"github.com/Yusuf2236/workhub/backend/pkg/jwt"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -133,6 +133,7 @@ func (c *WsClient) readPump(h *ChatHub) {
 	}()
 
 	c.conn.SetReadLimit(65536)
+	windowStart, sentInWindow := time.Now(), 0
 
 	for {
 		_, rawMsg, err := c.conn.ReadMessage()
@@ -176,7 +177,17 @@ func (c *WsClient) readPump(h *ChatHub) {
 			continue
 		}
 
-		now := time.Now().UTC()
+		// Flood protection: at most wsMessagesPerWindow messages per window per socket
+		now := time.Now()
+		if now.Sub(windowStart) >= wsRateWindow {
+			windowStart, sentInWindow = now, 0
+		}
+		if sentInWindow >= wsMessagesPerWindow {
+			c.safeSend([]byte(`{"type":"error","error":"Juda tez yozyapsiz, biroz kuting"}`))
+			continue
+		}
+		sentInWindow++
+
 		chatMsg := models.ChatMessage{
 			ID:           uuid.NewString(),
 			RoomID:       c.roomID,
@@ -184,7 +195,7 @@ func (c *WsClient) readPump(h *ChatHub) {
 			SenderName:   c.userName,
 			SenderAvatar: c.avatarURL,
 			Content:      content,
-			CreatedAt:    now,
+			CreatedAt:    now.UTC(),
 		}
 
 		if chatRepo != nil {
@@ -195,7 +206,11 @@ func (c *WsClient) readPump(h *ChatHub) {
 	}
 }
 
-const maxChatMessageLen = 4000
+const (
+	maxChatMessageLen   = 4000
+	wsMessagesPerWindow = 10
+	wsRateWindow        = 10 * time.Second
+)
 
 // canAccessRoom enforces that direct-message rooms ("dm_<userA>_<userB>") are only
 // readable/writable by their two participants. Public rooms are open to everyone.
@@ -379,7 +394,7 @@ func HandleChatSocket(c *gin.Context) {
 	}
 
 	if tokenStr != "" {
-		claims, err := jwt.ParseToken(tokenStr)
+		claims, err := middleware.ParseValidToken(tokenStr)
 		if err != nil || claims.UserID == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": false, "error": "invalid token"})
 			return

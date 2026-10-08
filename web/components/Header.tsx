@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Plus, Bell, MessageSquare, Sun, Moon, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe } from 'lucide-react';
-import { removeAuthToken } from '../lib/api';
+import { Search, Plus, Bell, Sun, Moon, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe } from 'lucide-react';
+import { api } from '../lib/api';
 import { Language, translations } from '../lib/translations';
 
 interface HeaderProps {
@@ -14,6 +14,7 @@ interface HeaderProps {
   onOpenNotifications: () => void;
   unreadNotificationsCount?: number;
   searchQuery: string;
+  showSearch?: boolean;
   onSearchChange: (q: string) => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
@@ -27,10 +28,10 @@ export default function Header({
   onOpenAuth,
   onOpenCreateVacancy,
   onOpenCreateResume,
-  onOpenChat,
   onOpenNotifications,
   unreadNotificationsCount = 0,
   searchQuery,
+  showSearch = true,
   onSearchChange,
   darkMode,
   onToggleDarkMode,
@@ -45,7 +46,7 @@ export default function Header({
   const t = translations[lang] || translations.uz;
 
   const handleLogout = () => {
-    removeAuthToken();
+    api.logout();
     setShowUserMenu(false);
     onUserLogout();
   };
@@ -65,18 +66,13 @@ export default function Header({
             <span className="relative z-10 tracking-tighter">W</span>
             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
           </div>
-          <div>
-            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white flex items-center">
-              W<span className="text-blue-600 dark:text-blue-400">Zone</span>
-            </span>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 -mt-0.5 font-medium hidden sm:block">
-              {t.appTagline}
-            </p>
-          </div>
+          <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white flex items-center">
+            W<span className="text-blue-600 dark:text-blue-400">Zone</span>
+          </span>
         </div>
 
         {/* Global Real-Time Search Bar */}
-        <div className="flex-1 max-w-xl hidden md:block">
+        <div className={`flex-1 max-w-xl hidden ${showSearch ? 'md:block' : ''}`}>
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition" size={17} />
             <input
@@ -176,17 +172,6 @@ export default function Header({
               </div>
             )}
           </div>
-
-          {/* Real-time WebSocket Chat Icon (Hidden on mobile - available in bottom nav) */}
-          <button
-            onClick={onOpenChat}
-            title={t.chat}
-            className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition relative hidden sm:flex"
-          >
-            <MessageSquare size={19} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500" />
-          </button>
 
           {/* Notifications (Always visible on mobile & desktop) */}
           <button
