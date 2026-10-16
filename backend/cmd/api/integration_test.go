@@ -173,7 +173,7 @@ func TestHiringFlow(t *testing.T) {
 	// Candidate pool hides contacts from other users
 	pool := c.mustOK(c.call("GET", "/api/v1/resumes?all=true", emp, nil), "pool")["resumes"].([]any)
 	for _, r := range pool {
-		if strings.Contains(r.(map[string]any)["summary"].(string), "111 22 33") {
+		if summary, ok := r.(map[string]any)["summary"].(string); ok && strings.Contains(summary, "111 22 33") {
 			t.Fatal("phone number visible in candidate pool")
 		}
 	}

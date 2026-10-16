@@ -56,7 +56,10 @@ func userSkills(userID string) []string {
 		if resumes, _ := resumeRepo.ListByUser(userID); len(resumes) > 0 {
 			var text strings.Builder
 			for _, r := range resumes {
-				text.WriteString(" " + r.Title + " " + r.Summary)
+				text.WriteString(" ")
+				text.WriteString(r.Title)
+				text.WriteString(" ")
+				text.WriteString(r.Summary)
 			}
 			for _, kw := range recommendationKeywords {
 				if containsWord(text.String(), kw) {

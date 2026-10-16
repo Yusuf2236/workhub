@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
+  --background: #f1f5f9;
   --foreground: #0f172a;
 }
 
@@ -12,13 +12,74 @@
   --foreground: #f8fafc;
 }
 
+/* ─── Base ─────────────────────────────────────── */
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   color: var(--foreground);
   background-color: var(--background);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom modern scrollbar */
+/* ─── Light mode explicit overrides ─────────────
+   Tailwind's `dark:` prefix hides elements properly
+   in dark mode, but some bare classes (e.g. text-slate-*
+   without a light-mode counterpart) can be too low-contrast
+   on a white/light-grey background. We reinforce them here. */
+
+/* Cards & panels */
+.bg-white {
+  background-color: #ffffff !important;
+}
+
+/* Ensure slate text is dark enough on light bg */
+:not(.dark) .text-slate-400 {
+  color: #64748b;
+}
+:not(.dark) .text-slate-500 {
+  color: #475569;
+}
+:not(.dark) .text-slate-600 {
+  color: #334155;
+}
+:not(.dark) .text-slate-700 {
+  color: #1e293b;
+}
+
+/* Input fields in light mode */
+:not(.dark) input,
+:not(.dark) select,
+:not(.dark) textarea {
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+
+/* ─── Animations ─────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+.animate-fadeIn  { animation: fadeIn  0.25s ease both; }
+.animate-slideUp { animation: slideUp 0.3s  ease both; }
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+
+/* ─── Custom modern scrollbar ─────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -44,3 +105,4 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/Yusuf2236/workhub/backend/internal/models"
+	"github.com/google/uuid"
 )
 
 type ResumeRepo interface {
@@ -52,6 +53,9 @@ func (r *postgresResumeRepo) ListAll() ([]models.Resume, error) {
 }
 
 func (r *postgresResumeRepo) ListByUser(userID string) ([]models.Resume, error) {
+	if _, err := uuid.Parse(userID); err != nil {
+		return []models.Resume{}, nil
+	}
 	query := `
 		SELECT id, user_id, title, COALESCE(summary, ''), COALESCE(file_url, ''), created_at, updated_at
 		FROM resumes
@@ -75,6 +79,9 @@ func (r *postgresResumeRepo) ListByUser(userID string) ([]models.Resume, error) 
 }
 
 func (r *postgresResumeRepo) Get(id string) (*models.Resume, error) {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, nil
+	}
 	query := `
 		SELECT id, user_id, title, COALESCE(summary, ''), COALESCE(file_url, ''), created_at, updated_at
 		FROM resumes
@@ -108,6 +115,9 @@ func (r *postgresResumeRepo) Update(res models.Resume) error {
 }
 
 func (r *postgresResumeRepo) Delete(id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil
+	}
 	query := `DELETE FROM resumes WHERE id = $1`
 	_, err := r.db.Exec(query, id)
 	return err

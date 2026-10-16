@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Yusuf2236/workhub/backend/internal/models"
+	"github.com/google/uuid"
 )
 
 type VacancyRepo interface {
@@ -149,6 +150,9 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 }
 
 func (r *postgresVacancyRepo) Get(id string) (*models.Vacancy, error) {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, nil
+	}
 	query := `
 		SELECT id, title, company, COALESCE(location, ''), COALESCE(description, ''),
 		       COALESCE(salary, ''), COALESCE(category, 'IT & Dasturlash'), COALESCE(job_type, 'Full-time'),
@@ -206,6 +210,9 @@ func scanVacancies(rows *sql.Rows) ([]models.Vacancy, error) {
 }
 
 func (r *postgresVacancyRepo) ListByCreator(userID string) ([]models.Vacancy, error) {
+	if _, err := uuid.Parse(userID); err != nil {
+		return []models.Vacancy{}, nil
+	}
 	rows, err := r.db.Query(vacancyColumns+` WHERE created_by = $1 ORDER BY created_at DESC`, userID)
 	if err != nil {
 		return nil, err
@@ -297,11 +304,17 @@ func (r *postgresVacancyRepo) Update(v models.Vacancy) error {
 }
 
 func (r *postgresVacancyRepo) Delete(id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil
+	}
 	_, err := r.db.Exec(`DELETE FROM vacancies WHERE id = $1`, id)
 	return err
 }
 
 func (r *postgresVacancyRepo) IncrementViews(id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil
+	}
 	_, err := r.db.Exec(`UPDATE vacancies SET views_count = views_count + 1 WHERE id = $1`, id)
 	return err
 }
