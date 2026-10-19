@@ -13,6 +13,7 @@ import {
   MapPin,
   Phone,
   Briefcase,
+  Building2,
   Globe,
   AlertCircle,
   FileText,
@@ -440,6 +441,18 @@ export default function ProfileView({
                   <span>{t.oneIdVerifiedBadge}</span>
                 </span>
               )}
+              {user.account_type === 'company' && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shadow-xs">
+                  <Building2 size={13} className="text-indigo-600 dark:text-indigo-400" />
+                  <span>Yuridik shaxs{user.company_name ? `: ${user.company_name}` : ''}</span>
+                </span>
+              )}
+              {user.auth_provider === 'oneid' && (user.account_type === 'individual' || !user.account_type) && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-xs">
+                  <User size={13} className="text-slate-500" />
+                  <span>Oddiy shaxs</span>
+                </span>
+              )}
               {user.auth_provider === 'google' && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-red-50 dark:bg-red-950 text-red-600 border border-red-200">
                   Google SSO
@@ -862,6 +875,22 @@ export default function ProfileView({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-0.5 text-xs">
                   <div className="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Hisob turi</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      {user.account_type === 'company' ? (
+                        <>
+                          <Building2 size={13} className="text-indigo-600 shrink-0" />
+                          <span>Yuridik shaxs</span>
+                        </>
+                      ) : (
+                        <>
+                          <User size={13} className="text-blue-600 shrink-0" />
+                          <span>Oddiy shaxs</span>
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <div className="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">{t.profilePinfl}</span>
                     <span className="font-mono font-extrabold text-blue-600 dark:text-blue-400 text-sm tracking-wider">{user.pinfl || '—'}</span>
                   </div>
@@ -871,12 +900,21 @@ export default function ProfileView({
                       {pinflData ? `${pinflData.birthDate} (${pinflData.gender})` : 'Davlat reestridan tasdiqlangan'}
                     </span>
                   </div>
-                  <div className="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">{t.profileRegion}</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
-                      {location || (pinflData ? pinflData.region : 'O‘zbekiston')}
-                    </span>
-                  </div>
+                  {user.account_type === 'company' && (
+                    <div className="bg-indigo-50/80 dark:bg-indigo-950/50 p-2.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60 col-span-1 sm:col-span-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Building2 size={15} className="text-indigo-600 dark:text-indigo-400" />
+                        <span className="font-bold text-xs text-indigo-950 dark:text-indigo-100">
+                          Tashkilot: {user.company_name || 'Kompaniya'}
+                        </span>
+                      </div>
+                      {user.inn && (
+                        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                          STIR (INN): {user.inn}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );

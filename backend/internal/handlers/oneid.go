@@ -26,14 +26,17 @@ const oneIDStateTTL = 10 * time.Minute
 // oneIDCitizen holds identity data obtained from a trusted OneID source
 // (sso.egov.uz token exchange or id.egov.uz QR confirmation).
 type oneIDCitizen struct {
-	PINFL     string
-	FullName  string
-	BirthDate string
-	Gender    string
-	Location  string
-	Email     string
-	Phone     string
-	AvatarURL string
+	PINFL       string
+	FullName    string
+	BirthDate   string
+	Gender      string
+	Location    string
+	Email       string
+	Phone       string
+	AvatarURL   string
+	AccountType string
+	CompanyName string
+	INN         string
 }
 
 // oneIDDemoMode allows logging in with a self-declared PINFL. It exists only for
@@ -254,10 +257,25 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		email = syntheticEmail
 	}
 
+	accountType := citizen.AccountType
+	if accountType == "" {
+		accountType = "individual"
+	}
+	role := "user"
+	if accountType == "company" {
+		role = "employer"
+	}
+
 	if userRepo == nil {
 		for _, u := range users {
 			if u.PINFL == citizen.PINFL {
 				user := u
+				user.AccountType = accountType
+				user.CompanyName = citizen.CompanyName
+				user.INN = citizen.INN
+				if accountType == "company" && user.Role != "admin" {
+					user.Role = "employer"
+				}
 				return &user, nil, nil
 			}
 		}
@@ -268,10 +286,13 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 			ID:           uuid.NewString(),
 			Name:         citizen.FullName,
 			Email:        email,
-			Role:         "user",
+			Role:         role,
 			AuthProvider: "oneid",
 			PINFL:        citizen.PINFL,
 			AvatarURL:    citizen.AvatarURL,
+			AccountType:  accountType,
+			CompanyName:  citizen.CompanyName,
+			INN:          citizen.INN,
 			CreatedAt:    time.Now().UTC(),
 			UpdatedAt:    time.Now().UTC(),
 		}
@@ -284,6 +305,12 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		return nil, nil, err
 	}
 	if user != nil {
+		user.AccountType = accountType
+		user.CompanyName = citizen.CompanyName
+		user.INN = citizen.INN
+		if accountType == "company" && user.Role != "admin" {
+			user.Role = "employer"
+		}
 		// Refresh name/photo from the government registry, keep the user's own email
 		if err := userRepo.LinkOneID(user.ID, citizen.PINFL, citizen.FullName, ""); err != nil {
 			return nil, nil, err
@@ -301,10 +328,13 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 			ID:           uuid.NewString(),
 			Name:         citizen.FullName,
 			Email:        email,
-			Role:         "user",
+			Role:         role,
 			AuthProvider: "oneid",
 			PINFL:        citizen.PINFL,
 			AvatarURL:    citizen.AvatarURL,
+			AccountType:  accountType,
+			CompanyName:  citizen.CompanyName,
+			INN:          citizen.INN,
 			CreatedAt:    time.Now().UTC(),
 			UpdatedAt:    time.Now().UTC(),
 		}
@@ -317,16 +347,30 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 	if fresh, err := userRepo.GetByID(user.ID); err == nil && fresh != nil {
 		user = fresh
 	}
+	user.AccountType = accountType
+	user.CompanyName = citizen.CompanyName
+	user.INN = citizen.INN
+	if accountType == "company" && user.Role != "admin" {
+		user.Role = "employer"
+	}
 
 	var profile *models.Profile
 	if profileRepo != nil {
 		existing, _ := profileRepo.GetByUserID(user.ID)
 		now := time.Now().UTC()
 		if existing == nil {
+			bio := fmt.Sprintf("OneID (%s) orqali rasman tasdiqlangan fuqaro.", verifiedVia)
+			if accountType == "company" {
+				cName := citizen.CompanyName
+				if cName == "" {
+					cName = "Tashkilot"
+				}
+				bio = fmt.Sprintf("OneID orqali rasman tasdiqlangan yuridik shaxs (Ish beruvchi: %s).", cName)
+			}
 			existing = &models.Profile{
 				ID:        uuid.NewString(),
 				UserID:    user.ID,
-				Bio:       fmt.Sprintf("OneID (%s) orqali rasman tasdiqlangan fuqaro.", verifiedVia),
+				Bio:       bio,
 				Skills:    "",
 				Website:   "",
 				CreatedAt: now,
@@ -357,25 +401,31 @@ func oneIDLoginResponse(c *gin.Context, citizen *oneIDCitizen, user *models.User
 		return
 	}
 	payload := gin.H{
-		"user":       user,
-		"token":      token,
-		"profile":    profile,
-		"provider":   "oneid",
-		"pinfl":      citizen.PINFL,
-		"birth_date": citizen.BirthDate,
-		"gender":     citizen.Gender,
-		"location":   citizen.Location,
-		"phone":      citizen.Phone,
-		"avatar_url": citizen.AvatarURL,
+		"user":         user,
+		"token":        token,
+		"profile":      profile,
+		"provider":     "oneid",
+		"pinfl":        citizen.PINFL,
+		"birth_date":   citizen.BirthDate,
+		"gender":       citizen.Gender,
+		"location":     citizen.Location,
+		"phone":        citizen.Phone,
+		"avatar_url":   citizen.AvatarURL,
+		"account_type": citizen.AccountType,
+		"company_name": citizen.CompanyName,
+		"inn":          citizen.INN,
 		"citizen": gin.H{
-			"pinfl":      citizen.PINFL,
-			"full_name":  citizen.FullName,
-			"birth_date": citizen.BirthDate,
-			"gender":     citizen.Gender,
-			"location":   citizen.Location,
-			"phone":      citizen.Phone,
-			"email":      user.Email,
-			"avatar_url": citizen.AvatarURL,
+			"pinfl":        citizen.PINFL,
+			"full_name":    citizen.FullName,
+			"birth_date":   citizen.BirthDate,
+			"gender":       citizen.Gender,
+			"location":     citizen.Location,
+			"phone":        citizen.Phone,
+			"email":        user.Email,
+			"avatar_url":   citizen.AvatarURL,
+			"account_type": citizen.AccountType,
+			"company_name": citizen.CompanyName,
+			"inn":          citizen.INN,
 		},
 	}
 	for k, v := range extra {
@@ -386,15 +436,18 @@ func oneIDLoginResponse(c *gin.Context, citizen *oneIDCitizen, user *models.User
 
 func OneIDCallback(c *gin.Context) {
 	var payload struct {
-		Code      string `json:"code"`
-		State     string `json:"state"`
-		PINFL     string `json:"pinfl"`
-		FullName  string `json:"full_name"`
-		Email     string `json:"email"`
-		Phone     string `json:"phone"`
-		Location  string `json:"location"`
-		BirthDate string `json:"birth_date"`
-		Gender    string `json:"gender"`
+		Code        string `json:"code"`
+		State       string `json:"state"`
+		PINFL       string `json:"pinfl"`
+		FullName    string `json:"full_name"`
+		Email       string `json:"email"`
+		Phone       string `json:"phone"`
+		Location    string `json:"location"`
+		BirthDate   string `json:"birth_date"`
+		Gender      string `json:"gender"`
+		AccountType string `json:"account_type"`
+		CompanyName string `json:"company_name"`
+		INN         string `json:"inn"`
 	}
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
@@ -434,13 +487,19 @@ func OneIDCallback(c *gin.Context) {
 			fullName = "OneID Fuqarosi"
 		}
 		citizen = &oneIDCitizen{
-			PINFL:     pinfl,
-			FullName:  fullName,
-			Email:     strings.ToLower(strings.TrimSpace(payload.Email)),
-			Phone:     strings.TrimSpace(payload.Phone),
-			Location:  strings.TrimSpace(payload.Location),
-			BirthDate: strings.TrimSpace(payload.BirthDate),
-			Gender:    strings.TrimSpace(payload.Gender),
+			PINFL:       pinfl,
+			FullName:    fullName,
+			Email:       strings.ToLower(strings.TrimSpace(payload.Email)),
+			Phone:       strings.TrimSpace(payload.Phone),
+			Location:    strings.TrimSpace(payload.Location),
+			BirthDate:   strings.TrimSpace(payload.BirthDate),
+			Gender:      strings.TrimSpace(payload.Gender),
+			AccountType: strings.TrimSpace(payload.AccountType),
+			CompanyName: strings.TrimSpace(payload.CompanyName),
+			INN:         strings.TrimSpace(payload.INN),
+		}
+		if citizen.AccountType == "" {
+			citizen.AccountType = "individual"
 		}
 		fillFromPINFL(citizen)
 
@@ -451,6 +510,20 @@ func OneIDCallback(c *gin.Context) {
 	default:
 		response.Error(c, http.StatusBadRequest, "OneID avtorizatsiya kodi talab qilinadi")
 		return
+	}
+
+	if citizen.AccountType == "" {
+		if payload.AccountType != "" {
+			citizen.AccountType = payload.AccountType
+		} else {
+			citizen.AccountType = "individual"
+		}
+	}
+	if citizen.CompanyName == "" && payload.CompanyName != "" {
+		citizen.CompanyName = payload.CompanyName
+	}
+	if citizen.INN == "" && payload.INN != "" {
+		citizen.INN = payload.INN
 	}
 
 	user, profile, err := loginOneIDCitizen(citizen, "OneID Portal")

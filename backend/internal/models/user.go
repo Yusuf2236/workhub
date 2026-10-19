@@ -12,6 +12,9 @@ type User struct {
 	ExternalID    string    `json:"external_id,omitempty"`
 	AvatarURL     string    `json:"avatar_url,omitempty"`
 	PINFL         string    `json:"pinfl,omitempty"`
+	AccountType   string    `json:"account_type,omitempty"`
+	CompanyName   string    `json:"company_name,omitempty"`
+	INN           string    `json:"inn,omitempty"`
 	EmailVerified bool      `json:"email_verified"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at,omitempty"`

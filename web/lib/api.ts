@@ -206,6 +206,9 @@ export const api = {
     birth_date?: string;
     gender?: string;
     code?: string;
+    account_type?: string;
+    company_name?: string;
+    inn?: string;
   }) {
     return request<{
       user: any;
@@ -218,6 +221,9 @@ export const api = {
       gender?: string;
       location?: string;
       phone?: string;
+      account_type?: string;
+      company_name?: string;
+      inn?: string;
     }>('/auth/oneid/callback', {
       method: 'POST',
       body: JSON.stringify(payload),

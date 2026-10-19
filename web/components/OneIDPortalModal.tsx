@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Lock, ShieldCheck, KeyRound, Smartphone, FileText, CheckCircle2, AlertCircle, ArrowRight, Upload, QrCode, ScanLine, RefreshCw, Sparkles } from 'lucide-react';
+import { X, Lock, ShieldCheck, KeyRound, Smartphone, FileText, CheckCircle2, AlertCircle, ArrowRight, Upload, QrCode, ScanLine, RefreshCw, Sparkles, User, Building2, Briefcase } from 'lucide-react';
 import QRCode from 'qrcode';
 import { api, setAuthToken, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
@@ -66,10 +66,23 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
   const [qrStatus, setQrStatus] = useState<'idle' | 'loading' | 'waiting' | 'approved' | 'expired'>('idle');
   const [approvedCitizen, setApprovedCitizen] = useState<any>(null);
 
-  // Flow states
-  const [step, setStep] = useState<'auth' | 'consent'>('auth');
+  // Role & account selection states
+  const [accountType, setAccountType] = useState<'individual' | 'company'>('individual');
+  const [companyName, setCompanyName] = useState('Murad Buildings MCHJ');
+  const [companyInn, setCompanyInn] = useState('308123456');
+
+  // Flow states: 'role_select' -> 'auth' -> 'consent'
+  const [step, setStep] = useState<'role_select' | 'auth' | 'consent'>('role_select');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Reset to role_select whenever modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      setStep('role_select');
+      setError(null);
+    }
+  }, [isOpen]);
 
   // Live parsed info from entered JShShIR
   const cleanPinfl = pinflInput.replace(/\D/g, '');
@@ -240,15 +253,22 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
       const code = 'one_code-portal-' + Math.random().toString(36).substring(2, 12) + Date.now();
       const info = parsePINFL(activePinfl);
 
+      const effectiveFullName =
+        fullNameInput.trim() ||
+        (accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : 'OneID Fuqarosi');
+
       const res = await api.oneIDCallback({
         code,
         pinfl: activePinfl,
-        full_name: fullNameInput.trim() || 'OneID Fuqarosi',
+        full_name: effectiveFullName,
         email: `${activePinfl}@oneid.egov.uz`,
         phone: mobilePhone.trim() || '+998 (90) 123-45-67',
         location: info?.location || 'Toshkent shahri',
         birth_date: info?.birthDate || '12.01.1999',
         gender: info?.gender || 'Erkak',
+        account_type: accountType,
+        company_name: accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : undefined,
+        inn: accountType === 'company' ? (companyInn.trim() || '308123456') : undefined,
       });
 
       if (res.success && res.data) {
@@ -271,7 +291,9 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     setError(null);
     if (!cleanPinfl || cleanPinfl.length !== 14) {
       setPinflInput('31201991234567');
-      if (!fullNameInput.trim()) setFullNameInput('Yusuf Usmonov');
+      if (!fullNameInput.trim()) {
+        setFullNameInput(accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : 'Yusuf Usmonov');
+      }
     }
     await handleApproveAndLogin();
   };
@@ -283,14 +305,21 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     try {
       const activePinfl = cleanPinfl.length === 14 ? cleanPinfl : '31201991234567';
       const info = parsePINFL(activePinfl);
+      const effectiveFullName =
+        fullNameInput.trim() ||
+        (accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : 'Yusuf Usmonov');
+
       const res = await api.oneIDCallback({
         code: 'one_code-demo-qr-' + Date.now(),
         pinfl: activePinfl,
-        full_name: fullNameInput.trim() || 'Yusuf Usmonov',
+        full_name: effectiveFullName,
         phone: mobilePhone.trim() || '+998 (90) 123-45-67',
         location: info?.location || 'Toshkent shahri',
         birth_date: info?.birthDate || '12.01.1999',
         gender: info?.gender || 'Erkak',
+        account_type: accountType,
+        company_name: accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : undefined,
+        inn: accountType === 'company' ? (companyInn.trim() || '308123456') : undefined,
       });
       if (res.success && res.data) {
         setQrStatus('approved');
@@ -381,8 +410,236 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
         )}
 
         <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-          {step === 'auth' ? (
+          {step === 'role_select' ? (
+            <div className="space-y-5 animate-fadeIn">
+              {/* Heading */}
+              <div className="text-center space-y-1.5 pb-2 border-b border-slate-200 dark:border-slate-800">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#0047BA] dark:text-blue-400 text-[11px] font-bold border border-blue-200 dark:border-blue-800">
+                  <Sparkles size={13} />
+                  <span>OneID identifikatsiyasi</span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                  Kim bo‘lib davom ettirasiz?
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                  OneID orqali kirishdan avval o‘zingizga mos hisob turini tanlang.
+                </p>
+              </div>
+
+              {/* Two selection cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* Card 1: Oddiy shaxs (Jismoniy shaxs) */}
+                <div
+                  onClick={() => { setAccountType('individual'); setError(null); }}
+                  className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left flex flex-col justify-between ${
+                    accountType === 'individual'
+                      ? 'border-[#0047BA] bg-blue-50/60 dark:bg-blue-950/40 shadow-md ring-2 ring-blue-500/20'
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/50'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                        accountType === 'individual'
+                          ? 'bg-[#0047BA] text-white shadow-md'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                      }`}>
+                        <User size={22} />
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        accountType === 'individual'
+                          ? 'border-[#0047BA] bg-[#0047BA] text-white'
+                          : 'border-slate-300 dark:border-slate-600'
+                      }`}>
+                        {accountType === 'individual' && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                        Oddiy shaxs
+                      </h4>
+                      <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                        Jismoniy shaxs (Nomzod / Fuqaro)
+                      </span>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                        Bo‘sh ish o‘rinlarini qidirish, rezyume yaratish va vakansiyalarga ariza topshirish uchun.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span>Shaxsiy rezyume yaratish</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span>Bir klikda vakansiyalarga ariza</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span>Ish beruvchilar bilan bevosita chat</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 2: Yuridik shaxs (Kompaniya / Ish beruvchi) */}
+                <div
+                  onClick={() => { setAccountType('company'); setError(null); }}
+                  className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left flex flex-col justify-between ${
+                    accountType === 'company'
+                      ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/40 shadow-md ring-2 ring-indigo-500/20'
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/50'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                        accountType === 'company'
+                          ? 'bg-indigo-600 text-white shadow-md'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                      }`}>
+                        <Building2 size={22} />
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        accountType === 'company'
+                          ? 'border-indigo-600 bg-indigo-600 text-white'
+                          : 'border-slate-300 dark:border-slate-600'
+                      }`}>
+                        {accountType === 'company' && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                        Yuridik shaxs
+                      </h4>
+                      <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
+                        Kompaniya / Ish beruvchi
+                      </span>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                        Tashkilot nomidan yangi vakansiyalar e’lon qilish va nomzodlar bilan chatlashish uchun.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span>Vakansiya va e’lonlar berish</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span>Rasmiy STIR (INN) tasdiqlangan maqom</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                        <span>Nomzodlar bazasi bilan ishlash</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* If Yuridik shaxs is selected, show Company Name & INN inputs */}
+              {accountType === 'company' && (
+                <div className="p-4 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200 dark:border-indigo-900/60 space-y-3 animate-fadeIn">
+                  <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 dark:text-indigo-200">
+                    <Briefcase size={15} />
+                    <span>Tashkilot rekvizitlari (Yuridik shaxs)</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Tashkilot / Kompaniya nomi *
+                      </label>
+                      <input
+                        type="text"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="Masalan: Murad Buildings MCHJ"
+                        className="w-full px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        STIR / INN (9 xonali) *
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={9}
+                        value={companyInn}
+                        onChange={(e) => setCompanyInn(e.target.value.replace(/\D/g, ''))}
+                        placeholder="308123456"
+                        className="w-full px-3.5 py-2 text-xs sm:text-sm font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-indigo-700 dark:text-indigo-300">
+                    * Ushbu ma’lumotlar OneID orqali yuridik shaxs sifatida ro‘yxatdan o‘tish va e’lon berish huquqini beradi.
+                  </p>
+                </div>
+              )}
+
+              {/* Continue button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (accountType === 'company') {
+                      if (!companyName.trim()) {
+                        setError('Tashkilot yoki kompaniya nomini kiriting');
+                        return;
+                      }
+                      if (companyInn.trim().length !== 9) {
+                        setError('STIR (INN) aynan 9 ta raqamdan iborat bo‘lishi kerak');
+                        return;
+                      }
+                    }
+                    setError(null);
+                    setStep('auth');
+                  }}
+                  className="w-full py-3 bg-[#0047BA] hover:bg-[#003B95] text-white text-sm font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2 active:scale-[0.99]"
+                >
+                  <span>OneID orqali tasdiqlashga o‘tish</span>
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          ) : step === 'auth' ? (
             <div className="space-y-5">
+              {/* Selected Role Status Banner with Change Button */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 ${
+                    accountType === 'company' ? 'bg-indigo-600 shadow-sm' : 'bg-[#0047BA] shadow-sm'
+                  }`}>
+                    {accountType === 'company' ? <Building2 size={16} /> : <User size={16} />}
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Tanlangan maqom
+                    </div>
+                    <div className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
+                      <span>{accountType === 'company' ? `Yuridik shaxs: ${companyName || 'Kompaniya'}` : 'Oddiy shaxs (Jismoniy shaxs)'}</span>
+                      {accountType === 'company' && companyInn && (
+                        <span className="text-[10px] px-1.5 py-0.2 bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded font-mono font-bold">
+                          STIR: {companyInn}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setStep('role_select'); setError(null); }}
+                  className="px-2.5 py-1 text-[11px] font-bold text-[#0047BA] dark:text-blue-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition flex items-center gap-1 shadow-xs shrink-0"
+                >
+                  <RefreshCw size={11} />
+                  <span>O‘zgartirish</span>
+                </button>
+              </div>
+
               {/* Target Service Info */}
               <div className="p-3 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-200/80 dark:border-blue-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -859,9 +1116,33 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
               {/* Verified Citizen Details Being Shared */}
               <div className="p-4 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5 text-xs">
                 <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">Hisob maqomi:</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    {accountType === 'company' ? (
+                      <>
+                        <Building2 size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                        <span>Yuridik shaxs ({companyName || 'Kompaniya'})</span>
+                      </>
+                    ) : (
+                      <>
+                        <User size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span>Oddiy shaxs (Jismoniy shaxs)</span>
+                      </>
+                    )}
+                  </span>
+                </div>
+                {accountType === 'company' && companyInn && (
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Tashkilot STIR (INN):</span>
+                    <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                      {companyInn}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
                   <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdCitizen}</span>
                   <span className="font-extrabold text-slate-900 dark:text-white">
-                    {fullNameInput || 'Fuqaro'}
+                    {fullNameInput || (accountType === 'company' ? companyName : 'Fuqaro')}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
