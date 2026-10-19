@@ -20,27 +20,38 @@ export default function LiveCommentsWidget({
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
 
+  const isFetchingRef = React.useRef(false);
+
   const fetchComments = async (silent = false) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     if (!silent) setLoading(true);
     try {
       const res = await api.getRecentComments(1, 5);
-      if (res.success && res.data?.comments) {
-        setComments(res.data.comments);
+      if (res.success && Array.isArray(res.data?.comments)) {
+        const incoming = res.data.comments;
+        setComments((prev) => {
+          if (prev.length !== incoming.length || incoming.some((c: any, i: number) => !prev[i] || prev[i].id !== c.id)) {
+            return incoming;
+          }
+          return prev;
+        });
         setLastRefreshed(new Date());
       }
     } catch (e) {
       console.error('Failed to fetch recent comments', e);
     } finally {
+      isFetchingRef.current = false;
       if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchComments();
-    // Real-time polling every 30 seconds
+    // Continuous 1-second real-time polling
     const interval = setInterval(() => {
       fetchComments(true);
-    }, 30_000);
+    }, 1_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -81,6 +92,9 @@ export default function LiveCommentsWidget({
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                1s Real-time
               </span>
             </h5>
           </div>

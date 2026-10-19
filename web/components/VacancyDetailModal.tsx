@@ -55,24 +55,41 @@ export default function VacancyDetailModal({
   useEffect(() => {
     if (!vacancy?.id) return;
     let isMounted = true;
+    let isFetching = false;
 
-    async function fetchComments() {
-      setLoadingComments(true);
+    async function fetchComments(silent = false) {
+      if (isFetching) return;
+      isFetching = true;
+      if (!silent) setLoadingComments(true);
       try {
         const res = await api.getVacancyComments(vacancy.id);
-        if (isMounted && res.success && res.data?.comments) {
-          setComments(res.data.comments);
+        if (isMounted && res.success && Array.isArray(res.data?.comments)) {
+          const incoming = res.data.comments;
+          setComments((prev) => {
+            if (prev.length !== incoming.length || incoming.some((c: any, i: number) => !prev[i] || prev[i].id !== c.id)) {
+              return incoming;
+            }
+            return prev;
+          });
         }
       } catch (err) {
         console.error('Failed to load comments', err);
       } finally {
-        if (isMounted) setLoadingComments(false);
+        isFetching = false;
+        if (isMounted && !silent) setLoadingComments(false);
       }
     }
 
     fetchComments();
+
+    // 1-second continuous real-time comments polling
+    const interval = setInterval(() => {
+      fetchComments(true);
+    }, 1_000);
+
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, [vacancy?.id]);
 
@@ -270,6 +287,10 @@ export default function VacancyDetailModal({
                 <MessageCircle size={18} className="text-blue-600" />
                 <span>{lang === 'ru' ? 'Вопросы и обсуждение' : lang === 'en' ? 'Questions & Discussion' : 'Savollar va Fikr-mulohazalar'} ({comments.length})</span>
               </h4>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                1s Real-time
+              </span>
             </div>
 
             {/* Comments List */}

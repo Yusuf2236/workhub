@@ -421,6 +421,95 @@ export default function HomeFeedView({
     return () => clearInterval(timer);
   }, [fetchBatch]);
 
+  // 1-second continuous real-time polling for any opened vacancy comments drawer
+  useEffect(() => {
+    if (expandedVacancyIds.size === 0) return;
+    const isFetchingRef = { current: false };
+
+    const interval = setInterval(async () => {
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
+      try {
+        await Promise.all(
+          Array.from(expandedVacancyIds).map(async (vacId) => {
+            const res = await api.getVacancyComments(vacId);
+            if (res.success && Array.isArray(res.data?.comments)) {
+              const incoming = res.data.comments;
+              setVacancyCommentsMap((prev) => {
+                const current = prev[vacId] || [];
+                if (
+                  current.length !== incoming.length ||
+                  incoming.some((c: any, i: number) => !current[i] || current[i].id !== c.id)
+                ) {
+                  return { ...prev, [vacId]: incoming };
+                }
+                return prev;
+              });
+
+              // Also keep comments_count updated in streamItems
+              setStreamItems((prev) =>
+                prev.map((item) => {
+                  if (item.type === 'vacancy' && item.data.id === vacId && item.data.comments_count !== incoming.length) {
+                    return {
+                      ...item,
+                      data: {
+                        ...item.data,
+                        comments_count: incoming.length,
+                      },
+                    };
+                  }
+                  return item;
+                })
+              );
+            }
+          })
+        );
+      } catch (_) {
+      } finally {
+        isFetchingRef.current = false;
+      }
+    }, 1_000); // 1 second real-time polling
+
+    return () => clearInterval(interval);
+  }, [expandedVacancyIds]);
+
+  // 1-second continuous real-time polling for the comments stream tab
+  useEffect(() => {
+    if (streamFilter !== 'comments') return;
+    const isFetchingRecentRef = { current: false };
+
+    const interval = setInterval(async () => {
+      if (isFetchingRecentRef.current) return;
+      isFetchingRecentRef.current = true;
+      try {
+        const res = await api.getRecentComments(1, 15, surveyFilters.category);
+        if (res.success && Array.isArray(res.data?.comments)) {
+          const freshComments: CommentItem[] = res.data.comments.map(toCommentItem);
+          setStreamItems((prev) => {
+            const existingIds = new Set(
+              prev.filter((i) => i.type === 'discussion').map((i) => (i.data as CommentItem).id)
+            );
+            const brandNew = freshComments.filter((c) => !existingIds.has(c.id));
+            if (brandNew.length > 0) {
+              const newDiscussionItems: StreamItem[] = brandNew.map((c) => ({
+                streamId: `d-${c.id}`,
+                type: 'discussion',
+                data: c,
+              }));
+              return [...newDiscussionItems, ...prev];
+            }
+            return prev;
+          });
+        }
+      } catch (_) {
+      } finally {
+        isFetchingRecentRef.current = false;
+      }
+    }, 1_000); // 1 second real-time polling
+
+    return () => clearInterval(interval);
+  }, [streamFilter, surveyFilterKey]);
+
   useEffect(() => {
     const sentinel = infiniteSentinelRef.current;
     if (!sentinel) return;
@@ -685,7 +774,7 @@ export default function HomeFeedView({
                   </h3>
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-extrabold animate-pulse">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Real-time
+                    1s Real-time
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
@@ -825,7 +914,7 @@ export default function HomeFeedView({
                           </h4>
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                            Live
+                            1s Real-time
                           </span>
                         </div>
                         <button
