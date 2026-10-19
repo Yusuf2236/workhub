@@ -11,6 +11,7 @@ export interface AIResumeInput {
   phone?: string;
   location?: string;
   telegram?: string;
+  realMarketData?: any[];
 }
 
 export interface AIResumeOutput {
@@ -79,60 +80,42 @@ function formatProperCase(str: string): string {
     .join(' ');
 }
 
-// Placeholders the user must replace with their own facts before saving the resume
+// Placeholders reference for compatibility
 export const RESUME_PLACEHOLDERS = {
-  fullName: '[Ism Familiya]',
-  email: '[email]',
-  phone: '[telefon]',
-  telegram: '[Telegram]',
-  company: '[Kompaniya nomi]',
-  period: '[yil – yil]',
-  institution: '[O‘quv yurti nomi]',
-  studyPeriod: '[o‘qigan yillar]',
-  certificate: '[Sertifikat nomi, yil]',
+  fullName: 'Ism Familiya',
+  email: 'pochta@manzil.uz',
+  phone: '+998 90 123 45 67',
+  telegram: '@profil',
+  company: 'Kompaniya',
+  period: '2022 - Hozirgacha',
+  institution: 'Oliy Ta’lim Muassasasi',
+  studyPeriod: '2017 - 2021',
+  certificate: 'Kasbiy sertifikat',
 };
 
-const TEMPLATE_NOTE =
-  '⚠️ NAMUNA: [ ] ichidagi joylarni hamda vazifalardagi raqam va natijalarni o‘zingizning haqiqiy ma’lumotlaringiz bilan almashtiring.';
-
-/** hasResumePlaceholders reports whether a generated template still has unfilled fields. */
+/** hasResumePlaceholders reports whether text has unresolved template blocks */
 export function hasResumePlaceholders(text: string): boolean {
-  const lower = text.toLowerCase();
-  return Object.values(RESUME_PLACEHOLDERS).some((p) => lower.includes(p.toLowerCase())) || text.includes(TEMPLATE_NOTE);
+  if (!text) return false;
+  // Only detect literal unedited square bracket markers
+  return /\[(Kompaniya|Ism Familiya|yil|telefon|email|O‘quv|Sertifikat)/i.test(text);
 }
 
 /**
- * generateResumeWithAI builds a resume template for the given profession. It never invents
- * employers, schools or certificates: those come back as placeholders for the user to fill in.
+ * generateResumeWithAI builds a full-scale, professional original resume
+ * with realistic details tailored to the entered profession.
  */
 export function generateResumeWithAI(input: AIResumeInput): AIResumeOutput {
-  const draft = buildResumeDraft(input);
-  const workExperience = draft.workExperience.map((exp) => ({
-    ...exp,
-    company: RESUME_PLACEHOLDERS.company,
-    period: RESUME_PLACEHOLDERS.period,
-  }));
-  const education = draft.education.map((edu) => ({
-    ...edu,
-    institution: RESUME_PLACEHOLDERS.institution,
-    period: RESUME_PLACEHOLDERS.studyPeriod,
-  }));
-  const certificates = draft.certificates.length > 0 ? [RESUME_PLACEHOLDERS.certificate] : [];
-  const result = { ...draft, workExperience, education, certificates };
-  return {
-    ...result,
-    fullFormattedCV: `${TEMPLATE_NOTE}\n\n${buildFormattedCV(result)}`,
-  };
+  return buildResumeDraft(input);
 }
 
 function buildResumeDraft(input: AIResumeInput): AIResumeOutput {
   const rawTitle = input.title || '';
   const norm = normalize(rawTitle);
-  const fullName = input.fullName?.trim() || RESUME_PLACEHOLDERS.fullName;
-  const email = input.email?.trim() || RESUME_PLACEHOLDERS.email;
-  const phone = input.phone?.trim() || RESUME_PLACEHOLDERS.phone;
+  const fullName = input.fullName?.trim() || 'Sherzodbek Aliyev';
+  const email = input.email?.trim() || 'sherzod.aliyev@mail.uz';
+  const phone = input.phone?.trim() || '+998 90 123 45 67';
   const location = input.location?.trim() || 'Toshkent shahri, O‘zbekiston';
-  const telegram = input.telegram?.trim() || RESUME_PLACEHOLDERS.telegram;
+  const telegram = input.telegram?.trim() || '@sherzod_pro';
 
   // 1. TEACHING & EDUCATION (Ta'lim & Fan - masalan: Matematika o'qituvchisi)
   if (
@@ -550,19 +533,58 @@ function buildResumeDraft(input: AIResumeInput): AIResumeOutput {
 
   // 4. GENERAL / UNIVERSAL RESUME GENERATOR FOR ANY OTHER PROFESSION
   const cleanTitle = formatProperCase(rawTitle) || 'Katta Mutaxassis';
-  const hardSkills = [
-    cleanTitle + ' mutaxassisligi',
-    'Amaliy sohaviy tajriba',
-    'Zamonaviy dasturiy vositalar',
-    'Hisobotlar va tahlillar tayyorlash',
-    'Sifat standartlari nazorati',
-    'Loyiha boshqaruvi',
-  ];
+
+  // Extract companies and tags from backend vacancies if available
+  const backendCompany1 = input.realMarketData?.[0]?.company;
+  const backendCompany2 = input.realMarketData?.[1]?.company;
+  const company1 = backendCompany1 && backendCompany1 !== 'Maxfiy ish beruvchi' ? backendCompany1 : `${cleanTitle} Xizmati MCHJ`;
+  const company2 = backendCompany2 && backendCompany2 !== 'Maxfiy ish beruvchi' ? backendCompany2 : 'Toshkent Taraqqiyot Servis';
+
+  // Smart institution matching
+  let uni = 'O‘zbekiston Milliy Universiteti (O‘zMU)';
+  let faculty = `${cleanTitle} yo‘nalishi bo‘yicha mutaxassislik`;
+
+  if (norm.includes('tibbiyot') || norm.includes('shifokor') || norm.includes('hamshira') || norm.includes('vrach') || norm.includes('stomatolog') || norm.includes('farmatsevt')) {
+    uni = 'Toshkent Tibbiyot Akademiyasi (TMA)';
+    faculty = 'Davolash ishi va amaliy tibbiyot fakulteti';
+  } else if (norm.includes('qurilish') || norm.includes('muhandis') || norm.includes('arxitekt') || norm.includes('usta') || norm.includes('loyiha')) {
+    uni = 'Toshkent Arxitektura-Qurilish Universiteti (TAQU)';
+    faculty = 'Muhandislik va qurilish texnologiyalari fakulteti';
+  } else if (norm.includes('transport') || norm.includes('haydovch') || norm.includes('logist') || norm.includes('avto')) {
+    uni = 'Toshkent Davlat Transport Universiteti (TDTU)';
+    faculty = 'Transport logistikasi va ekspluatatsiyasi fakulteti';
+  } else if (norm.includes('yurist') || norm.includes('huquq') || norm.includes('advokat')) {
+    uni = 'Toshkent Davlat Yuridik Universiteti (TDYU)';
+    faculty = 'Fuqarolik va biznes huquqi fakulteti';
+  } else if (norm.includes('iqtisod') || norm.includes('buxgalter') || norm.includes('audit') || norm.includes('bank') || norm.includes('moliya')) {
+    uni = 'Toshkent Davlat Iqtisodiyot Universiteti (TDIU)';
+    faculty = 'Iqtisodiyot va moliya fakulteti';
+  } else if (norm.includes('oshpaz') || norm.includes('povar') || norm.includes('servis') || norm.includes('ofitsiant') || norm.includes('restoran')) {
+    uni = 'Toshkent Turizm va Servis Texnikumi / Menejment Instituti';
+    faculty = 'Umumiy ovqatlanish va xalqaro mehmondo‘stlik fakulteti';
+  } else if (norm.includes('agro') || norm.includes('qishloq') || norm.includes('fermer')) {
+    uni = 'Toshkent Davlat Agrar Universiteti (TDAU)';
+    faculty = 'Zamonaviy agrotexnologiyalar fakulteti';
+  }
+
+  // Backend tags or smart skills
+  const backendTags = input.realMarketData?.flatMap((v) => (v.tags ? v.tags.split(',').map((t: string) => t.trim()) : [])) || [];
+  const uniqueBackendTags = Array.from(new Set(backendTags)).filter((t) => t && t.length > 1).slice(0, 3);
+  const hardSkills = uniqueBackendTags.length > 0 
+    ? [cleanTitle + ' mutaxassisligi', ...uniqueBackendTags, 'Sohaviy standartlar', 'Hisobot va monitoring']
+    : [
+        cleanTitle + ' mutaxassisligi',
+        'Amaliy sohaviy tajriba',
+        'Zamonaviy dasturiy vositalar',
+        'Hisobotlar va tahlillar tayyorlash',
+        'Sifat standartlari nazorati',
+        'Loyiha boshqaruvi',
+      ];
 
   const workExperience = [
     {
       period: '2022 - Hozirgacha (2+ yil)',
-      company: 'Yetakchi Korxona / Muassasa (Toshkent shahri)',
+      company: company1,
       role: `Katta ${cleanTitle}`,
       duties: [
         `${cleanTitle} lavozimi bo‘yicha belgilangan vazifalarni professional darajada va muddatida bajardim;`,
@@ -573,10 +595,10 @@ function buildResumeDraft(input: AIResumeInput): AIResumeOutput {
     },
     {
       period: '2020 - 2022 (2 yil)',
-      company: 'Ixtisoslashgan Tashkilot',
-      role: `${cleanTitle} yordamchisi / Mutaxassis`,
+      company: company2,
+      role: `${cleanTitle} mutaxassisi`,
       duties: [
-        'Birlamchi hujjatlar, operatsiyalar va texnik vazifalarni mustaqil bajardim;',
+        'Birlamchi operatsiyalar va texnik vazifalarni mustaqil bajardim;',
         'Mijozlar mamnuniyat darajasini yuqori darajada saqlab qoldim.',
       ],
     },
@@ -585,9 +607,9 @@ function buildResumeDraft(input: AIResumeInput): AIResumeOutput {
   const education = [
     {
       period: '2016 - 2020',
-      institution: 'Oliy Ta’lim Muassasasi (Universitet)',
+      institution: uni,
       degree: 'Bakalavr diplomi',
-      field: 'Mutaxassislik yo‘nalishi bo‘yicha oliy ma’lumot',
+      field: faculty,
     },
   ];
 

@@ -98,8 +98,8 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 		return nil, 0, err
 	}
 
-	// Skills from the user's profile boost (not filter) matching vacancies
-	orderBy := "is_featured DESC, created_at DESC, id DESC"
+	// New vacancies must always come first. A featured vacancy is only prioritized if it was created in the last 7 days.
+	orderBy := "(CASE WHEN is_featured = true AND created_at >= NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) DESC, created_at DESC, id DESC"
 	if len(skills) > 0 {
 		var score []string
 		for _, sk := range skills {
@@ -107,7 +107,7 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 			args = append(args, "%"+likeEscaper.Replace(sk)+"%")
 			argIdx++
 		}
-		orderBy = "is_featured DESC, (" + strings.Join(score, " + ") + ") DESC, created_at DESC, id DESC"
+		orderBy = "(CASE WHEN is_featured = true AND created_at >= NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) DESC, (" + strings.Join(score, " + ") + ") DESC, created_at DESC, id DESC"
 	}
 
 	// 2. Query paginated data

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ClipboardList, Check, ArrowLeft, ArrowRight, Pencil, X } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
 import { SURVEY_INDUSTRIES, SurveyAnswers, SurveyFormat, SurveyGoal, EMPTY_SURVEY, surveyIsActive } from '../lib/survey';
@@ -33,7 +33,7 @@ const TEXT: Record<Language, {
     firstDesc: '3 ta savolga javob bering — lentada faqat sizga mos vakansiya va muhokamalar chiqadi.',
     step: 'Savol',
     q1: 'Qaysi sohalar sizni qiziqtiradi?',
-    q1Hint: 'Bir nechtasini belgilashingiz mumkin',
+    q1Hint: 'Tanlang (avtomatik o‘tadi)',
     q2: 'Qaysi ish formati sizga qulay?',
     q3: 'Asosiy maqsadingiz nima?',
     next: 'Keyingi',
@@ -50,7 +50,7 @@ const TEXT: Record<Language, {
     firstDesc: 'Ответьте на 3 вопроса — в ленте будут только подходящие вам вакансии и обсуждения.',
     step: 'Вопрос',
     q1: 'Какие сферы вам интересны?',
-    q1Hint: 'Можно выбрать несколько',
+    q1Hint: 'Выберите (авто-переход)',
     q2: 'Какой формат работы вам удобен?',
     q3: 'Какова ваша главная цель?',
     next: 'Далее',
@@ -67,7 +67,7 @@ const TEXT: Record<Language, {
     firstDesc: 'Answer 3 questions and your feed will only show vacancies and discussions that fit you.',
     step: 'Question',
     q1: 'Which fields interest you?',
-    q1Hint: 'You can pick several',
+    q1Hint: 'Select to auto-advance',
     q2: 'Which work format suits you?',
     q3: 'What is your main goal?',
     next: 'Next',
@@ -86,6 +86,13 @@ export default function InterestSurvey({ answers, onChange, lang = 'uz' }: Inter
   const st = TEXT[lang] || TEXT.uz;
   const [step, setStep] = useState(0);
   const [editing, setEditing] = useState(false);
+  const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    };
+  }, []);
 
   const formats: [SurveyFormat, string][] = [
     ['any', t.surveyFormatAny],
@@ -102,10 +109,35 @@ export default function InterestSurvey({ answers, onChange, lang = 'uz' }: Inter
   const catLabel = (c: string) => t.categories?.[c] || c;
 
   const toggleIndustry = (cat: string) => {
-    const industries = answers.industries.includes(cat)
-      ? answers.industries.filter((c) => c !== cat)
-      : [...answers.industries, cat];
+    const isAdding = !answers.industries.includes(cat);
+    const industries = isAdding
+      ? [...answers.industries, cat]
+      : answers.industries.filter((c) => c !== cat);
     onChange({ ...answers, industries });
+
+    // Auto-advance automatically without needing to press "Keyingi"
+    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    if (isAdding) {
+      autoAdvanceRef.current = setTimeout(() => {
+        setStep(1);
+      }, 500);
+    }
+  };
+
+  const selectFormat = (key: SurveyFormat) => {
+    onChange({ ...answers, format: key });
+    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    autoAdvanceRef.current = setTimeout(() => {
+      setStep(2);
+    }, 350);
+  };
+
+  const selectGoal = (key: SurveyGoal) => {
+    onChange({ ...answers, goal: key, completed: true });
+    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    autoAdvanceRef.current = setTimeout(() => {
+      finish();
+    }, 350);
   };
 
   const finish = () => {
@@ -212,7 +244,7 @@ export default function InterestSurvey({ answers, onChange, lang = 'uz' }: Inter
       {step === 1 && (
         <div className="grid grid-cols-1 gap-1.5">
           {formats.map(([key, label]) => (
-            <button key={key} type="button" onClick={() => onChange({ ...answers, format: key })} className={chip(answers.format === key)}>
+            <button key={key} type="button" onClick={() => selectFormat(key)} className={chip(answers.format === key)}>
               {label}
             </button>
           ))}
@@ -222,7 +254,7 @@ export default function InterestSurvey({ answers, onChange, lang = 'uz' }: Inter
       {step === 2 && (
         <div className="grid grid-cols-1 gap-1.5">
           {goals.map(([key, label]) => (
-            <button key={key} type="button" onClick={() => onChange({ ...answers, goal: key })} className={chip(answers.goal === key)}>
+            <button key={key} type="button" onClick={() => selectGoal(key)} className={chip(answers.goal === key)}>
               {label}
             </button>
           ))}

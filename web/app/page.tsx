@@ -109,11 +109,13 @@ export default function WZonePortal() {
 
   // Modals
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authContext, setAuthContext] = useState<'default' | 'vacancy'>('default');
   const [createVacancyModalOpen, setCreateVacancyModalOpen] = useState(false);
   const [createResumeModalOpen, setCreateResumeModalOpen] = useState(false);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [chatTargetUser, setChatTargetUser] = useState<any | null>(null);
+  const [activeChatRoomId, setActiveChatRoomId] = useState<string | null>(null);
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
   const [selectedVacancyForDetail, setSelectedVacancyForDetail] = useState<any | null>(null);
   // Desktop split view (list + detail side by side) on vacancy list tabs
@@ -445,7 +447,7 @@ export default function WZonePortal() {
     }
   }, [debouncedSearch, selectedCategory, selectedLocation, selectedJobType]);
 
-  // Every minute: add newly posted vacancies to the top of the list without resetting scroll/pages
+  // Every 60 seconds: add newly posted vacancies to the top of the list and update total counts
   useEffect(() => {
     const timer = setInterval(async () => {
       try {
@@ -459,9 +461,11 @@ export default function WZonePortal() {
         });
         if (res.success && res.data?.vacancies) {
           setVacancies((prev) => {
+            const freshMap = new Map(res.data!.vacancies.map((v: any) => [v.id, v]));
+            const updatedPrev = prev.map((v) => freshMap.get(v.id) || v);
             const existing = new Set(prev.map((v) => v.id));
             const fresh = res.data!.vacancies.filter((v: any) => !existing.has(v.id));
-            return fresh.length > 0 ? [...fresh, ...prev] : prev;
+            return fresh.length > 0 ? [...fresh, ...updatedPrev] : updatedPrev;
           });
           if (res.data.total !== undefined) setTotalVacancies(res.data.total);
         }
@@ -737,14 +741,35 @@ export default function WZonePortal() {
     else setSelectedVacancyForDetail(v);
   };
 
+  const handleOpenCreateVacancy = () => {
+    if (!user || user.auth_provider !== 'oneid') {
+      setAuthContext('vacancy');
+      setAuthModalOpen(true);
+    } else {
+      setCreateVacancyModalOpen(true);
+    }
+  };
+
+  const handleOpenCreateResume = () => {
+    if (!user || user.auth_provider !== 'oneid') {
+      setAuthContext('vacancy');
+      setAuthModalOpen(true);
+    } else {
+      setCreateResumeModalOpen(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] flex flex-col font-sans transition-colors duration-200 text-slate-900 dark:text-slate-100">
       {/* Top Navigation Header */}
       <Header
         user={user}
-        onOpenAuth={() => setAuthModalOpen(true)}
-        onOpenCreateVacancy={() => (user ? setCreateVacancyModalOpen(true) : setAuthModalOpen(true))}
-        onOpenCreateResume={() => (user ? setCreateResumeModalOpen(true) : setAuthModalOpen(true))}
+        onOpenAuth={(ctx?: 'default' | 'vacancy') => {
+          setAuthContext(ctx || 'default');
+          setAuthModalOpen(true);
+        }}
+        onOpenCreateVacancy={handleOpenCreateVacancy}
+        onOpenCreateResume={handleOpenCreateResume}
         onOpenChat={goToChat}
         onOpenNotifications={() => setNotificationsModalOpen(true)}
         unreadNotificationsCount={unreadCount}
@@ -822,11 +847,11 @@ export default function WZonePortal() {
               receivedApplications={receivedApplications}
               onUpdateStatus={handleUpdateApplicationStatus}
               onOpenApplicantChat={(app) => {
-                setChatTargetUser({ id: app.user_id, name: app.applicant_name || 'Nomzod' });
-                setChatModalOpen(true);
+                setActiveChatRoomId(`app_${app.id}`);
+                setCurrentTab('chat');
               }}
               onSelectVacancy={openVacancyById}
-              onOpenChat={() => setChatModalOpen(true)}
+              onOpenChat={() => setCurrentTab('chat')}
               lang={lang}
             />
           ) : currentTab === 'resumes' ? (
@@ -880,6 +905,9 @@ export default function WZonePortal() {
                 currentUser={user}
                 onOpenAuth={() => setAuthModalOpen(true)}
                 lang={lang}
+                initialRoomId={activeChatRoomId || undefined}
+                onNavigateToVacancies={() => setCurrentTab('vacancies')}
+                onSelectVacancy={openVacancyById}
               />
             </div>
           ) : currentTab === 'profile' ? (
@@ -941,10 +969,7 @@ export default function WZonePortal() {
                 {t.noMyVacanciesDesc}
               </p>
               <button
-                onClick={() => {
-                  if (!user) setAuthModalOpen(true);
-                  else setCreateVacancyModalOpen(true);
-                }}
+                onClick={handleOpenCreateVacancy}
                 className="mt-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition"
               >
                 {t.postVacancyBtn}
@@ -958,14 +983,8 @@ export default function WZonePortal() {
               onSurveyChange={handleSurveyChange}
               onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
               onNavigateToVacancies={() => setCurrentTab('vacancies')}
-              onOpenCreateResume={() => {
-                if (!user) setAuthModalOpen(true);
-                else setCreateResumeModalOpen(true);
-              }}
-              onOpenCreateVacancy={() => {
-                if (!user) setAuthModalOpen(true);
-                else setCreateVacancyModalOpen(true);
-              }}
+              onOpenCreateResume={handleOpenCreateResume}
+              onOpenCreateVacancy={handleOpenCreateVacancy}
               onApplyVacancy={(v) => {
                 setSelectedVacancyForApply(v);
                 setApplyModalOpen(true);
@@ -1301,14 +1320,23 @@ export default function WZonePortal() {
       {/* Modals */}
       <AuthModal
         isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={() => {
+          setAuthModalOpen(false);
+          setAuthContext('default');
+        }}
         onSuccess={(u) => {
           setUser(u);
           setAuthModalOpen(false);
-          setCurrentTab('profile');
+          if (authContext === 'vacancy') {
+            setCreateVacancyModalOpen(true);
+          } else {
+            setCurrentTab('profile');
+          }
+          setAuthContext('default');
           fetchUserData();
         }}
         lang={lang}
+        authContext={authContext}
       />
 
       <VacancyDetailModal
@@ -1351,6 +1379,10 @@ export default function WZonePortal() {
             setVacancies(merge);
             setTabVacancies(merge);
             return;
+          }
+          if (savedVac) {
+            setVacancies((prev) => [savedVac, ...prev.filter((v) => v.id !== savedVac.id)]);
+            setTabVacancies((prev) => [savedVac, ...prev.filter((v) => v.id !== savedVac.id)]);
           }
           if (savedVac?.category) {
             setSelectedCategory(savedVac.category);

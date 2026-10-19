@@ -43,9 +43,10 @@ interface AuthModalProps {
   onClose: () => void;
   onSuccess: (user: any) => void;
   lang?: Language;
+  authContext?: 'default' | 'vacancy';
 }
 
-export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz', authContext = 'default' }: AuthModalProps) {
   const t = translations[lang] || translations.uz;
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
@@ -423,12 +424,20 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
         <div className="p-6">
           <div className="text-center mb-6">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-              {tab === 'login'
+              {authContext === 'vacancy'
+                ? (lang === 'ru' ? 'Вход для работодателей' : lang === 'en' ? 'Employer Sign In' : 'Ish beruvchi sifatida kirish')
+                : tab === 'login'
                 ? (lang === 'ru' ? 'Вход в систему' : lang === 'en' ? 'Sign In to Account' : 'Tizimga kirish')
                 : (lang === 'ru' ? 'Регистрация' : lang === 'en' ? 'Create Account' : 'Ro‘yxatdan o‘tish')}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {lang === 'ru'
+              {authContext === 'vacancy'
+                ? (lang === 'ru'
+                  ? 'Для размещения вакансий подтвердите организацию или статус через единую систему OneID'
+                  : lang === 'en'
+                  ? 'To publish vacancies, authenticate via the sovereign OneID portal'
+                  : 'Vakansiya e’lon qilish uchun yagona identifikatsiya tizimi (OneID) orqali kiring')
+                : lang === 'ru'
                 ? 'Войдите в аккаунт, чтобы получить доступ ко всем возможностям WZone'
                 : lang === 'en'
                 ? 'Sign in to access all features of WZone'
@@ -443,6 +452,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
             </div>
           )}
 
+          {authContext === 'vacancy' && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl flex items-start gap-2.5 text-xs text-blue-950 dark:text-blue-100">
+              <ShieldCheck size={18} className="text-[#0047BA] dark:text-blue-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-bold">Rasmiy ish beruvchi identifikatsiyasi (OneID)</p>
+                <p className="text-blue-800/80 dark:text-blue-300/80 text-[11px] leading-relaxed">
+                  Soxta e’lonlarning oldini olish va nomzodlar xavfsizligini ta’minlash maqsadida vakansiya berish faqat davlat OneID tizimi orqali amalga oshiriladi. Google orqali kirish vakansiya berish uchun taqiqlangan.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Social / SSO Auth Buttons */}
           <div className="space-y-2.5 mb-6">
             {/* OneID SSO Button */}
@@ -450,7 +471,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
               type="button"
               onClick={() => setShowOneIDPortal(true)}
               disabled={loading}
-              className="w-full flex items-center justify-between gap-3 py-2.5 px-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-gradient-to-r from-blue-50 via-indigo-50 to-sky-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-sky-950/20 hover:border-blue-400 dark:hover:border-blue-700 text-blue-950 dark:text-blue-100 font-semibold text-sm transition shadow-sm group active:scale-[0.99]"
+              className={`w-full flex items-center justify-between gap-3 py-2.5 px-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-gradient-to-r from-blue-50 via-indigo-50 to-sky-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-sky-950/20 hover:border-blue-400 dark:hover:border-blue-700 text-blue-950 dark:text-blue-100 font-semibold text-sm transition shadow-sm group active:scale-[0.99] ${
+                authContext === 'vacancy' ? 'ring-2 ring-blue-500/30 shadow-md' : ''
+              }`}
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#0047BA] text-white flex items-center justify-center text-xs font-black shadow group-hover:scale-105 transition">
@@ -471,20 +494,22 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
               <ShieldCheck size={18} className="text-[#0047BA] dark:text-blue-400 shrink-0" />
             </button>
 
-            {/* Real Google SSO Button */}
-            <button
-              type="button"
-              onClick={handleRealGoogleSignIn}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-semibold text-sm transition shadow-sm hover:shadow active:scale-[0.99]"
-            >
-              <GoogleIcon />
-              <span>
-                {googleLoading
-                  ? (lang === 'ru' ? 'Проверка аккаунта Google...' : lang === 'en' ? 'Verifying Google Account...' : 'Google hisobi tasdiqlanmoqda...')
-                  : (lang === 'ru' ? 'Продолжить с Google' : lang === 'en' ? 'Continue with Google' : 'Google orqali davom etish')}
-              </span>
-            </button>
+            {/* Real Google SSO Button - Only shown when NOT posting a vacancy */}
+            {authContext !== 'vacancy' && (
+              <button
+                type="button"
+                onClick={handleRealGoogleSignIn}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-semibold text-sm transition shadow-sm hover:shadow active:scale-[0.99]"
+              >
+                <GoogleIcon />
+                <span>
+                  {googleLoading
+                    ? (lang === 'ru' ? 'Проверка аккаунта Google...' : lang === 'en' ? 'Verifying Google Account...' : 'Google hisobi tasdiqlanmoqda...')
+                    : (lang === 'ru' ? 'Продолжить с Google' : lang === 'en' ? 'Continue with Google' : 'Google orqali davom etish')}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* Divider */}

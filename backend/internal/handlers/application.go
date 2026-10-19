@@ -213,6 +213,31 @@ func ApplyToVacancy(c *gin.Context) {
 			}
 		}
 
+		// Initialize hh.uz style direct chat thread for this application
+		if chatRepo != nil {
+			initMsg := models.ChatMessage{
+				ID:           uuid.NewString(),
+				RoomID:       fmt.Sprintf("app_%s", app.ID),
+				UserID:       userID.(string),
+				SenderName:   candidateName,
+				Content:      fmt.Sprintf("Assalomu alaykum! Men «%s» vakansiyasiga o‘z rezyume (CV)imni yubordim.", vacancy.Title),
+				CreatedAt:    time.Now().UTC(),
+			}
+			_ = chatRepo.SaveMessage(initMsg)
+
+			if payload.CoverLetter != "" {
+				letterMsg := models.ChatMessage{
+					ID:           uuid.NewString(),
+					RoomID:       fmt.Sprintf("app_%s", app.ID),
+					UserID:       userID.(string),
+					SenderName:   candidateName,
+					Content:      fmt.Sprintf("Kuzatuv xati: %s", payload.CoverLetter),
+					CreatedAt:    time.Now().UTC().Add(time.Millisecond * 500),
+				}
+				_ = chatRepo.SaveMessage(letterMsg)
+			}
+		}
+
 		vacTitle, compName := vacancy.Title, vacancy.Company
 		go services.GetTelegramService().NotifyNewApplication(candidateName, vacTitle, compName)
 	} else {

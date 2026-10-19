@@ -171,13 +171,14 @@ export default function ApplicationsView({
                     </label>
                   )}
 
-                  {view === 'received' && onOpenApplicantChat && (
+                  {onOpenApplicantChat && (
                     <button
                       onClick={() => onOpenApplicantChat(app)}
-                      title={t.chatWithApplicant}
-                      className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition"
+                      title={view === 'received' ? "Nomzod bilan muloqot" : "Ish beruvchi bilan muloqot"}
+                      className="p-2 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 transition flex items-center gap-1 text-xs font-bold"
                     >
                       <MessageSquare size={15} />
+                      <span className="hidden sm:inline">Muloqot</span>
                     </button>
                   )}
 

@@ -20,6 +20,8 @@ backend/*.out
 backend/uploads/
 uploads/
 web/tsconfig.tsbuildinfo
+admin/tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 # Android
 android/.gradle/

@@ -106,13 +106,22 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess, resume
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  {lang === 'ru' ? 'Сопроводительное письмо (Cover letter)' : lang === 'en' ? 'Cover Letter / Message' : 'Kuzatuv xati / Izoh (Cover letter)'}
+                  {lang === 'ru'
+                    ? 'Сопроводительное письмо / Комментарий (необязательно)'
+                    : lang === 'en'
+                    ? 'Cover Letter / Note (optional)'
+                    : 'Kuzatuv xati / Izoh (ixtiyoriy)'}
                 </label>
                 <textarea
                   rows={4}
-                  required
                   maxLength={5000}
-                  placeholder={lang === 'ru' ? 'Почему именно вы подходите на эту роль? Кратко расскажите об опыте и навыках...' : lang === 'en' ? 'Why are you a great fit for this position? Briefly describe your experience...' : 'Nima uchun aynan siz ushbu lavozimga mos ekansiz? Tajribangiz va yutuqlaringiz haqida qisqacha yozing...'}
+                  placeholder={
+                    lang === 'ru'
+                      ? 'Почему именно вы подходите на эту роль? Кратко расскажите об опыте (необязательно)...'
+                      : lang === 'en'
+                      ? 'Why are you a great fit for this position? (optional)...'
+                      : 'Nima uchun aynan siz ushbu lavozimga mos ekansiz? Tajribangiz va yutuqlaringiz haqida qisqacha yozing (ixtiyoriy)...'
+                  }
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
                   className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"

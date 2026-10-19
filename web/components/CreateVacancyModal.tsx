@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { generateVacancyWithAI, AIVacancyOutput } from '../lib/aiVacancyGenerator';
+import { detectCurrentLocation } from '../lib/geolocation';
 import { Language, translations } from '../lib/translations';
 
 interface CreateVacancyModalProps {
@@ -68,6 +69,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
 
   // AI Generation states
   const [aiLoading, setAiLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [aiSuccessMessage, setAiSuccessMessage] = useState<string | null>(null);
   const [aiInsights, setAiInsights] = useState<AIVacancyOutput['marketInsights'] | null>(null);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
@@ -92,12 +94,23 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
     setAiInsights(null);
   }, [isOpen, initialVacancy]);
 
+  const handleDetectLocation = async () => {
+    setLocating(true);
+    try {
+      const detected = await detectCurrentLocation();
+      if (detected) setLocation(detected);
+    } catch {
+      setLocation('Toshkent shahri');
+    } finally {
+      setLocating(false);
+    }
+  };
+
   if (!isOpen) return null;
 
-  const handleAIFill = (onlyDescription = false, customTitle?: string) => {
+  const handleAIFill = async (onlyDescription = false, customTitle?: string) => {
     const targetTitle = (customTitle || title || '').trim();
     if (!targetTitle) {
-      // Default to "Matematika o‘qituvchisi" if completely empty
       setTitle('Matematika o‘qituvchisi');
     }
 
@@ -105,41 +118,45 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
     setAiLoading(true);
     setAiSuccessMessage(null);
 
-    // Simulate smart thinking transition (300ms)
-    setTimeout(() => {
-      try {
-        const result = generateVacancyWithAI({
-          title: activeTitle,
-          company: company.trim() || undefined,
-          location: location.trim() || undefined,
-        });
+    try {
+      // 1. Fetch real market vacancies from backend
+      const searchRes = await api.getVacancies({ q: activeTitle, limit: 10 }).catch(() => null);
+      const realVacancies = (searchRes && searchRes.success && searchRes.data?.vacancies) || [];
 
-        if (onlyDescription) {
-          setDescription(result.description);
-          setAiSuccessMessage('✨ AI talablar va vazifalar matnini qayta shakllantirdi!');
-        } else {
-          // The company name is the employer's to enter; the AI does not make one up
-          setTitle(result.title);
-          setCategory(result.category);
-          setJobType(result.jobType);
-          setExperience(result.experience);
-          setSalary(result.salary);
+      // 2. Generate with AI using backend market data
+      const result = generateVacancyWithAI({
+        title: activeTitle,
+        company: company.trim() || undefined,
+        location: location.trim() || undefined,
+        realMarketData: realVacancies,
+      });
+
+      if (onlyDescription) {
+        setDescription(result.description);
+        setAiSuccessMessage('✨ AI talablar va vazifalar matnini bozor ma’lumotlari asosida yangiladi!');
+      } else {
+        setTitle(result.title);
+        setCategory(result.category);
+        setJobType(result.jobType);
+        setExperience(result.experience);
+        setSalary(result.salary);
+        if (!location || location === 'Toshkent shahri') {
           setLocation(result.location);
-          setTags(result.tags);
-          setDescription(result.description);
-          setAiInsights(result.marketInsights);
-          setSuggestedTags(result.suggestedTags || []);
-
-          setAiSuccessMessage(
-            `✨ AI tomonidan «${result.title}» uchun barcha talablar, vazifalar, maosh va teglar muvaffaqiyatli to‘ldirildi!`
-          );
         }
-      } catch (err) {
-        console.error('AI generation error', err);
-      } finally {
-        setAiLoading(false);
+        setTags(result.tags);
+        setDescription(result.description);
+        setAiInsights(result.marketInsights);
+        setSuggestedTags(result.suggestedTags || []);
+
+        setAiSuccessMessage(
+          `✨ AI backenddagi real ma’lumotlar asosida «${result.title}» uchun barcha talablar, maosh va tavsiflarni to‘ldirdi!`
+        );
       }
-    }, 320);
+    } catch (err) {
+      console.error('AI generation error', err);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSelectSample = (sample: string) => {
@@ -219,6 +236,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
           </div>
           <button
             onClick={onClose}
+            aria-label="Close vacancy modal"
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X size={18} />
@@ -241,32 +259,32 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
             </div>
           )}
 
-          {/* Job Title with AI Action Button */}
+          {/* Job Title with AI Action Button inside */}
           <div>
             <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
               Lavozim nomi *
             </label>
 
-            <div className="relative">
+            <div className="relative flex items-center">
               <input
                 type="text"
                 required
                 placeholder="masalan: Matematika o‘qituvchisi, Go backend dasturchi, Buxgalter..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                className="w-full pl-3.5 pr-12 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white transition"
               />
-            </div>
 
-            <button
-              type="button"
-              onClick={() => handleAIFill(false)}
-              disabled={aiLoading}
-              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md active:scale-95 transition disabled:opacity-50"
-            >
-              <Sparkles size={13} className={aiLoading ? 'animate-spin' : 'text-amber-300'} />
-              <span>{aiLoading ? '...' : t.fillWithAi}</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleAIFill(false)}
+                disabled={aiLoading}
+                title="AI orqali real ma'lumotlar bilan to'ldirish"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md active:scale-95 transition disabled:opacity-50"
+              >
+                <Sparkles size={16} className={aiLoading ? 'animate-spin text-amber-300' : 'text-amber-300'} />
+              </button>
+            </div>
 
             {/* Quick Sample Role Chips */}
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -353,15 +371,26 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Joylashuv / Hudud
+                Shahar / Manzil
               </label>
-              <input
-                type="text"
-                placeholder="masalan: Toshkent shahri"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  placeholder="masalan: Toshkent shahri"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full pl-3 pr-9 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+                />
+                <button
+                  type="button"
+                  onClick={handleDetectLocation}
+                  disabled={locating}
+                  title="Haqiqiy joylashuvni aniqlash"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  <MapPin size={15} className={locating ? 'animate-bounce text-blue-600' : ''} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -433,7 +462,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
             <textarea
               rows={8}
               required
-              placeholder="Nomzoddan nimalar talab qilinadi va qanday vazifalarni bajarishi kerak? (yoki yuqoridagi «AI bilan to‘ldirish» tugmasini bosing)..."
+              placeholder="Nomzoddan nimalar talab qilinadi va qanday vazifalarni bajarishi kerak? (yoki yuqoridagi AI tugmasini bosing)..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full p-3 text-xs leading-relaxed rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-mono text-[11px]"

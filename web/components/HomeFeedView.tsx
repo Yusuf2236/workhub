@@ -9,6 +9,12 @@ import {
   Bookmark,
   RefreshCw,
   Check,
+  Sparkles,
+  ShieldCheck,
+  Zap,
+  ArrowRight,
+  TrendingUp,
+  ChevronRight,
 } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
 import { api } from '../lib/api';
@@ -94,6 +100,7 @@ export default function HomeFeedView({
   onSelectVacancy,
   onNavigateToVacancies,
   onOpenCreateResume,
+  onOpenCreateVacancy,
   onApplyVacancy,
   isSaved,
   onToggleSave,
@@ -109,6 +116,79 @@ export default function HomeFeedView({
     if (onSearch) onSearch(q.trim(), heroRegion);
     else onNavigateToVacancies();
   };
+
+  // WZone Interactive Animated Advertisement Carousel
+  const [promoSlide, setPromoSlide] = useState(0);
+
+  const PROMO_SLIDES = [
+    {
+      badge: lang === 'ru' ? 'AI Технологии' : lang === 'en' ? 'AI Powered' : 'AI Yordamchi',
+      title:
+        lang === 'ru'
+          ? 'Создавайте резюme и вакансии за 10 секунд с помощью AI'
+          : lang === 'en'
+          ? 'Generate professional resumes & jobs in 10 seconds with AI'
+          : 'AI bilan 10 soniyada professional rezyume va vakansiyalar yarating',
+      desc:
+        lang === 'ru'
+          ? 'Укажите только название профессии — WZone AI подберет реальные навыки, актуальные обязанности и рыночную зарплату.'
+          : lang === 'en'
+          ? 'Just enter a job title — WZone AI will automatically pull market skills, authentic duties and competitive salary.'
+          : 'Faqat lavozim nomini kiriting — WZone AI real bozor ko‘nikmalari, vazifalar va to‘g‘ri maosh ko‘lamini avtomatik to‘ldiradi.',
+      cta: lang === 'ru' ? 'Заполнить с AI' : lang === 'en' ? 'Create with AI' : 'AI bilan rezyume yaratish',
+      action: onOpenCreateResume,
+      accent: 'from-blue-600 via-indigo-600 to-purple-600',
+      glow: 'bg-blue-500/20 text-blue-400',
+      icon: Sparkles,
+    },
+    {
+      badge: lang === 'ru' ? '100% OneID' : lang === 'en' ? 'Verified OneID' : '100% OneID Kafolati',
+      title:
+        lang === 'ru'
+          ? 'Проверенные работодатели и официальные соискатели'
+          : lang === 'en'
+          ? 'Verified employers & authentic candidates via OneID'
+          : 'Faqat rasmiy tasdiqlangan ish beruvchilar va nomzodlar',
+      desc:
+        lang === 'ru'
+          ? 'Никакого мошенничества и фейков. Работодатели подтверждаются через OneID портал Республики Узбекистан.'
+          : lang === 'en'
+          ? 'Zero spam or fake postings. Employers verify their identity via Uzbekistan OneID e-Gov portal.'
+          : 'Soxta va firibgar e’lonlarga o‘rin yo‘q. Ish beruvchilar O‘zbekiston OneID portali orqali qat’iy tekshiriladi.',
+      cta: lang === 'ru' ? 'Разместить вакансию' : lang === 'en' ? 'Post Verified Job' : 'Vakansiya e’lon qilish',
+      action: onOpenCreateVacancy,
+      accent: 'from-emerald-600 via-teal-600 to-blue-600',
+      glow: 'bg-emerald-500/20 text-emerald-400',
+      icon: ShieldCheck,
+    },
+    {
+      badge: lang === 'ru' ? 'Smart GPS & Real-time' : lang === 'en' ? 'Smart GPS & Live' : 'Smart GPS & Jonli Oqim',
+      title:
+        lang === 'ru'
+          ? 'Свежие вакансии каждую минуту и умный поиск по локации'
+          : lang === 'en'
+          ? 'Fresh job updates every 60s with smart proximity GPS'
+          : 'Har daqiqada yangilanuvchi ish o‘rinlari va aqlli GPS qidiruv',
+      desc:
+        lang === 'ru'
+          ? 'Вакансии обновляются в реальном времени. Находите работу рядом с домом одним нажатием кнопки геолокации.'
+          : lang === 'en'
+          ? 'Listings refresh continuously in real-time. Discover great jobs close to your exact location with instant GPS.'
+          : 'Vakansiyalar har 60 soniyada avtomatik yangilanadi. GPS tugmasi orqali uyingizga eng yaqin ishni toping.',
+      cta: lang === 'ru' ? 'Смотреть вакансии' : lang === 'en' ? 'Explore Jobs' : 'Vakansiyalarni ko‘rish',
+      action: onNavigateToVacancies,
+      accent: 'from-purple-600 via-pink-600 to-indigo-600',
+      glow: 'bg-purple-500/20 text-purple-400',
+      icon: Zap,
+    },
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPromoSlide((prev) => (prev + 1) % PROMO_SLIDES.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [PROMO_SLIDES.length]);
 
   // Feed personalization from the interests survey (left sidebar)
   const surveyFilters = survey ? surveyVacancyFilters(survey) : {};
@@ -221,23 +301,23 @@ export default function HomeFeedView({
     }
   }, [streamPage, isLoadingMoreStream, streamHasMore, fetchBatch]);
 
-  // Every minute: put newly posted vacancies and comments on top of the feed
+  // Every 60 seconds: refresh feed with new vacancies and comments without jumping scroll
   useEffect(() => {
-    if (survey === null) return;
     const timer = setInterval(async () => {
       const gen = streamGenRef.current;
       const batch = await fetchBatch(1, 1);
       if (gen !== streamGenRef.current) return;
       const fresh = interleave(batch.vacs, batch.coms);
       setStreamItems((prev) => {
+        const freshMap = new Map(fresh.map((i) => [i.streamId, i]));
+        const updated = prev.map((item) => freshMap.get(item.streamId) || item);
         const seen = new Set(prev.map((i) => i.streamId));
         const added = fresh.filter((i) => !seen.has(i.streamId));
-        return added.length > 0 ? [...added, ...prev] : prev;
+        return added.length > 0 ? [...added, ...updated] : updated;
       });
     }, AUTO_REFRESH_MS);
     return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchBatch, survey === null]);
+  }, [fetchBatch]);
 
   useEffect(() => {
     const sentinel = infiniteSentinelRef.current;
@@ -284,8 +364,93 @@ export default function HomeFeedView({
 
   return (
     <div className="space-y-6 pb-24">
-      {/* 1. HERO SEARCH — what + where, like a classic job board */}
-      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm">
+      {/* 1. HERO SEARCH & WZONE ANIMATED PROMOTIONAL SHOWCASE */}
+      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm relative overflow-hidden">
+        {/* Ambient Animated Glow Accents */}
+        <div className="absolute -top-24 -right-24 w-80 h-80 bg-gradient-to-br from-blue-500/15 via-indigo-500/10 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
+        <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-gradient-to-tr from-purple-500/15 via-blue-500/10 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
+
+        {/* WZONE INTERACTIVE ANIMATED PROMO BANNER (Fixed Uniform Dimensions) */}
+        <div id="wzone-promo-banner" className="relative mb-6 rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 dark:from-slate-950 dark:via-blue-950/50 dark:to-slate-950 text-white border border-indigo-500/30 shadow-lg shadow-indigo-500/10 overflow-hidden min-h-[220px] sm:min-h-[205px] flex flex-col justify-between">
+          {/* Moving shimmer light streak */}
+          <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 animate-shimmer pointer-events-none" />
+
+          {/* Top Bar: Live Beacon Badge & Slide Dots */}
+          <div className="flex items-center justify-between gap-2 mb-2 relative z-10 flex-wrap">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-[11px] font-bold text-blue-200">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span>WZone 2.0 • O‘zbekiston #1 AI Karyera Ekotizimi</span>
+            </div>
+
+            {/* Slide Navigation Dots & Tabs */}
+            <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur px-2.5 py-1 rounded-full border border-white/10">
+              {PROMO_SLIDES.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setPromoSlide(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    promoSlide === idx ? 'w-5 bg-blue-400' : 'w-1.5 bg-white/30 hover:bg-white/60'
+                  }`}
+                  aria-label={`Promo slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Active Animated Slide Content (Locked Uniform Box) */}
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 py-1 min-h-[96px]">
+            <div className="space-y-1 max-w-xl flex-1 flex flex-col justify-center">
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-0.5 rounded-md ${PROMO_SLIDES[promoSlide].glow}`}>
+                  {React.createElement(PROMO_SLIDES[promoSlide].icon, { size: 12, className: 'shrink-0 animate-bounce' })}
+                  {PROMO_SLIDES[promoSlide].badge}
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug line-clamp-2 h-[2.75rem] sm:h-[2.85rem] flex items-center">
+                {PROMO_SLIDES[promoSlide].title}
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed font-medium line-clamp-2 h-[2.4rem] flex items-center">
+                {PROMO_SLIDES[promoSlide].desc}
+              </p>
+            </div>
+
+            <div className="shrink-0 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={PROMO_SLIDES[promoSlide].action}
+                className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r ${PROMO_SLIDES[promoSlide].accent} hover:brightness-110 active:scale-95 transition shadow-md shadow-black/30 group`}
+              >
+                <span>{PROMO_SLIDES[promoSlide].cta}</span>
+                <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+          </div>
+
+          {/* Interactive Feature Highlights Strip */}
+          <div className="mt-3 pt-2.5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-semibold text-slate-300 relative z-10">
+            <div className="flex items-center gap-1.5">
+              <Sparkles size={13} className="text-amber-400 shrink-0" />
+              <span>Real bozor AI tahlili</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck size={13} className="text-emerald-400 shrink-0" />
+              <span>OneID rasmiy kafolati</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Zap size={13} className="text-blue-400 shrink-0" />
+              <span>60s Jonli yangilanish</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <MapPin size={13} className="text-purple-400 shrink-0" />
+              <span>Smart GPS geolokatsiya</span>
+            </div>
+          </div>
+        </div>
+
         <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
           {t.heroMainHeading}
         </h1>

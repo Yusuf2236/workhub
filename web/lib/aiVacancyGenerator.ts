@@ -9,6 +9,7 @@ export interface AIVacancyInput {
   title: string;
   company?: string;
   location?: string;
+  realMarketData?: any[];
 }
 
 export interface AIVacancyOutput {
@@ -820,8 +821,19 @@ Biz jamoamiz xodimlarini eng asosiy boyligimiz deb hisoblovchi, o‘z sohasida y
 
   // 11. GENERAL / ANY OTHER PROFESSION (Universal Semantic Generator)
   const cleanTitle = formatTitle(rawTitle) || 'Malakali Mutaxassis';
-  const tagsList = [cleanTitle, 'Kasbiy tajriba', 'Mas’uliyatlilik', 'Jamoada ishlash', 'O‘sish imkoniyati'];
-  const salaryRange = '5 000 000 - 10 000 000 UZS';
+
+  // Extract real market insights from backend data if available
+  const marketItem = input.realMarketData?.find((v) => v && v.title);
+  const realCategory = marketItem?.category || 'Mijozlarga xizmat';
+  const realSalary = input.realMarketData?.find((v) => v.salary && v.salary.includes('UZS'))?.salary || '6 000 000 - 12 000 000 UZS';
+  const backendTags = input.realMarketData?.flatMap((v) => (v.tags ? v.tags.split(',').map((t: string) => t.trim()) : [])) || [];
+  const uniqueBackendTags = Array.from(new Set(backendTags)).filter((t) => t && t.length > 1).slice(0, 4);
+
+  const tagsList = uniqueBackendTags.length > 0
+    ? [cleanTitle, ...uniqueBackendTags]
+    : [cleanTitle, 'Kasbiy tajriba', 'Mas’uliyatlilik', 'Jamoada ishlash', 'O‘sish imkoniyati'];
+  const salaryRange = realSalary;
+  const similarRoles = (input.realMarketData?.map((v) => v.title).filter(Boolean).slice(0, 4)) || [cleanTitle, 'Yetakchi mutaxassis', 'Bosh mutaxassis'];
 
   const description = `🏢 Kompaniya haqida:
 Biz o‘z sohasida barqaror va jadal rivojlanayotgan jamoamiz. Mijozlarimizga yuqori sifatli xizmat ko‘rsatish va yangi cho‘qqilarni zabt etish maqsadida o‘z ishining ustasi bo‘lgan ${cleanTitle} lavozimiga mas’uliyatli mutaxassisni taklif qilamiz!
@@ -848,7 +860,7 @@ Biz o‘z sohasida barqaror va jadal rivojlanayotgan jamoamiz. Mijozlarimizga yu
   return {
     title: cleanTitle,
     company: companyName,
-    category: 'Mijozlarga xizmat',
+    category: realCategory,
     jobType: 'Full-time',
     experience: '1-3 yil',
     salary: salaryRange,
@@ -858,8 +870,8 @@ Biz o‘z sohasida barqaror va jadal rivojlanayotgan jamoamiz. Mijozlarimizga yu
     suggestedTags: tagsList,
     marketInsights: {
       demandLevel: 'Yuqori',
-      averageSalary: '7 000 000 UZS',
-      similarRoles: [cleanTitle, 'Yetakchi mutaxassis', 'Bosh mutaxassis'],
+      averageSalary: salaryRange.includes('-') ? salaryRange.split('-')[0].trim() + ' UZS' : '8 000 000 UZS',
+      similarRoles: similarRoles.length > 0 ? similarRoles : [cleanTitle, 'Yetakchi mutaxassis', 'Bosh mutaxassis'],
     },
   };
 }

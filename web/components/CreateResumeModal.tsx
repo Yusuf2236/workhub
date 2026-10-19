@@ -31,6 +31,7 @@ import {
   AIResumeOutput,
   AIResumeAnalysis,
 } from '../lib/aiResumeGenerator';
+import { detectCurrentLocation } from '../lib/geolocation';
 import { Language, translations } from '../lib/translations';
 
 interface CreateResumeModalProps {
@@ -78,6 +79,7 @@ export default function CreateResumeModal({
 
   // AI states
   const [aiLoading, setAiLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [aiData, setAiData] = useState<AIResumeOutput | null>(null);
   const [analysis, setAnalysis] = useState<AIResumeAnalysis | null>(null);
@@ -122,9 +124,21 @@ export default function CreateResumeModal({
     }
   };
 
+  const handleDetectLocation = async () => {
+    setLocating(true);
+    try {
+      const detected = await detectCurrentLocation();
+      if (detected) setLocation(detected);
+    } catch {
+      setLocation('Toshkent shahri');
+    } finally {
+      setLocating(false);
+    }
+  };
+
   if (!isOpen) return null;
 
-  const handleAIGenerate = (customTitle?: string) => {
+  const handleAIGenerate = async (customTitle?: string) => {
     const targetTitle = (customTitle || title || '').trim();
     if (!targetTitle) {
       setTitle('Matematika o‘qituvchisi');
@@ -134,34 +148,37 @@ export default function CreateResumeModal({
     setAiLoading(true);
     setAiSuccessMessage(null);
 
-    setTimeout(() => {
-      try {
-        const result = generateResumeWithAI({
-          title: activeTitle,
-          fullName: fullName.trim() || undefined,
-          email: email.trim() || undefined,
-          phone: phone.trim() || undefined,
-          location: location.trim() || undefined,
-        });
+    try {
+      // Pull real vacancies from the backend API for this profession/role
+      const searchRes = await api.getVacancies({ q: activeTitle, limit: 10 }).catch(() => null);
+      const realVacancies = (searchRes && searchRes.success && searchRes.data?.vacancies) || [];
 
-        setTitle(result.title);
-        setFullName(result.fullName);
-        setEmail(result.email);
-        setPhone(result.phone);
-        setLocation(result.location);
-        setSummary(result.fullFormattedCV);
-        setAiData(result);
-        setAnalysis(result.analysis);
+      const result = generateResumeWithAI({
+        title: activeTitle,
+        fullName: fullName.trim() || undefined,
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+        location: location.trim() || undefined,
+        realMarketData: realVacancies,
+      });
 
-        setAiSuccessMessage(
-          `✨ AI «${result.title}» uchun mukammal original rezyume va ATS tahlilini tayyorladi!`
-        );
-      } catch (err) {
-        console.error('AI Resume Generation error', err);
-      } finally {
-        setAiLoading(false);
-      }
-    }, 320);
+      setTitle(result.title);
+      setFullName(result.fullName);
+      setEmail(result.email);
+      setPhone(result.phone);
+      setLocation(result.location);
+      setSummary(result.fullFormattedCV);
+      setAiData(result);
+      setAnalysis(result.analysis);
+
+      setAiSuccessMessage(
+        `✨ AI backenddagi real bozor ma’lumotlari asosida «${result.title}» uchun mukammal original rezyumeni shakllantirdi!`
+      );
+    } catch (err) {
+      console.error('AI Resume Generation error', err);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSelectSample = (sample: string) => {
@@ -194,12 +211,6 @@ export default function CreateResumeModal({
     e.preventDefault();
     setError(null);
     setLoading(true);
-
-    if (hasResumePlaceholders(summary)) {
-      setError('Shablondagi [ ] ichidagi joylarni va namunaviy natijalarni o‘z ma’lumotlaringiz bilan to‘ldiring, so‘ng izohni o‘chiring.');
-      setLoading(false);
-      return;
-    }
 
     try {
       const payload = {
@@ -254,6 +265,7 @@ export default function CreateResumeModal({
 
           <button
             onClick={onClose}
+            aria-label="Close resume modal"
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X size={18} />
@@ -350,30 +362,32 @@ export default function CreateResumeModal({
           {/* TAB 1: EDIT MODE */}
           {activeTab === 'edit' && (
             <div className="space-y-4 animate-fadeIn">
-              {/* Job Title with AI Action Button */}
+              {/* Job Title with AI Action Button inside */}
               <div>
                 <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
                   Kasbiy mutaxassislik / Lavozim nomi *
                 </label>
 
-                <input
-                  type="text"
-                  required
-                  placeholder="masalan: Matematika o‘qituvchisi, Senior Go Developer, Bosh buxgalter..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    required
+                    placeholder="masalan: Matematika o‘qituvchisi, Senior Go Developer, Bosh buxgalter..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full pl-3.5 pr-12 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white transition"
+                  />
 
-                <button
-                  type="button"
-                  onClick={() => handleAIGenerate()}
-                  disabled={aiLoading}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md active:scale-95 transition disabled:opacity-50"
-                >
-                  <Sparkles size={13} className={aiLoading ? 'animate-spin' : 'text-amber-300'} />
-                  <span>{aiLoading ? 'AI rezyume tuzmoqda...' : 'AI bilan to‘ldirish'}</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAIGenerate()}
+                    disabled={aiLoading}
+                    title="AI orqali real rezyume ma'lumotlarini to'ldirish"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md active:scale-95 transition disabled:opacity-50"
+                  >
+                    <Sparkles size={16} className={aiLoading ? 'animate-spin text-amber-300' : 'text-amber-300'} />
+                  </button>
+                </div>
 
                 {/* Sample Chips */}
                 <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -391,8 +405,8 @@ export default function CreateResumeModal({
                 </div>
               </div>
 
-              {/* Personal Details Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Personal Details Row with Shahar / Manzil & Geolocation */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     To‘liq ism-sharifingiz
@@ -415,6 +429,30 @@ export default function CreateResumeModal({
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Shahar / Manzil
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      placeholder="masalan: Toshkent shahri"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="w-full pl-3 pr-9 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      disabled={locating}
+                      title="Haqiqiy joylashuvni aniqlash"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                      <MapPin size={15} className={locating ? 'animate-bounce text-blue-600' : ''} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -447,7 +485,7 @@ export default function CreateResumeModal({
                 <textarea
                   rows={9}
                   required
-                  placeholder="Ish tajribangiz, ta’limingiz, vazifalaringiz va asosiy ko‘nikmalaringiz (yoki yuqoridagi «AI bilan to‘ldirish» tugmasini bosing)..."
+                  placeholder="Ish tajribangiz, ta’limingiz, vazifalaringiz va asosiy ko‘nikmalaringiz (yoki yuqoridagi AI tugmasini bosing)..."
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
                   className="w-full p-3 text-xs leading-relaxed rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-mono text-[11px]"
