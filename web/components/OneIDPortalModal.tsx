@@ -68,8 +68,8 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
 
   // Role & account selection states
   const [accountType, setAccountType] = useState<'individual' | 'company'>('individual');
-  const [companyName, setCompanyName] = useState('Murad Buildings MCHJ');
-  const [companyInn, setCompanyInn] = useState('308123456');
+  const [companyName, setCompanyName] = useState('');
+  const [companyInn, setCompanyInn] = useState('');
 
   // Flow states: 'role_select' -> 'auth' -> 'consent'
   const [step, setStep] = useState<'role_select' | 'auth' | 'consent'>('role_select');
@@ -255,7 +255,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
 
       const effectiveFullName =
         fullNameInput.trim() ||
-        (accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : 'OneID Fuqarosi');
+        (accountType === 'company' ? (companyName.trim() || 'Tashkilot') : 'OneID Fuqarosi');
 
       const res = await api.oneIDCallback({
         code,
@@ -267,8 +267,8 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
         birth_date: info?.birthDate || '12.01.1999',
         gender: info?.gender || 'Erkak',
         account_type: accountType,
-        company_name: accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : undefined,
-        inn: accountType === 'company' ? (companyInn.trim() || '308123456') : undefined,
+        company_name: accountType === 'company' ? (companyName.trim() || undefined) : undefined,
+        inn: accountType === 'company' ? (companyInn.trim() || undefined) : undefined,
       });
 
       if (res.success && res.data) {
@@ -292,7 +292,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     if (!cleanPinfl || cleanPinfl.length !== 14) {
       setPinflInput('31201991234567');
       if (!fullNameInput.trim()) {
-        setFullNameInput(accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : 'Yusuf Usmonov');
+        setFullNameInput(accountType === 'company' ? (companyName.trim() || 'Tashkilot') : 'Yusuf Usmonov');
       }
     }
     await handleApproveAndLogin();
@@ -307,7 +307,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
       const info = parsePINFL(activePinfl);
       const effectiveFullName =
         fullNameInput.trim() ||
-        (accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : 'Yusuf Usmonov');
+        (accountType === 'company' ? (companyName.trim() || 'Tashkilot') : 'Yusuf Usmonov');
 
       const res = await api.oneIDCallback({
         code: 'one_code-demo-qr-' + Date.now(),
@@ -318,8 +318,8 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
         birth_date: info?.birthDate || '12.01.1999',
         gender: info?.gender || 'Erkak',
         account_type: accountType,
-        company_name: accountType === 'company' ? (companyName.trim() || 'Murad Buildings MCHJ') : undefined,
-        inn: accountType === 'company' ? (companyInn.trim() || '308123456') : undefined,
+        company_name: accountType === 'company' ? (companyName.trim() || undefined) : undefined,
+        inn: accountType === 'company' ? (companyInn.trim() || undefined) : undefined,
       });
       if (res.success && res.data) {
         setQrStatus('approved');
@@ -557,7 +557,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                         type="text"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Masalan: Murad Buildings MCHJ"
+                        placeholder="Korxona yoki tashkilot nomini kiriting"
                         className="w-full px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
                       />
                     </div>
@@ -570,7 +570,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                         maxLength={9}
                         value={companyInn}
                         onChange={(e) => setCompanyInn(e.target.value.replace(/\D/g, ''))}
-                        placeholder="308123456"
+                        placeholder="9 xonali STIR (masalan: 301234567)"
                         className="w-full px-3.5 py-2 text-xs sm:text-sm font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
                       />
                     </div>
