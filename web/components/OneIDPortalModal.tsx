@@ -71,16 +71,18 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
   const [companyName, setCompanyName] = useState('');
   const [companyInn, setCompanyInn] = useState('');
 
-  // Flow states: 'role_select' -> 'auth' -> 'consent'
-  const [step, setStep] = useState<'role_select' | 'auth' | 'consent'>('role_select');
+  // Flow states: 1. 'auth' -> 2. 'consent' -> 3. 'role_select'
+  const [step, setStep] = useState<'auth' | 'consent' | 'role_select'>('auth');
+  const [loggedInUser, setLoggedInUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reset to role_select whenever modal is opened
+  // 1-chi OneID orqali kiriladi (auth bosqichi)
   useEffect(() => {
     if (isOpen) {
-      setStep('role_select');
+      setStep('auth');
       setError(null);
+      setLoggedInUser(null);
     }
   }, [isOpen]);
 
@@ -163,13 +165,12 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
             const citizenInfo = res.data.citizen || res.data.user;
             setApprovedCitizen(citizenInfo);
             setAuthToken(res.data.token);
-            setCurrentUser(res.data.user);
+            setLoggedInUser(res.data.user);
             setTimeout(() => {
               if (isSubscribed) {
-                onSuccess(res.data.user);
-                onClose();
+                setStep('role_select');
               }
-            }, 1200);
+            }, 800);
           } else if (res.data.status === 'expired') {
             clearInterval(interval);
             setQrStatus('expired');
@@ -260,22 +261,19 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
       const res = await api.oneIDCallback({
         code,
         pinfl: activePinfl,
-        full_name: effectiveFullName,
+        full_name: fullNameInput.trim() || 'OneID Fuqarosi',
         email: `${activePinfl}@oneid.egov.uz`,
         phone: mobilePhone.trim() || '+998 (90) 123-45-67',
         location: info?.location || 'Toshkent shahri',
         birth_date: info?.birthDate || '12.01.1999',
         gender: info?.gender || 'Erkak',
-        account_type: accountType,
-        company_name: accountType === 'company' ? (companyName.trim() || undefined) : undefined,
-        inn: accountType === 'company' ? (companyInn.trim() || undefined) : undefined,
       });
 
       if (res.success && res.data) {
         setAuthToken(res.data.token);
-        setCurrentUser(res.data.user);
-        onSuccess(res.data.user);
-        onClose();
+        setLoggedInUser(res.data.user);
+        // 1-chi OneID autentifikatsiyasi tugadi -> 2-chi "Kim bo‘lib davom ettirasiz?" oynasi ochiladi
+        setStep('role_select');
       } else {
         setError(res.error || 'OneID orqali autentifikatsiyada xatolik yuz berdi');
       }
@@ -292,7 +290,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     if (!cleanPinfl || cleanPinfl.length !== 14) {
       setPinflInput('31201991234567');
       if (!fullNameInput.trim()) {
-        setFullNameInput(accountType === 'company' ? (companyName.trim() || 'Tashkilot') : 'Yusuf Usmonov');
+        setFullNameInput('Yusuf Usmonov');
       }
     }
     await handleApproveAndLogin();
@@ -305,32 +303,24 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     try {
       const activePinfl = cleanPinfl.length === 14 ? cleanPinfl : '31201991234567';
       const info = parsePINFL(activePinfl);
-      const effectiveFullName =
-        fullNameInput.trim() ||
-        (accountType === 'company' ? (companyName.trim() || 'Tashkilot') : 'Yusuf Usmonov');
-
       const res = await api.oneIDCallback({
         code: 'one_code-demo-qr-' + Date.now(),
         pinfl: activePinfl,
-        full_name: effectiveFullName,
+        full_name: fullNameInput.trim() || 'Yusuf Usmonov',
         phone: mobilePhone.trim() || '+998 (90) 123-45-67',
         location: info?.location || 'Toshkent shahri',
         birth_date: info?.birthDate || '12.01.1999',
         gender: info?.gender || 'Erkak',
-        account_type: accountType,
-        company_name: accountType === 'company' ? (companyName.trim() || undefined) : undefined,
-        inn: accountType === 'company' ? (companyInn.trim() || undefined) : undefined,
       });
       if (res.success && res.data) {
         setQrStatus('approved');
         const citizenInfo = res.data.citizen || res.data.user;
         setApprovedCitizen(citizenInfo);
         setAuthToken(res.data.token);
-        setCurrentUser(res.data.user);
+        setLoggedInUser(res.data.user);
         setTimeout(() => {
-          onSuccess(res.data.user);
-          onClose();
-        }, 1200);
+          setStep('role_select');
+        }, 800);
       } else {
         setError(res.error || 'OneID orqali autentifikatsiyada xatolik yuz berdi');
         setQrStatus('waiting');
@@ -338,6 +328,48 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     } catch (err: any) {
       setError(err.message || 'OneID serveri bilan ulanishda xatolik');
       setQrStatus('waiting');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tanlangan yo‘nalish (Oddiy shaxs / Yuridik shaxs) bo‘yicha profilni yangilab, tizimga kiritish
+  const handleFinalizeRole = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (accountType === 'company') {
+        if (!companyName.trim()) {
+          setError('Tashkilot yoki kompaniya nomini kiriting');
+          setLoading(false);
+          return;
+        }
+        if (companyInn.trim().length !== 9) {
+          setError('STIR (INN) aynan 9 ta raqamdan iborat bo‘lishi kerak');
+          setLoading(false);
+          return;
+        }
+      }
+
+      const updateRes = await api.updateProfile({
+        account_type: accountType,
+        company_name: accountType === 'company' ? companyName.trim() : '',
+        inn: accountType === 'company' ? companyInn.trim() : '',
+      });
+
+      const finalUser = updateRes.data?.user || {
+        ...(loggedInUser || {}),
+        account_type: accountType,
+        company_name: accountType === 'company' ? companyName.trim() : '',
+        inn: accountType === 'company' ? companyInn.trim() : '',
+        role: accountType === 'company' ? 'employer' : 'user',
+      };
+
+      setCurrentUser(finalUser);
+      onSuccess(finalUser);
+      onClose();
+    } catch (err: any) {
+      setError(err.message || 'Profilni saqlashda xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
@@ -422,8 +454,21 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                   Kim bo‘lib davom ettirasiz?
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                  OneID orqali kirishdan avval o‘zingizga mos hisob turini tanlang.
+                  OneID orqali muvaffaqiyatli autentifikatsiyadan o‘tdingiz! Platformada o‘zingizga mos hisob turini tanlang.
                 </p>
+              </div>
+
+              {/* Authenticated citizen banner */}
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-xs text-emerald-900 dark:text-emerald-200">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                  <span>OneID orqali tasdiqlangan fuqaro: <b>{loggedInUser?.name || fullNameInput || 'OneID Fuqarosi'}</b></span>
+                </div>
+                {(loggedInUser?.pinfl || cleanPinfl) && (
+                  <span className="font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                    JShShIR: {loggedInUser?.pinfl || cleanPinfl}
+                  </span>
+                )}
               </div>
 
               {/* Two selection cards */}
@@ -581,65 +626,27 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                 </div>
               )}
 
-              {/* Continue button */}
+              {/* Confirm & Proceed to Platform button */}
               <div className="pt-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (accountType === 'company') {
-                      if (!companyName.trim()) {
-                        setError('Tashkilot yoki kompaniya nomini kiriting');
-                        return;
-                      }
-                      if (companyInn.trim().length !== 9) {
-                        setError('STIR (INN) aynan 9 ta raqamdan iborat bo‘lishi kerak');
-                        return;
-                      }
-                    }
-                    setError(null);
-                    setStep('auth');
-                  }}
-                  className="w-full py-3 bg-[#0047BA] hover:bg-[#003B95] text-white text-sm font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2 active:scale-[0.99]"
+                  disabled={loading}
+                  onClick={handleFinalizeRole}
+                  className="w-full py-3 bg-[#0047BA] hover:bg-[#003B95] text-white text-sm font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-50"
                 >
-                  <span>OneID orqali tasdiqlashga o‘tish</span>
-                  <ArrowRight size={16} />
+                  {loading ? (
+                    <span>Saqlanmoqda...</span>
+                  ) : (
+                    <>
+                      <span>Tasdiqlash va platformaga o‘tish</span>
+                      <ArrowRight size={16} />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           ) : step === 'auth' ? (
             <div className="space-y-5">
-              {/* Selected Role Status Banner with Change Button */}
-              <div className="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 ${
-                    accountType === 'company' ? 'bg-indigo-600 shadow-sm' : 'bg-[#0047BA] shadow-sm'
-                  }`}>
-                    {accountType === 'company' ? <Building2 size={16} /> : <User size={16} />}
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Tanlangan maqom
-                    </div>
-                    <div className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
-                      <span>{accountType === 'company' ? `Yuridik shaxs: ${companyName || 'Kompaniya'}` : 'Oddiy shaxs (Jismoniy shaxs)'}</span>
-                      {accountType === 'company' && companyInn && (
-                        <span className="text-[10px] px-1.5 py-0.2 bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded font-mono font-bold">
-                          STIR: {companyInn}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setStep('role_select'); setError(null); }}
-                  className="px-2.5 py-1 text-[11px] font-bold text-[#0047BA] dark:text-blue-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition flex items-center gap-1 shadow-xs shrink-0"
-                >
-                  <RefreshCw size={11} />
-                  <span>O‘zgartirish</span>
-                </button>
-              </div>
-
               {/* Target Service Info */}
               <div className="p-3 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-200/80 dark:border-blue-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -1116,33 +1123,9 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
               {/* Verified Citizen Details Being Shared */}
               <div className="p-4 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5 text-xs">
                 <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Hisob maqomi:</span>
-                  <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    {accountType === 'company' ? (
-                      <>
-                        <Building2 size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
-                        <span>Yuridik shaxs ({companyName || 'Kompaniya'})</span>
-                      </>
-                    ) : (
-                      <>
-                        <User size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                        <span>Oddiy shaxs (Jismoniy shaxs)</span>
-                      </>
-                    )}
-                  </span>
-                </div>
-                {accountType === 'company' && companyInn && (
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Tashkilot STIR (INN):</span>
-                    <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                      {companyInn}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
                   <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdCitizen}</span>
                   <span className="font-extrabold text-slate-900 dark:text-white">
-                    {fullNameInput || (accountType === 'company' ? companyName : 'Fuqaro')}
+                    {fullNameInput || 'OneID Fuqarosi'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">

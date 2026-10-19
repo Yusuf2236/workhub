@@ -87,15 +87,18 @@ func UpdateProfile(c *gin.Context) {
 	// Pointer fields: a field omitted from the request keeps its stored value, so
 	// partial updates (e.g. saving only skills) never wipe the rest of the profile.
 	var payload struct {
-		Name      *string         `json:"name"`
-		Email     *string         `json:"email"`
-		Bio       *string         `json:"bio"`
-		Skills    *string         `json:"skills"`
-		Phone     *string         `json:"phone"`
-		Location  *string         `json:"location"`
-		Website   *string         `json:"website"`
-		AvatarURL *string         `json:"avatar_url"`
-		Settings  map[string]bool `json:"settings"`
+		Name        *string         `json:"name"`
+		Email       *string         `json:"email"`
+		Bio         *string         `json:"bio"`
+		Skills      *string         `json:"skills"`
+		Phone       *string         `json:"phone"`
+		Location    *string         `json:"location"`
+		Website     *string         `json:"website"`
+		AvatarURL   *string         `json:"avatar_url"`
+		AccountType *string         `json:"account_type"`
+		CompanyName *string         `json:"company_name"`
+		INN         *string         `json:"inn"`
+		Settings    map[string]bool `json:"settings"`
 	}
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
@@ -196,6 +199,19 @@ func UpdateProfile(c *gin.Context) {
 				return
 			}
 		}
+		if payload.AccountType != nil {
+			accType := str(payload.AccountType)
+			if accType == "" {
+				accType = "individual"
+			}
+			compName := str(payload.CompanyName)
+			innNum := str(payload.INN)
+			role := "user"
+			if accType == "company" {
+				role = "employer"
+			}
+			_ = userRepo.UpdateAccountType(userID.(string), accType, compName, innNum, role)
+		}
 	} else {
 		for key, u := range users {
 			if u.ID == userID.(string) {
@@ -210,6 +226,22 @@ func UpdateProfile(c *gin.Context) {
 					delete(users, key)
 					u.Email = trimmedEmail
 					key = trimmedEmail
+				}
+				if payload.AccountType != nil {
+					accType := str(payload.AccountType)
+					if accType == "" {
+						accType = "individual"
+					}
+					u.AccountType = accType
+					u.CompanyName = str(payload.CompanyName)
+					u.INN = str(payload.INN)
+					if u.Role != "admin" {
+						if accType == "company" {
+							u.Role = "employer"
+						} else {
+							u.Role = "user"
+						}
+					}
 				}
 				users[key] = u
 				break

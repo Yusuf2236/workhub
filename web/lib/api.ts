@@ -303,7 +303,7 @@ export const api = {
   },
 
   async updateProfile(payload: any) {
-    return request<{ profile: any }>('/profile', {
+    return request<{ profile: any; user?: any }>('/profile', {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
