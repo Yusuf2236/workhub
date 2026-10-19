@@ -15,6 +15,8 @@ import {
   ArrowRight,
   TrendingUp,
   ChevronRight,
+  MessageCircle,
+  Send,
 } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
 import { api } from '../lib/api';
@@ -64,8 +66,8 @@ const POPULAR_SEARCHES: Record<Language, string[]> = {
   en: ['Developer', 'Accountant', 'Teacher', 'Sales manager', 'Driver', 'Designer'],
 };
 
-const VACANCIES_PER_PAGE = 3;
-const COMMENTS_PER_PAGE = 2;
+const VACANCIES_PER_PAGE = 4;
+const COMMENTS_PER_PAGE = 8;
 const AUTO_REFRESH_MS = 60_000;
 
 const toCommentItem = (c: any): CommentItem => ({
@@ -228,6 +230,106 @@ export default function HomeFeedView({
   const commentsHasMoreRef = useRef(true);
   // Bumped whenever the stream is rebuilt so in-flight results for old filters are dropped
   const streamGenRef = useRef(0);
+
+  // Real-time inline comments state
+  const [expandedVacancyIds, setExpandedVacancyIds] = useState<Set<string>>(new Set());
+  const [vacancyCommentsMap, setVacancyCommentsMap] = useState<Record<string, any[]>>({});
+  const [loadingCommentsMap, setLoadingCommentsMap] = useState<Record<string, boolean>>({});
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [submittingCommentMap, setSubmittingCommentMap] = useState<Record<string, boolean>>({});
+  const [guestName, setGuestName] = useState<string>('');
+
+  const toggleVacancyComments = async (vacancyId: string) => {
+    setExpandedVacancyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(vacancyId)) {
+        next.delete(vacancyId);
+      } else {
+        next.add(vacancyId);
+      }
+      return next;
+    });
+
+    if (!vacancyCommentsMap[vacancyId]) {
+      setLoadingCommentsMap((prev) => ({ ...prev, [vacancyId]: true }));
+      try {
+        const res = await api.getVacancyComments(vacancyId);
+        if (res.success && res.data?.comments) {
+          setVacancyCommentsMap((prev) => ({ ...prev, [vacancyId]: res.data.comments }));
+        }
+      } catch (err) {
+        console.error('Failed to load vacancy comments', err);
+      } finally {
+        setLoadingCommentsMap((prev) => ({ ...prev, [vacancyId]: false }));
+      }
+    }
+  };
+
+  const handleAddVacancyComment = async (vacancyId: string, vacancyTitle: string) => {
+    const content = (commentDrafts[vacancyId] || '').trim();
+    if (!content) return;
+
+    const authorName = currentUser?.name || guestName.trim() || (lang === 'ru' ? 'Гость' : lang === 'en' ? 'Guest' : 'Mehmon');
+    const authorAvatar = currentUser?.avatar_url || '';
+
+    setSubmittingCommentMap((prev) => ({ ...prev, [vacancyId]: true }));
+    try {
+      const res = await api.createVacancyComment(vacancyId, {
+        content,
+        author_name: authorName,
+        author_avatar: authorAvatar,
+      });
+
+      if (res.success && res.data?.comment) {
+        const created = res.data.comment;
+
+        // 1. Update vacancy comments list
+        setVacancyCommentsMap((prev) => ({
+          ...prev,
+          [vacancyId]: [...(prev[vacancyId] || []), created],
+        }));
+
+        // 2. Clear draft
+        setCommentDrafts((prev) => ({ ...prev, [vacancyId]: '' }));
+
+        // 3. Increment comments_count in streamItems
+        setStreamItems((prev) =>
+          prev.map((item) => {
+            if (item.type === 'vacancy' && item.data.id === vacancyId) {
+              return {
+                ...item,
+                data: {
+                  ...item.data,
+                  comments_count: (item.data.comments_count || 0) + 1,
+                },
+              };
+            }
+            return item;
+          })
+        );
+
+        // 4. Prepend to streamItems as a discussion item so it immediately appears in real-time stream
+        const newDiscussion: StreamItem = {
+          streamId: `d-${created.id}`,
+          type: 'discussion',
+          data: {
+            id: created.id,
+            authorName: created.author_name || authorName,
+            authorAvatar: created.author_avatar || authorAvatar,
+            content: created.content,
+            createdAt: created.created_at,
+            vacancyId: vacancyId,
+            vacancyTitle: vacancyTitle,
+          },
+        };
+        setStreamItems((prev) => [newDiscussion, ...prev]);
+      }
+    } catch (err) {
+      console.error('Failed to post vacancy comment', err);
+    } finally {
+      setSubmittingCommentMap((prev) => ({ ...prev, [vacancyId]: false }));
+    }
+  };
 
   const formatRelativeTime = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -569,10 +671,44 @@ export default function HomeFeedView({
           </div>
         </div>
 
+        {/* Stream Filter: Live Comments Header Banner */}
+        {streamFilter === 'comments' && (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-200/60 dark:border-blue-800/60 flex items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                <MessageCircle size={20} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                    {lang === 'ru' ? 'Лента живых комментариев' : lang === 'en' ? 'Live Comments Stream' : 'Jonli Izohlar va Savollar Oqimi'}
+                  </h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-extrabold animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Real-time
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  {lang === 'ru'
+                    ? 'Актуальные вопросы и обсуждения по вакансиям в реальном времени'
+                    : lang === 'en'
+                    ? 'Real-time candidate questions and discussions on active vacancies'
+                    : 'Nomzodlar va ish beruvchilar o‘rtasidagi real vaqtdagi savol-javoblar'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           {displayedStream.map((item) => {
             if (item.type === 'vacancy') {
               const v = item.data;
+              const isCommentsOpen = expandedVacancyIds.has(v.id);
+              const commentsList = vacancyCommentsMap[v.id] || [];
+              const isLoadingThis = loadingCommentsMap[v.id];
+              const isSubmittingThis = submittingCommentMap[v.id];
+
               return (
                 <div
                   key={item.streamId}
@@ -640,22 +776,178 @@ export default function HomeFeedView({
                       <DollarSign size={14} className="shrink-0" />
                       <span className="truncate">{v.salary || t.salaryNegotiable}</span>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onApplyVacancy(v);
-                      }}
-                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold shadow-md shadow-blue-500/25 transition flex items-center gap-1.5 shrink-0"
-                    >
-                      <Briefcase size={13} />
-                      <span>{t.applyBtn}</span>
-                    </button>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleVacancyComments(v.id);
+                        }}
+                        className={`px-3 py-2 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 ${
+                          isCommentsOpen
+                            ? 'bg-blue-50 dark:bg-blue-950/80 border-blue-400 dark:border-blue-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                            : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                        }`}
+                        title={lang === 'ru' ? 'Обсуждение и вопросы' : lang === 'en' ? 'Discussion & questions' : 'Izohlar va savollar'}
+                      >
+                        <MessageCircle size={14} className={isCommentsOpen ? 'text-blue-600 fill-blue-100 dark:fill-blue-900' : 'text-blue-500'} />
+                        <span>{v.comments_count || 0}</span>
+                        <span className="hidden sm:inline font-medium text-[11px] text-slate-400">
+                          {lang === 'ru' ? 'коммент.' : lang === 'en' ? 'comments' : 'izoh'}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onApplyVacancy(v);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold shadow-md shadow-blue-500/25 transition flex items-center gap-1.5 shrink-0"
+                      >
+                        <Briefcase size={13} />
+                        <span>{t.applyBtn}</span>
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Expandable Real-time Comments Drawer */}
+                  {isCommentsOpen && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 -mx-5 -mb-5 p-5 rounded-b-3xl space-y-3 cursor-default animate-fadeIn"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MessageCircle size={15} className="text-blue-600" />
+                          <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                            {lang === 'ru' ? 'Обсуждения вакансии' : lang === 'en' ? 'Vacancy Discussions' : 'Vakansiya bo‘yicha izohlar'} ({commentsList.length})
+                          </h4>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                            Live
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleVacancyComments(v.id)}
+                          className="text-[11px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+                        >
+                          ✕ {lang === 'ru' ? 'Закрыть' : lang === 'en' ? 'Close' : 'Yopish'}
+                        </button>
+                      </div>
+
+                      {/* Comments List */}
+                      {isLoadingThis ? (
+                        <div className="py-6 flex items-center justify-center gap-2 text-xs font-bold text-slate-500">
+                          <RefreshCw size={14} className="animate-spin text-blue-600" />
+                          <span>{lang === 'ru' ? 'Загрузка комментариев...' : lang === 'en' ? 'Loading comments...' : 'Izohlar yuklanmoqda...'}</span>
+                        </div>
+                      ) : commentsList.length === 0 ? (
+                        <div className="py-5 text-center text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900/60 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4">
+                          {lang === 'ru'
+                            ? 'Пока никто не оставил комментариев. Задайте первый вопрос!'
+                            : lang === 'en'
+                            ? 'No comments yet. Be the first to ask a question!'
+                            : 'Hozircha hech kim fikr bildirmagan. Birinchi bo‘lib savol bering!'}
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+                          {commentsList.map((c: any) => (
+                            <div
+                              key={c.id}
+                              className="p-3 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/70 dark:border-slate-800 shadow-sm space-y-1.5"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {c.author_avatar ? (
+                                    <img
+                                      src={c.author_avatar}
+                                      alt={c.author_name}
+                                      className="w-6 h-6 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-lg bg-blue-600 text-white font-black text-[10px] flex items-center justify-center shrink-0">
+                                      {c.author_name ? c.author_name[0].toUpperCase() : 'M'}
+                                    </div>
+                                  )}
+                                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                    {c.author_name || 'Mehmon'}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                                  {formatRelativeTime(c.created_at)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-700 dark:text-slate-200 pl-8 leading-relaxed font-normal whitespace-pre-line">
+                                {c.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Inline Comment Composer Form */}
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleAddVacancyComment(v.id, v.title);
+                        }}
+                        className="space-y-2 pt-1"
+                      >
+                        {!currentUser && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-slate-500">
+                              {lang === 'ru' ? 'Ваше имя:' : lang === 'en' ? 'Your name:' : 'Ismingiz:'}
+                            </span>
+                            <input
+                              type="text"
+                              placeholder={lang === 'ru' ? 'Имя...' : lang === 'en' ? 'Name...' : 'Ismingiz...'}
+                              value={guestName}
+                              onChange={(e) => setGuestName(e.target.value)}
+                              className="px-2.5 py-1 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder={
+                              lang === 'ru'
+                                ? 'Напишите комментарий или вопрос...'
+                                : lang === 'en'
+                                ? 'Write a comment or question...'
+                                : 'Izoh yoki savol qoldiring...'
+                            }
+                            value={commentDrafts[v.id] || ''}
+                            onChange={(e) =>
+                              setCommentDrafts((prev) => ({ ...prev, [v.id]: e.target.value }))
+                            }
+                            className="flex-1 px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!(commentDrafts[v.id] || '').trim() || isSubmittingThis}
+                            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm shrink-0"
+                          >
+                            {isSubmittingThis ? (
+                              <RefreshCw size={12} className="animate-spin" />
+                            ) : (
+                              <Send size={12} />
+                            )}
+                            <span>{lang === 'ru' ? 'Отправить' : lang === 'en' ? 'Send' : 'Yuborish'}</span>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
                 </div>
               );
             }
 
             const comment = item.data;
+            const isReplying = comment.vacancyId ? expandedVacancyIds.has(comment.vacancyId) : false;
             return (
               <div
                 key={item.streamId}
@@ -688,13 +980,79 @@ export default function HomeFeedView({
                       title={comment.vacancyTitle}
                       className="max-w-[45%] truncate text-[11px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/70 px-2.5 py-0.5 rounded-md transition"
                     >
-                      {comment.vacancyTitle}
+                      💼 {comment.vacancyTitle}
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed whitespace-pre-line">
+                <p className="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed whitespace-pre-line pl-1">
                   {comment.content}
                 </p>
+
+                {comment.vacancyId && (
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => toggleVacancyComments(comment.vacancyId!)}
+                      className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition flex items-center gap-1.5"
+                    >
+                      <MessageCircle size={13} />
+                      <span>
+                        {isReplying
+                          ? (lang === 'ru' ? 'Скрыть обсуждение' : lang === 'en' ? 'Hide discussion' : 'Muhokamani yopish')
+                          : (lang === 'ru' ? 'Ответить / Смотреть обсуждение' : lang === 'en' ? 'Reply / View discussion' : 'Javob yozish / Muhokama')}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => openCommentVacancy(comment.vacancyId)}
+                      className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+                    >
+                      {lang === 'ru' ? 'Перейти к вакансии →' : lang === 'en' ? 'Open vacancy →' : 'Vakansiyaga o‘tish →'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Inline Reply / Discussion Box under Comment Card */}
+                {comment.vacancyId && isReplying && (
+                  <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 -mx-5 -mb-5 p-4 rounded-b-3xl space-y-3">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleAddVacancyComment(comment.vacancyId!, comment.vacancyTitle);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        placeholder={
+                          lang === 'ru'
+                            ? 'Напишите ваш ответ или мнение...'
+                            : lang === 'en'
+                            ? 'Write your reply or thoughts...'
+                            : 'Fikr yoki javobingizni yozing...'
+                        }
+                        value={commentDrafts[comment.vacancyId] || ''}
+                        onChange={(e) =>
+                          setCommentDrafts((prev) => ({ ...prev, [comment.vacancyId!]: e.target.value }))
+                        }
+                        className="flex-1 px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!(commentDrafts[comment.vacancyId] || '').trim() || submittingCommentMap[comment.vacancyId]}
+                        className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm shrink-0"
+                      >
+                        {submittingCommentMap[comment.vacancyId] ? (
+                          <RefreshCw size={12} className="animate-spin" />
+                        ) : (
+                          <Send size={12} />
+                        )}
+                        <span>{lang === 'ru' ? 'Отправить' : lang === 'en' ? 'Send' : 'Yuborish'}</span>
+                      </button>
+                    </form>
+                  </div>
+                )}
               </div>
             );
           })}

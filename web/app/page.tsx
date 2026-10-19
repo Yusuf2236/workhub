@@ -1179,6 +1179,9 @@ export default function WZonePortal() {
             user={user}
             onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
             onOpenProfile={() => setCurrentTab('profile')}
+            onNavigateToComments={() => {
+              setCurrentTab('feed');
+            }}
             lang={lang}
           />
         )}

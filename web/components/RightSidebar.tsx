@@ -4,20 +4,36 @@ import React from 'react';
 import { Send, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
 import RecommendationsWidget from './RecommendationsWidget';
+import LiveCommentsWidget from './LiveCommentsWidget';
 
 interface RightSidebarProps {
   vacanciesCount: number;
   user?: any;
   onSelectVacancy?: (vacancy: any) => void;
   onOpenProfile?: () => void;
+  onNavigateToComments?: () => void;
   lang?: Language;
 }
 
-export default function RightSidebar({ vacanciesCount, user, onSelectVacancy, onOpenProfile, lang = 'uz' }: RightSidebarProps) {
+export default function RightSidebar({
+  vacanciesCount,
+  user,
+  onSelectVacancy,
+  onOpenProfile,
+  onNavigateToComments,
+  lang = 'uz',
+}: RightSidebarProps) {
   const t = translations[lang] || translations.uz;
 
   return (
     <aside className="w-80 shrink-0 hidden xl:block sticky top-20 self-start space-y-4">
+      {/* Real-time Live Comments Widget */}
+      <LiveCommentsWidget
+        onSelectVacancy={onSelectVacancy}
+        onNavigateToComments={onNavigateToComments}
+        lang={lang}
+      />
+
       {user && onSelectVacancy && onOpenProfile && (
         <RecommendationsWidget user={user} onSelectVacancy={onSelectVacancy} onOpenProfile={onOpenProfile} lang={lang} />
       )}
