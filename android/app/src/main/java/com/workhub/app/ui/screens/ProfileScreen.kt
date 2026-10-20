@@ -1,6 +1,8 @@
 package com.workhub.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -16,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.workhub.app.data.repository.JobRepository
+import com.workhub.app.ui.theme.LocalThemeMode
+import com.workhub.app.ui.theme.ThemeMode
 
 @Composable
 fun ProfileScreen(
@@ -23,13 +27,13 @@ fun ProfileScreen(
     onLogout: () -> Unit = {}
 ) {
     val currentUser by repository.currentUser.collectAsState()
+    val themeModeState = LocalThemeMode.current
 
     var skills by remember {
         mutableStateOf(listOf("Go", "Kotlin", "Jetpack Compose", "PostgreSQL", "Docker", "REST API", "Git"))
     }
     var newSkillInput by remember { mutableStateOf("") }
-    var selectedLanguage by remember { mutableStateOf("O‘zbekcha (UZ)") }
-    var darkModeEnabled by remember { mutableStateOf(false) }
+    var selectedLanguage by remember { mutableStateOf("uz") }
     var notificationsEnabled by remember { mutableStateOf(true) }
 
     Scaffold(
@@ -252,41 +256,103 @@ fun ProfileScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
 
-                        // Language setting
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
+                        // Language setting with 3-button switcher
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text("Ilova tili", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                Text("O‘zbekcha, Ruscha, Inglizcha", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    text = when (selectedLanguage) {
+                                        "uz" -> "🇺🇿 O‘zbekcha"
+                                        "ru" -> "🇷🇺 Русский"
+                                        else -> "🇺🇸 English"
+                                    },
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
                             }
 
-                            Text(
-                                text = selectedLanguage,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf("uz" to "🇺🇿 O‘zbek", "ru" to "🇷🇺 Русский", "en" to "🇺🇸 English").forEach { (code, label) ->
+                                    val isSelected = selectedLanguage == code
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { selectedLanguage = code },
+                                        label = { Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
                         }
 
                         Divider()
 
-                        // Dark mode toggle
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text("Tungi rejim (Dark theme)", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                Text("Qorong‘u fonni yoqish", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        // 3-Mode Theme Selector (Yorug‘, Qorong‘i, Tizim)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Mavzu rejimi (Theme Mode)", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = when (themeModeState.value) {
+                                        ThemeMode.LIGHT -> "Yorug‘"
+                                        ThemeMode.DARK -> "Qorong‘i"
+                                        ThemeMode.SYSTEM -> "Avtomatik"
+                                    },
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
                             }
-                            Switch(
-                                checked = darkModeEnabled,
-                                onCheckedChange = { darkModeEnabled = it }
-                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                val modes = listOf(
+                                    Triple(ThemeMode.LIGHT, "☀️", "Yorug‘"),
+                                    Triple(ThemeMode.DARK, "🌙", "Qorong‘i"),
+                                    Triple(ThemeMode.SYSTEM, "💻", "Tizim")
+                                )
+
+                                modes.forEach { (mode, icon, title) ->
+                                    val isSelected = themeModeState.value == mode
+                                    Surface(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { themeModeState.value = mode }
+                                            .border(
+                                                width = if (isSelected) 2.dp else 1.dp,
+                                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ),
+                                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "$icon $title",
+                                                fontSize = 11.sp,
+                                                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         Divider()
@@ -298,7 +364,7 @@ fun ProfileScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text("Bildirishnomalar", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                Text("Push-bildirishnomalar", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                 Text("Yangi vakansiyalar va xabarlar haqida", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Switch(

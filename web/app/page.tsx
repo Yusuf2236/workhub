@@ -167,6 +167,9 @@ export default function WZonePortal() {
   const handleSelectTheme = useCallback((mode: ThemeMode) => {
     try {
       localStorage.setItem('workhub_theme', mode);
+      if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'WORKHUB_THEME_CHANGED', theme: mode }, '*');
+      }
     } catch (_) {}
     applyTheme(mode);
   }, [applyTheme]);
@@ -428,6 +431,12 @@ export default function WZonePortal() {
       }
       if (event.data?.type === 'WORKHUB_SET_TAB' && event.data?.tab) {
         setCurrentTab(event.data.tab);
+      }
+      if (event.data?.type === 'WORKHUB_CHANGE_THEME' && event.data?.theme) {
+        const incomingTheme = event.data.theme as ThemeMode;
+        if (incomingTheme === 'system' || incomingTheme === 'light' || incomingTheme === 'dark') {
+          handleSelectTheme(incomingTheme);
+        }
       }
     };
     window.addEventListener('message', handleOneIDMessage);
