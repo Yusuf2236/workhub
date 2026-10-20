@@ -423,7 +423,10 @@ export default function FullChatView({
             type: 'message',
             room_id: activeRoom,
             content,
-            sender_name: currentUser?.name || 'Foydalanuvchi',
+            sender_name:
+              (currentUser?.account_type === 'company' && currentUser?.company_name
+                ? currentUser.company_name
+                : currentUser?.name) || 'Foydalanuvchi',
             sender_avatar: currentUser?.avatar_url || '',
           })
         );
@@ -431,7 +434,10 @@ export default function FullChatView({
         const res = await api.sendChatMessage({
           room_id: activeRoom,
           content,
-          sender_name: currentUser?.name || 'Foydalanuvchi',
+          sender_name:
+            (currentUser?.account_type === 'company' && currentUser?.company_name
+              ? currentUser.company_name
+              : currentUser?.name) || 'Foydalanuvchi',
           sender_avatar: currentUser?.avatar_url || '',
         });
 
@@ -468,7 +474,10 @@ export default function FullChatView({
               type: 'message',
               room_id: activeRoom,
               content: `[Tizim bildirishnomasi]: Ariza holati o‘zgartirildi: «${statusText}».`,
-              sender_name: currentUser?.name || 'Ish beruvchi',
+              sender_name:
+                (currentUser?.account_type === 'company' && currentUser?.company_name
+                  ? currentUser.company_name
+                  : currentUser?.name) || 'Ish beruvchi',
             })
           );
         }
@@ -762,12 +771,23 @@ export default function FullChatView({
         <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-sm">
-              <ChatAvatar avatarUrl={currentUser.avatar_url} name={currentUser.name} />
+              <ChatAvatar
+                avatarUrl={currentUser.avatar_url}
+                name={
+                  currentUser.account_type === 'company' && currentUser.company_name
+                    ? currentUser.company_name
+                    : currentUser.name
+                }
+              />
             </div>
             {isSidebarExpanded && (
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">
-                  <span>{currentUser.name}</span>
+                  <span>
+                    {currentUser.account_type === 'company' && currentUser.company_name
+                      ? currentUser.company_name
+                      : currentUser.name}
+                  </span>
                   {currentUser.auth_provider === 'oneid' && (
                     <ShieldCheck size={13} className="text-blue-500 shrink-0" />
                   )}

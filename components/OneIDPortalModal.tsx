@@ -311,15 +311,20 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
         account_type: accountType,
         company_name: accountType === 'company' ? companyName.trim() : '',
         inn: accountType === 'company' ? companyInn.trim() : '',
+        name: accountType === 'company' ? companyName.trim() : undefined,
       });
 
       const finalUser = updateRes.data?.user || {
         ...(loggedInUser || {}),
+        name: accountType === 'company' ? companyName.trim() : (loggedInUser?.name || ''),
         account_type: accountType,
         company_name: accountType === 'company' ? companyName.trim() : '',
         inn: accountType === 'company' ? companyInn.trim() : '',
         role: accountType === 'company' ? 'employer' : 'user',
       };
+      if (accountType === 'company' && companyName.trim()) {
+        finalUser.name = companyName.trim();
+      }
 
       setCurrentUser(finalUser);
       onSuccess(finalUser);

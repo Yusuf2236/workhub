@@ -252,7 +252,7 @@ export default function Header({
                     )}
                   </div>
                   <span className="text-xs font-bold text-slate-900 dark:text-white max-w-[110px] truncate">
-                    {user.name}
+                    {user.account_type === 'company' && user.company_name ? user.company_name : user.name}
                   </span>
                   <ChevronDown size={14} className="text-slate-400 mr-1" />
                 </button>
@@ -260,9 +260,15 @@ export default function Header({
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-50 animate-fadeIn">
                     <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700">
-                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {user.account_type === 'company' && user.company_name ? user.company_name : user.name}
+                      </p>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
-                      {user.auth_provider && (
+                      {user.account_type === 'company' ? (
+                        <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                          {user.company_name ? `Yuridik: ${user.company_name}` : 'Yuridik shaxs'}
+                        </span>
+                      ) : user.auth_provider && (
                         <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                           {user.auth_provider === 'oneid' ? 'OneID Tasdiqlangan' : user.auth_provider}
                         </span>

@@ -170,7 +170,12 @@ export default function ChatModal({
       }
 
       const userId = currentUser?.id || 'guest';
-      const userName = currentUser?.name || guestName || 'Mehmon';
+      const userName =
+        (currentUser?.account_type === 'company' && currentUser?.company_name
+          ? currentUser.company_name
+          : currentUser?.name) ||
+        guestName ||
+        'Mehmon';
       const userAvatar = currentUser?.avatar_url || '';
       const token = getAuthToken();
 
@@ -279,7 +284,12 @@ export default function ChatModal({
     const text = inputMessage.trim();
     if (!text || isSending) return;
 
-    const senderName = currentUser?.name || guestName.trim() || 'WZone Mehmon';
+    const senderName =
+      (currentUser?.account_type === 'company' && currentUser?.company_name
+        ? currentUser.company_name
+        : currentUser?.name) ||
+      guestName.trim() ||
+      'WZone Mehmon';
     const senderAvatar = currentUser?.avatar_url || '';
 
     setInputMessage('');
