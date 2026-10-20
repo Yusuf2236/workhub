@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import Header from '../components/Header';
+import Header, { ThemeMode } from '../components/Header';
 import LeftSidebar, { NavTab } from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import VacancyCard from '../components/VacancyCard';
@@ -137,8 +137,86 @@ export default function WZonePortal() {
   };
   const [vacanciesRefreshed, setVacanciesRefreshed] = useState(false);
 
-  // Dark Mode
-  const [darkMode, setDarkMode] = useState(false);
+  // Theme Mode: system, light, dark
+  const [themeMode, setThemeMode] = useState<ThemeMode>('system');
+  const [resolvedDark, setResolvedDark] = useState(false);
+
+  // Apply theme and update document element + state
+  const applyTheme = useCallback((mode: ThemeMode) => {
+    let isDark = false;
+    if (mode === 'dark') {
+      isDark = true;
+    } else if (mode === 'light') {
+      isDark = false;
+    } else {
+      isDark = typeof window !== 'undefined' && !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+
+    setThemeMode(mode);
+    setResolvedDark(isDark);
+
+    if (typeof document !== 'undefined') {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, []);
+
+  const handleSelectTheme = useCallback((mode: ThemeMode) => {
+    try {
+      localStorage.setItem('workhub_theme', mode);
+    } catch (_) {}
+    applyTheme(mode);
+  }, [applyTheme]);
+
+  const toggleDarkMode = useCallback(() => {
+    const nextMode: ThemeMode = resolvedDark ? 'light' : 'dark';
+    handleSelectTheme(nextMode);
+  }, [resolvedDark, handleSelectTheme]);
+
+  // Initialize theme and attach media query change listener for system adaptive mode
+  useEffect(() => {
+    let saved: ThemeMode = 'system';
+    try {
+      const stored = localStorage.getItem('workhub_theme');
+      if (stored === 'light' || stored === 'dark' || stored === 'system') {
+        saved = stored;
+      }
+    } catch (_) {}
+
+    applyTheme(saved);
+
+    const mediaQuery = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    const handleChange = () => {
+      let currentSaved: string | null = null;
+      try {
+        currentSaved = localStorage.getItem('workhub_theme');
+      } catch (_) {}
+      if (!currentSaved || currentSaved === 'system') {
+        applyTheme('system');
+      }
+    };
+
+    if (mediaQuery) {
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleChange);
+      } else if ((mediaQuery as any).addListener) {
+        (mediaQuery as any).addListener(handleChange);
+      }
+    }
+
+    return () => {
+      if (mediaQuery) {
+        if (mediaQuery.removeEventListener) {
+          mediaQuery.removeEventListener('change', handleChange);
+        } else if ((mediaQuery as any).removeListener) {
+          (mediaQuery as any).removeListener(handleChange);
+        }
+      }
+    };
+  }, [applyTheme]);
 
   // Real-time search debounce (250ms)
   useEffect(() => {
@@ -162,26 +240,6 @@ export default function WZonePortal() {
           setSavedIds(JSON.parse(saved));
         } catch {}
       }
-
-      // Restore theme (dark / light mode) with localStorage persistence
-      try {
-        const savedTheme = localStorage.getItem('workhub_theme');
-        if (savedTheme) {
-          const isDark = savedTheme === 'dark';
-          setDarkMode(isDark);
-          if (isDark) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          setDarkMode(true);
-          document.documentElement.classList.add('dark');
-        } else {
-          setDarkMode(false);
-          document.documentElement.classList.remove('dark');
-        }
-      } catch (_) {}
 
       // Check local cached user first for instant UI response
       const cachedUser = getCurrentUser();
@@ -403,21 +461,6 @@ export default function WZonePortal() {
     } catch (_) {}
   };
 
-  const toggleDarkMode = () => {
-    const nextMode = !darkMode;
-    setDarkMode(nextMode);
-    if (nextMode) {
-      document.documentElement.classList.add('dark');
-      try {
-        localStorage.setItem('workhub_theme', 'dark');
-      } catch (_) {}
-    } else {
-      document.documentElement.classList.remove('dark');
-      try {
-        localStorage.setItem('workhub_theme', 'light');
-      } catch (_) {}
-    }
-  };
 
   // Fetch Vacancies from Backend (PostgreSQL + Redis) with Pagination
   const fetchVacancies = useCallback(async () => {
@@ -795,7 +838,10 @@ export default function WZonePortal() {
             setCurrentTab('vacancies');
           }
         }}
-        darkMode={darkMode}
+        darkMode={resolvedDark}
+        resolvedDark={resolvedDark}
+        themeMode={themeMode}
+        onSelectTheme={handleSelectTheme}
         onToggleDarkMode={toggleDarkMode}
         onUserLogout={() => setUser(null)}
         lang={lang}
@@ -935,19 +981,10 @@ export default function WZonePortal() {
                   localStorage.setItem('workhub_lang', newLang);
                 } catch (_) {}
               }}
-              darkMode={darkMode}
-              onToggleDarkMode={() => {
-                const next = !darkMode;
-                setDarkMode(next);
-                try {
-                  localStorage.setItem('workhub_theme', next ? 'dark' : 'light');
-                } catch (_) {}
-                if (next) {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                }
-              }}
+              darkMode={resolvedDark}
+              themeMode={themeMode}
+              onSelectTheme={handleSelectTheme}
+              onToggleDarkMode={toggleDarkMode}
               onOpenCreateResume={() => setCreateResumeModalOpen(true)}
               resumes={resumes}
               onRefreshResumes={fetchResumes}

@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Plus, Bell, Sun, Moon, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe, Lock, ShieldCheck, Check } from 'lucide-react';
+import { Search, Plus, Bell, Sun, Moon, Laptop, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe, Lock, ShieldCheck, Check } from 'lucide-react';
 import { api } from '../lib/api';
 import { Language, translations } from '../lib/translations';
 import FlagIcon from './FlagIcon';
+
+export type ThemeMode = 'system' | 'light' | 'dark';
 
 interface HeaderProps {
   user: any;
@@ -17,8 +19,11 @@ interface HeaderProps {
   searchQuery: string;
   showSearch?: boolean;
   onSearchChange: (q: string) => void;
-  darkMode: boolean;
-  onToggleDarkMode: () => void;
+  darkMode?: boolean;
+  onToggleDarkMode?: () => void;
+  themeMode?: ThemeMode;
+  resolvedDark?: boolean;
+  onSelectTheme?: (mode: ThemeMode) => void;
   onUserLogout: () => void;
   lang: Language;
   onSelectLang: (lang: Language) => void;
@@ -34,8 +39,11 @@ export default function Header({
   searchQuery,
   showSearch = true,
   onSearchChange,
-  darkMode,
+  darkMode = false,
   onToggleDarkMode,
+  themeMode = 'system',
+  resolvedDark,
+  onSelectTheme,
   onUserLogout,
   lang,
   onSelectLang,
@@ -43,6 +51,9 @@ export default function Header({
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+
+  const isCurrentDark = resolvedDark !== undefined ? resolvedDark : darkMode;
 
   const isOneIdUser = Boolean(user && user.auth_provider === 'oneid');
 
@@ -239,14 +250,96 @@ export default function Header({
             )}
           </button>
 
-          {/* Dark / Light Toggle (Hidden on mobile) */}
-          <button
-            onClick={onToggleDarkMode}
-            title="Mavzuni almashtirish"
-            className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition hidden sm:flex"
-          >
-            {darkMode ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} />}
-          </button>
+          {/* Theme Mode Switcher (Visible on both mobile & desktop) */}
+          <div className="relative">
+            <button
+              onClick={() => setShowThemeMenu(!showThemeMenu)}
+              title="Mavzuni tanlash (Yorug‘ / Qorong‘i / Tizimga moslashish)"
+              className="px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100/90 sm:bg-slate-100/70 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 border border-slate-200/80 dark:border-slate-700/80 shadow-xs"
+            >
+              {isCurrentDark ? (
+                <Moon size={18} className="text-blue-500 dark:text-blue-400" />
+              ) : (
+                <Sun size={18} className="text-amber-500" />
+              )}
+              {themeMode === 'system' && (
+                <span className="hidden md:inline-block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Avto
+                </span>
+              )}
+              <ChevronDown size={12} className={`text-slate-400 transition-transform duration-200 ${showThemeMenu ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showThemeMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowThemeMenu(false)} />
+                <div className="absolute right-0 mt-2 w-52 bg-white/95 dark:bg-slate-850/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-1.5 z-50 animate-fadeIn">
+                  <div className="px-2.5 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 mb-1">
+                    Mavzuni tanlang
+                  </div>
+
+                  {/* Light */}
+                  <button
+                    onClick={() => {
+                      onSelectTheme ? onSelectTheme('light') : onToggleDarkMode?.();
+                      setShowThemeMenu(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition ${
+                      themeMode === 'light'
+                        ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Sun size={16} className="text-amber-500 shrink-0" />
+                      <span>{t.themeLight}</span>
+                    </div>
+                    {themeMode === 'light' && <Check size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                  </button>
+
+                  {/* Dark */}
+                  <button
+                    onClick={() => {
+                      onSelectTheme ? onSelectTheme('dark') : onToggleDarkMode?.();
+                      setShowThemeMenu(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition ${
+                      themeMode === 'dark'
+                        ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Moon size={16} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                      <span>{t.themeDark}</span>
+                    </div>
+                    {themeMode === 'dark' && <Check size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                  </button>
+
+                  {/* System (Auto adaptive) */}
+                  <button
+                    onClick={() => {
+                      onSelectTheme ? onSelectTheme('system') : onToggleDarkMode?.();
+                      setShowThemeMenu(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition ${
+                      themeMode === 'system'
+                        ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Laptop size={16} className="text-indigo-500 dark:text-indigo-400 shrink-0" />
+                      <div>
+                        <span>{t.themeSystem}</span>
+                      </div>
+                    </div>
+                    {themeMode === 'system' && <Check size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* User Profile or Login (Hidden on mobile - available in bottom nav) */}
           <div className="hidden sm:block">

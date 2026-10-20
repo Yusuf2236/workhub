@@ -22,7 +22,7 @@ export default function RootLayout({
                 try {
                   var saved = localStorage.getItem('workhub_theme');
                   var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  if (saved === 'dark' || (!saved && prefersDark)) {
+                  if (saved === 'dark' || ((!saved || saved === 'system') && prefersDark)) {
                     document.documentElement.classList.add('dark');
                   } else {
                     document.documentElement.classList.remove('dark');

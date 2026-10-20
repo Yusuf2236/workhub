@@ -342,6 +342,10 @@ export interface TranslationDictionary {
   profileThemeDesc: string;
   profileLightModeBtn: string;
   profileDarkModeBtn: string;
+  themeLight: string;
+  themeDark: string;
+  themeSystem: string;
+  themeSystemDesc: string;
   profileNotificationsTitle: string;
   profileNotifyJobsLabel: string;
   profileNotifyJobsDesc: string;
@@ -795,9 +799,13 @@ export const translations: Record<Language, TranslationDictionary> = {
     profileInterfaceLangLabel: 'Interfeys Tili:',
     profileInterfaceLangDesc: 'Platformaning barcha sahifalari tanlangan tilda ko‘rsatiladi',
     profileThemeLabel: 'Tizim Ko‘rinishi (Mavzu):',
-    profileThemeDesc: 'Kunduzgi (yorug‘) yoki tungi (qorong‘i) interfeysni tanlang',
+    profileThemeDesc: 'Kunduzgi (yorug‘), tungi (qorong‘i) yoki tizimga moslashuvchi rejimni tanlang',
     profileLightModeBtn: 'Kunduzgi rejimga o‘tish (Light Mode)',
     profileDarkModeBtn: 'Tungi rejimga o‘tish (Dark Mode)',
+    themeLight: 'Yorug‘',
+    themeDark: 'Qorong‘i',
+    themeSystem: 'Tizim (Avto)',
+    themeSystemDesc: 'Qurilmangiz sozlamasiga avtomatik moslashadi',
     profileNotificationsTitle: 'Bildirishnomalar va Ogohlantirishlar',
     profileNotifyJobsLabel: 'Yangi mos vakansiyalar haqida xabar',
     profileNotifyJobsDesc: 'Sizning ko‘nikmalaringizga mos ish e’lonlari chiqqanda push-bildirishnoma',
@@ -1250,9 +1258,13 @@ export const translations: Record<Language, TranslationDictionary> = {
     profileInterfaceLangLabel: 'Язык интерфейса:',
     profileInterfaceLangDesc: 'Все страницы платформы будут отображаться на выбранном языке',
     profileThemeLabel: 'Оформление (тема):',
-    profileThemeDesc: 'Выберите светлую или тёмную тему интерфейса',
+    profileThemeDesc: 'Выберите светлую, тёмную или адаптирующуюся под систему тему',
     profileLightModeBtn: 'Переключить на светлую тему (Light Mode)',
     profileDarkModeBtn: 'Переключить на тёмную тему (Dark Mode)',
+    themeLight: 'Светлая',
+    themeDark: 'Тёмная',
+    themeSystem: 'Системная (Авто)',
+    themeSystemDesc: 'Автоматически адаптируется под настройки устройства',
     profileNotificationsTitle: 'Уведомления и оповещения',
     profileNotifyJobsLabel: 'Уведомления о подходящих вакансиях',
     profileNotifyJobsDesc: 'Push-уведомления при появлении вакансий, соответствующих вашим навыкам',
@@ -1705,9 +1717,13 @@ export const translations: Record<Language, TranslationDictionary> = {
     profileInterfaceLangLabel: 'Interface Language:',
     profileInterfaceLangDesc: 'All platform pages will be presented in the selected language',
     profileThemeLabel: 'Theme Appearance:',
-    profileThemeDesc: 'Choose between Light and Dark interface theme',
+    profileThemeDesc: 'Choose Light, Dark, or System Adaptive theme',
     profileLightModeBtn: 'Switch to Light Mode',
     profileDarkModeBtn: 'Switch to Dark Mode',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    themeSystem: 'System (Auto)',
+    themeSystemDesc: 'Automatically adapts to device system settings',
     profileNotificationsTitle: 'Notifications & Alerts',
     profileNotifyJobsLabel: 'Matching job alerts',
     profileNotifyJobsDesc: 'Receive push notifications when vacancies matching your skills appear',

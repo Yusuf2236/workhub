@@ -21,6 +21,7 @@ import {
   Trash2,
   Moon,
   Sun,
+  Laptop,
   Bell,
   Lock,
   LogOut,
@@ -47,6 +48,8 @@ interface ProfileViewProps {
   onLanguageChange?: (lang: Language) => void;
   darkMode?: boolean;
   onToggleDarkMode?: () => void;
+  themeMode?: 'system' | 'light' | 'dark';
+  onSelectTheme?: (mode: 'system' | 'light' | 'dark') => void;
   onOpenCreateResume?: () => void;
   resumes?: any[];
   onRefreshResumes?: () => void;
@@ -121,6 +124,8 @@ export default function ProfileView({
   onLanguageChange,
   darkMode = false,
   onToggleDarkMode,
+  themeMode = 'system',
+  onSelectTheme,
   onOpenCreateResume,
   resumes = [],
   onRefreshResumes,
@@ -1235,33 +1240,56 @@ export default function ProfileView({
                 </div>
               </div>
 
-              {/* Theme Toggle */}
+              {/* Theme Selector (Light, Dark, System Adaptive) */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
                 <div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                  <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 block">
                     {t.profileThemeLabel}
                   </span>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    {t.profileThemeDesc}
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {themeMode === 'system' ? t.themeSystemDesc : t.profileThemeDesc}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={onToggleDarkMode}
-                  className="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-600 transition cursor-pointer"
-                >
-                  {darkMode ? (
-                    <>
-                      <Sun size={16} className="text-amber-400" />
-                      <span>{t.profileLightModeBtn}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon size={16} className="text-indigo-600" />
-                      <span>{t.profileDarkModeBtn}</span>
-                    </>
-                  )}
-                </button>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onSelectTheme ? onSelectTheme('light') : onToggleDarkMode?.()}
+                    className={`py-2 px-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      themeMode === 'light'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-200/80 dark:border-slate-600'
+                    }`}
+                  >
+                    <Sun size={15} className={themeMode === 'light' ? 'text-white' : 'text-amber-500'} />
+                    <span>{t.themeLight}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onSelectTheme ? onSelectTheme('dark') : onToggleDarkMode?.()}
+                    className={`py-2 px-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      themeMode === 'dark'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-200/80 dark:border-slate-600'
+                    }`}
+                  >
+                    <Moon size={15} className={themeMode === 'dark' ? 'text-white' : 'text-blue-400'} />
+                    <span>{t.themeDark}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onSelectTheme ? onSelectTheme('system') : onToggleDarkMode?.()}
+                    className={`py-2 px-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      themeMode === 'system'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-200/80 dark:border-slate-600'
+                    }`}
+                  >
+                    <Laptop size={15} className={themeMode === 'system' ? 'text-white' : 'text-slate-400'} />
+                    <span>{t.themeSystem}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
