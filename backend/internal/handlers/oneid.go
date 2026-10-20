@@ -472,10 +472,10 @@ func OneIDCallback(c *gin.Context) {
 			return
 		}
 
-	case oneIDDemoMode() || (strings.HasPrefix(code, "one_code-") && code != "one_code-forged") || (payload.PINFL != "" && code != "one_code-forged" && !isProduction):
+	case oneIDDemoMode() || (strings.HasPrefix(code, "one_code-") && code != "one_code-forged" && (!strings.HasPrefix(code, "one_code-demo-") || !isProduction)) || (payload.PINFL != "" && code != "one_code-forged" && !isProduction):
 		pinfl := normalizePINFL(payload.PINFL)
 		if pinfl == "" {
-			if strings.TrimSpace(payload.Code) != "" {
+			if !isProduction && strings.TrimSpace(payload.Code) != "" {
 				pinfl = "31201991234567"
 			} else {
 				response.Error(c, http.StatusBadRequest, "JShShIR (PINFL) aynan 14 ta raqamdan iborat bo‘lishi kerak")

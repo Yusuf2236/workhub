@@ -417,7 +417,6 @@ export interface TranslationDictionary {
   oneIdQrExpired: string;
   oneIdRefresh: string;
   oneIdWaitingQr: string;
-  oneIdDemoConfirm: string;
   oneIdEimzoActive: string;
   oneIdSignInEri: string;
   oneIdConfirmMobileId: string;
@@ -874,7 +873,6 @@ export const translations: Record<Language, TranslationDictionary> = {
     oneIdQrExpired: 'QR-kod muddati tugadi',
     oneIdRefresh: 'Qayta yangilash',
     oneIdWaitingQr: 'OneID ilovasidan skanerlash kutilmoqda...',
-    oneIdDemoConfirm: 'Demo: OneID orqali avtomatik tasdiqlash',
     oneIdEimzoActive: 'E-IMZO 3.42 moduli faol',
     oneIdSignInEri: 'ERI bilan imzolash va kirish',
     oneIdConfirmMobileId: 'Mobile-ID bilan tasdiqlash',
@@ -1330,7 +1328,6 @@ export const translations: Record<Language, TranslationDictionary> = {
     oneIdQrExpired: 'Срок действия QR-кода истек',
     oneIdRefresh: 'Обновить',
     oneIdWaitingQr: 'Ожидание сканирования из приложения OneID...',
-    oneIdDemoConfirm: 'Демо: Автоматическое подтверждение через OneID',
     oneIdEimzoActive: 'Модуль E-IMZO 3.42 активен',
     oneIdSignInEri: 'Подписать с ЭЦП и войти',
     oneIdConfirmMobileId: 'Подтвердить через Mobile-ID',
@@ -1786,7 +1783,6 @@ export const translations: Record<Language, TranslationDictionary> = {
     oneIdQrExpired: 'QR code expired',
     oneIdRefresh: 'Refresh',
     oneIdWaitingQr: 'Waiting for scan from OneID mobile app...',
-    oneIdDemoConfirm: 'Demo: Automatic confirmation via OneID',
     oneIdEimzoActive: 'E-IMZO 3.42 module active',
     oneIdSignInEri: 'Sign with EDS & Enter',
     oneIdConfirmMobileId: 'Confirm with Mobile-ID',
