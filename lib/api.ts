@@ -3,6 +3,14 @@ const API_BASE =
     ? (process.env.NEXT_PUBLIC_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/api/v1' : '/api/v1'))
     : (process.env.INTERNAL_API_URL || 'http://localhost:8080/api/v1');
 
+// Uploaded files are served by the backend; locally it runs on its own port
+export function resolveUploadUrl(path?: string): string {
+  if (!path) return '';
+  if (!path.startsWith('/uploads/') || typeof window === 'undefined') return path;
+  const local = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  return `${local ? 'http://localhost:8080' : ''}${path}`;
+}
+
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('workhub_token');
@@ -96,6 +104,28 @@ export const api = {
     return request<{ vacancy: any }>(`/vacancies/${id}`);
   },
 
+  async getVacanciesByIds(ids: string[]) {
+    if (ids.length === 0) return { success: true, data: { vacancies: [] as any[] } };
+    return request<{ vacancies: any[] }>(`/vacancies?ids=${encodeURIComponent(ids.slice(0, 100).join(','))}`);
+  },
+
+  async getMyVacancies() {
+    return request<{ vacancies: any[] }>('/vacancies/mine');
+  },
+
+  async updateVacancy(id: string, payload: Record<string, any>) {
+    return request<{ vacancy: any }>(`/vacancies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteVacancy(id: string) {
+    return request<{ deleted: boolean; id: string }>(`/vacancies/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
   async getVacancyComments(vacancyId: string) {
     return request<{ vacancy_id: string; comments: any[]; total: number }>(`/vacancies/${vacancyId}/comments`);
   },
@@ -162,7 +192,7 @@ export const api = {
   },
 
   async getOneIDLoginUrl() {
-    return request<{ auth_url: string; provider: string; state: string; is_live_configured: boolean; demo_mode: boolean }>('/auth/oneid/login');
+    return request<{ auth_url: string; provider: string; state: string; is_live_configured: boolean; demo_mode: boolean; qr_enabled?: boolean }>('/auth/oneid/login');
   },
 
   async oneIDCallback(payload: {
@@ -176,6 +206,9 @@ export const api = {
     birth_date?: string;
     gender?: string;
     code?: string;
+    account_type?: string;
+    company_name?: string;
+    inn?: string;
   }) {
     return request<{
       user: any;
@@ -188,6 +221,9 @@ export const api = {
       gender?: string;
       location?: string;
       phone?: string;
+      account_type?: string;
+      company_name?: string;
+      inn?: string;
     }>('/auth/oneid/callback', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -227,13 +263,47 @@ export const api = {
     return request<{ user: any }>('/auth/me');
   },
 
+  // Signs out on the server (all devices) and clears the local session
+  async logout() {
+    try {
+      if (getAuthToken()) await request('/auth/logout', { method: 'POST' });
+    } finally {
+      removeAuthToken();
+    }
+  },
+
+  async forgotPassword(email: string) {
+    return request<{ message: string }>('/auth/password/forgot', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  async resetPassword(token: string, password: string) {
+    return request<{ password_reset: boolean }>('/auth/password/reset', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    });
+  },
+
+  async verifyEmail(token: string) {
+    return request<{ email_verified: boolean }>('/auth/email/verify', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  async resendVerification() {
+    return request<{ sent?: boolean; email_verified?: boolean }>('/auth/email/resend', { method: 'POST' });
+  },
+
   // Profile
   async getProfile() {
     return request<{ profile: any }>('/profile');
   },
 
   async updateProfile(payload: any) {
-    return request<{ profile: any }>('/profile', {
+    return request<{ profile: any; user?: any }>('/profile', {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
@@ -242,6 +312,18 @@ export const api = {
   // Applications
   async getApplications() {
     return request<{ applications: any[] }>('/applications');
+  },
+
+  // Applications sent to vacancies the current user posted
+  async getReceivedApplications() {
+    return request<{ applications: any[] }>('/applications/received');
+  },
+
+  async updateApplicationStatus(id: string, status: string) {
+    return request<{ application: any }>(`/applications/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
   },
 
   // Resumes
@@ -273,10 +355,13 @@ export const api = {
     });
   },
 
-  async uploadResumeFile(file: File) {
+  // With resumeId the file replaces that resume's attachment; otherwise a new resume is created
+  async uploadResumeFile(file: File, title?: string, resumeId?: string) {
     const token = getAuthToken();
     const formData = new FormData();
     formData.append('file', file);
+    if (title) formData.append('title', title);
+    if (resumeId) formData.append('resume_id', resumeId);
 
     const headers: Record<string, string> = {};
     if (token) {
@@ -308,7 +393,7 @@ export const api = {
 
   // Recommendations
   async getRecommendations() {
-    return request<{ recommendations: any[] }>('/vacancies/recommendations');
+    return request<{ recommendations: any[]; needs_skills?: boolean }>('/vacancies/recommendations');
   },
 
   // Avatar Upload

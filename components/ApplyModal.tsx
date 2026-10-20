@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Send, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { Language, translations } from '../lib/translations';
@@ -10,12 +10,21 @@ interface ApplyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  /** The applicant's own resumes to attach */
+  resumes?: any[];
   lang?: Language;
 }
 
-export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess, lang = 'uz' }: ApplyModalProps) {
+export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess, resumes = [], lang = 'uz' }: ApplyModalProps) {
   const t = translations[lang] || translations.uz;
   const [coverLetter, setCoverLetter] = useState('');
+  const [resumeId, setResumeId] = useState('');
+
+  // Preselect the newest resume each time the modal opens
+  useEffect(() => {
+    if (isOpen) setResumeId(resumes[0]?.id || '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -29,7 +38,8 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess, lang =
 
     try {
       const res = await api.applyToVacancy(vacancy.id, {
-        cover_letter: coverLetter,
+        cover_letter: coverLetter.trim(),
+        resume_id: resumeId || undefined,
       });
 
       if (res.success) {
@@ -41,10 +51,10 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess, lang =
           onClose();
         }, 1500);
       } else {
-        setError(res.error || 'Arizani yuborishda xatolik yuz berdi');
+        setError(res.error || t.applyError);
       }
     } catch (err: any) {
-      setError(err.message || 'Server bilan aloqa uzildi');
+      setError(err.message || t.networkError);
     } finally {
       setLoading(false);
     }
@@ -96,12 +106,22 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess, lang =
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  {lang === 'ru' ? 'Сопроводительное письмо (Cover letter)' : lang === 'en' ? 'Cover Letter / Message' : 'Kuzatuv xati / Izoh (Cover letter)'}
+                  {lang === 'ru'
+                    ? 'Сопроводительное письмо / Комментарий (необязательно)'
+                    : lang === 'en'
+                    ? 'Cover Letter / Note (optional)'
+                    : 'Kuzatuv xati / Izoh (ixtiyoriy)'}
                 </label>
                 <textarea
                   rows={4}
-                  required
-                  placeholder={lang === 'ru' ? 'Почему именно вы подходите на эту роль? Кратко расскажите об опыте и навыках...' : lang === 'en' ? 'Why are you a great fit for this position? Briefly describe your experience...' : 'Nima uchun aynan siz ushbu lavozimga mos ekansiz? Tajribangiz va yutuqlaringiz haqida qisqacha yozing...'}
+                  maxLength={5000}
+                  placeholder={
+                    lang === 'ru'
+                      ? 'Почему именно вы подходите на эту роль? Кратко расскажите об опыте (необязательно)...'
+                      : lang === 'en'
+                      ? 'Why are you a great fit for this position? (optional)...'
+                      : 'Nima uchun aynan siz ushbu lavozimga mos ekansiz? Tajribangiz va yutuqlaringiz haqida qisqacha yozing (ixtiyoriy)...'
+                  }
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
                   className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -110,14 +130,21 @@ export default function ApplyModal({ vacancy, isOpen, onClose, onSuccess, lang =
 
               <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800 flex items-center gap-3">
                 <FileText size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                <div className="text-xs">
-                  <p className="font-semibold text-slate-800 dark:text-slate-200">
-                    {lang === 'ru' ? 'Ваш профиль и резюме на WZone' : lang === 'en' ? 'Your WZone Talent Profile & Resume' : 'Sizning WZone rezyume profilingiz'}
-                  </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {lang === 'ru' ? 'Будет автоматически прикреплено к заявке' : lang === 'en' ? 'Will be automatically attached to this application' : 'Arizaga avtomatik ravishda biriktiriladi'}
-                  </p>
-                </div>
+                <label className="text-xs flex-1 space-y-1">
+                  <span className="block font-semibold text-slate-800 dark:text-slate-200">{t.applyResumeLabel}</span>
+                  <select
+                    value={resumeId}
+                    onChange={(e) => setResumeId(e.target.value)}
+                    className="w-full p-2 text-xs rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {resumes.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.title}
+                      </option>
+                    ))}
+                    <option value="">{t.applyWithoutResume}</option>
+                  </select>
+                </label>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">

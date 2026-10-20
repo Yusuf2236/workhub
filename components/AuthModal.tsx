@@ -43,9 +43,10 @@ interface AuthModalProps {
   onClose: () => void;
   onSuccess: (user: any) => void;
   lang?: Language;
+  authContext?: 'default' | 'vacancy';
 }
 
-export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz', authContext = 'default' }: AuthModalProps) {
   const t = translations[lang] || translations.uz;
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
@@ -55,6 +56,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
   const [error, setError] = useState<string | null>(null);
   const [showOneIDPortal, setShowOneIDPortal] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  // "Forgot password" view: email form, then a confirmation message
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   useEffect(() => {
     const handleOneIDMessage = async (event: MessageEvent) => {
@@ -374,6 +378,19 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
 
 
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await api.forgotPassword(email.trim());
+      if (res.success) setForgotSent(true);
+      else setError(res.error || t.networkError);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -407,12 +424,20 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
         <div className="p-6">
           <div className="text-center mb-6">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-              {tab === 'login'
+              {authContext === 'vacancy'
+                ? (lang === 'ru' ? 'Вход для работодателей' : lang === 'en' ? 'Employer Sign In' : 'Ish beruvchi sifatida kirish')
+                : tab === 'login'
                 ? (lang === 'ru' ? 'Вход в систему' : lang === 'en' ? 'Sign In to Account' : 'Tizimga kirish')
                 : (lang === 'ru' ? 'Регистрация' : lang === 'en' ? 'Create Account' : 'Ro‘yxatdan o‘tish')}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {lang === 'ru'
+              {authContext === 'vacancy'
+                ? (lang === 'ru'
+                  ? 'Для размещения вакансий подтвердите организацию или статус через единую систему OneID'
+                  : lang === 'en'
+                  ? 'To publish vacancies, authenticate via the sovereign OneID portal'
+                  : 'Vakansiya e’lon qilish uchun yagona identifikatsiya tizimi (OneID) orqali kiring')
+                : lang === 'ru'
                 ? 'Войдите в аккаунт, чтобы получить доступ ко всем возможностям WZone'
                 : lang === 'en'
                 ? 'Sign in to access all features of WZone'
@@ -427,6 +452,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
             </div>
           )}
 
+          {authContext === 'vacancy' && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl flex items-start gap-2.5 text-xs text-blue-950 dark:text-blue-100">
+              <ShieldCheck size={18} className="text-[#0047BA] dark:text-blue-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="font-bold">Rasmiy ish beruvchi identifikatsiyasi (OneID)</p>
+                <p className="text-blue-800/80 dark:text-blue-300/80 text-[11px] leading-relaxed">
+                  Soxta e’lonlarning oldini olish va nomzodlar xavfsizligini ta’minlash maqsadida vakansiya berish faqat davlat OneID tizimi orqali amalga oshiriladi. Google orqali kirish vakansiya berish uchun taqiqlangan.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Social / SSO Auth Buttons */}
           <div className="space-y-2.5 mb-6">
             {/* OneID SSO Button */}
@@ -434,7 +471,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
               type="button"
               onClick={() => setShowOneIDPortal(true)}
               disabled={loading}
-              className="w-full flex items-center justify-between gap-3 py-2.5 px-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-gradient-to-r from-blue-50 via-indigo-50 to-sky-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-sky-950/20 hover:border-blue-400 dark:hover:border-blue-700 text-blue-950 dark:text-blue-100 font-semibold text-sm transition shadow-sm group active:scale-[0.99]"
+              className={`w-full flex items-center justify-between gap-3 py-2.5 px-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-gradient-to-r from-blue-50 via-indigo-50 to-sky-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-sky-950/20 hover:border-blue-400 dark:hover:border-blue-700 text-blue-950 dark:text-blue-100 font-semibold text-sm transition shadow-sm group active:scale-[0.99] ${
+                authContext === 'vacancy' ? 'ring-2 ring-blue-500/30 shadow-md' : ''
+              }`}
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#0047BA] text-white flex items-center justify-center text-xs font-black shadow group-hover:scale-105 transition">
@@ -455,20 +494,22 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
               <ShieldCheck size={18} className="text-[#0047BA] dark:text-blue-400 shrink-0" />
             </button>
 
-            {/* Real Google SSO Button */}
-            <button
-              type="button"
-              onClick={handleRealGoogleSignIn}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-semibold text-sm transition shadow-sm hover:shadow active:scale-[0.99]"
-            >
-              <GoogleIcon />
-              <span>
-                {googleLoading
-                  ? (lang === 'ru' ? 'Проверка аккаунта Google...' : lang === 'en' ? 'Verifying Google Account...' : 'Google hisobi tasdiqlanmoqda...')
-                  : (lang === 'ru' ? 'Продолжить с Google' : lang === 'en' ? 'Continue with Google' : 'Google orqali davom etish')}
-              </span>
-            </button>
+            {/* Real Google SSO Button - Only shown when NOT posting a vacancy */}
+            {authContext !== 'vacancy' && (
+              <button
+                type="button"
+                onClick={handleRealGoogleSignIn}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-semibold text-sm transition shadow-sm hover:shadow active:scale-[0.99]"
+              >
+                <GoogleIcon />
+                <span>
+                  {googleLoading
+                    ? (lang === 'ru' ? 'Проверка аккаунта Google...' : lang === 'en' ? 'Verifying Google Account...' : 'Google hisobi tasdiqlanmoqda...')
+                    : (lang === 'ru' ? 'Продолжить с Google' : lang === 'en' ? 'Continue with Google' : 'Google orqali davom etish')}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* Divider */}
@@ -506,7 +547,51 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
             </button>
           </div>
 
-          {/* Form */}
+          {/* Forgot password */}
+          {forgotMode ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">{t.forgotPasswordTitle}</h4>
+              {forgotSent ? (
+                <p className="text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl p-3">
+                  {t.resetLinkSent}
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t.forgotPasswordHint}</p>
+                  {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                    <input
+                      type="email"
+                      required
+                      placeholder="pochta@misol.uz"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl shadow-lg shadow-blue-500/25 transition disabled:opacity-50"
+                  >
+                    {loading ? '...' : t.sendResetLink}
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotMode(false);
+                  setForgotSent(false);
+                  setError(null);
+                }}
+                className="w-full text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {t.backToLogin}
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleStandardAuth} className="space-y-4">
             {tab === 'register' && (
               <div>
@@ -559,6 +644,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              {tab === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotMode(true);
+                    setError(null);
+                  }}
+                  className="mt-1.5 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {t.forgotPasswordLink}
+                </button>
+              )}
             </div>
 
             <button
@@ -573,6 +670,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz' }: A
                 : (lang === 'ru' ? 'Создать аккаунт' : lang === 'en' ? 'Create Account' : 'Hisob yaratish')}
             </button>
           </form>
+          )}
         </div>
       </div>
 

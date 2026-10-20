@@ -13,6 +13,7 @@ import {
   MapPin,
   Phone,
   Briefcase,
+  Building2,
   Globe,
   AlertCircle,
   FileText,
@@ -31,6 +32,9 @@ import {
   Zap,
   Clock,
   ExternalLink,
+  X,
+  RefreshCw,
+  ArrowRight,
 } from 'lucide-react';
 import { api, getCurrentUser, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
@@ -162,6 +166,75 @@ export default function ProfileView({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Role / Account Type switch modal state
+  const [showRoleSwitchModal, setShowRoleSwitchModal] = useState(false);
+  const [switchAccountType, setSwitchAccountType] = useState<'individual' | 'company'>(
+    user?.account_type === 'company' ? 'company' : 'individual'
+  );
+  const [switchCompanyName, setSwitchCompanyName] = useState(user?.company_name || '');
+  const [switchInn, setSwitchInn] = useState(user?.inn || '');
+  const [switchLoading, setSwitchLoading] = useState(false);
+  const [switchError, setSwitchError] = useState<string | null>(null);
+  const [switchSuccess, setSwitchSuccess] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setSwitchAccountType(user.account_type === 'company' ? 'company' : 'individual');
+      setSwitchCompanyName(user.company_name || '');
+      setSwitchInn(user.inn || '');
+    }
+  }, [user?.account_type, user?.company_name, user?.inn]);
+
+  const handleSwitchAccountType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSwitchLoading(true);
+    setSwitchError(null);
+
+    if (switchAccountType === 'company') {
+      if (!switchCompanyName.trim()) {
+        setSwitchError('Tashkilot yoki kompaniya nomini kiriting');
+        setSwitchLoading(false);
+        return;
+      }
+      if (switchInn.trim().length !== 9) {
+        setSwitchError('STIR (INN) aynan 9 ta raqamdan iborat bo‘lishi kerak');
+        setSwitchLoading(false);
+        return;
+      }
+    }
+
+    try {
+      const res = await api.updateProfile({
+        account_type: switchAccountType,
+        company_name: switchAccountType === 'company' ? switchCompanyName.trim() : '',
+        inn: switchAccountType === 'company' ? switchInn.trim() : '',
+      });
+
+      if (res.success) {
+        const updated = (res.data as any)?.user || {
+          ...user,
+          account_type: switchAccountType,
+          company_name: switchAccountType === 'company' ? switchCompanyName.trim() : '',
+          inn: switchAccountType === 'company' ? switchInn.trim() : '',
+          role: switchAccountType === 'company' ? 'employer' : 'user',
+        };
+        setCurrentUser(updated);
+        onUserUpdated(updated);
+        setSwitchSuccess(true);
+        setTimeout(() => {
+          setSwitchSuccess(false);
+          setShowRoleSwitchModal(false);
+        }, 800);
+      } else {
+        setSwitchError(res.error || 'Hisob turini almashtirishda xatolik yuz berdi');
+      }
+    } catch (err: any) {
+      setSwitchError(err.message || 'Server xatosi');
+    } finally {
+      setSwitchLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user?.name) setName(user.name);
     if (user?.email) setEmail(user.email);
@@ -180,18 +253,23 @@ export default function ProfileView({
           if (p.website) setWebsite(p.website);
           if (p.avatar_url) setAvatarUrl(p.avatar_url);
 
-          if (p.skills) {
-            const list = p.skills
+          setSkillsList(
+            (p.skills || '')
               .split(',')
               .map((s: string) => s.trim())
-              .filter(Boolean);
-            setSkillsList(list);
-          } else {
-            // Default skills if none set
-            setSkillsList(['Go', 'Next.js', 'PostgreSQL', 'Docker']);
-          }
+              .filter(Boolean)
+          );
+
+          // Settings are stored server-side; switches missing from the profile stay on their defaults
+          const st = p.settings || {};
+          if (typeof st.notify_job_alerts === 'boolean') setNotifyJobAlerts(st.notify_job_alerts);
+          if (typeof st.notify_app_status === 'boolean') setNotifyAppStatus(st.notify_app_status);
+          if (typeof st.notify_chat_messages === 'boolean') setNotifyChatMessages(st.notify_chat_messages);
+          if (typeof st.notify_telegram === 'boolean') setNotifyTelegram(st.notify_telegram);
+          if (typeof st.profile_public === 'boolean') setProfilePublic(st.profile_public);
+          if (typeof st.phone_verified_only === 'boolean') setPhoneVerifiedOnly(st.phone_verified_only);
         } else {
-          setSkillsList(['Go', 'Next.js', 'PostgreSQL', 'Docker']);
+          setSkillsList([]);
         }
       }
     }
@@ -336,18 +414,19 @@ export default function ProfileView({
     setErrorMessage(null);
 
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(
-          'workhub_user_settings',
-          JSON.stringify({
-            notifyJobAlerts,
-            notifyAppStatus,
-            notifyChatMessages,
-            notifyTelegram,
-            profilePublic,
-            phoneVerifiedOnly,
-          })
-        );
+      const res = await api.updateProfile({
+        settings: {
+          notify_job_alerts: notifyJobAlerts,
+          notify_app_status: notifyAppStatus,
+          notify_chat_messages: notifyChatMessages,
+          notify_telegram: notifyTelegram,
+          profile_public: profilePublic,
+          phone_verified_only: phoneVerifiedOnly,
+        },
+      });
+      if (!res.success) {
+        setErrorMessage(res.error || 'Server xatosi');
+        return;
       }
       setSettingsSavedSuccess(true);
       setTimeout(() => setSettingsSavedSuccess(false), 3500);
@@ -433,6 +512,35 @@ export default function ProfileView({
                   <ShieldCheck size={14} className="text-blue-600 dark:text-blue-400" />
                   <span>{t.oneIdVerifiedBadge}</span>
                 </span>
+              )}
+              {user.account_type === 'company' && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shadow-xs">
+                  <Building2 size={13} className="text-indigo-600 dark:text-indigo-400" />
+                  <span>Yuridik shaxs{user.company_name ? `: ${user.company_name}` : ''}</span>
+                </span>
+              )}
+              {user.auth_provider === 'oneid' && (user.account_type === 'individual' || !user.account_type) && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-xs">
+                  <User size={13} className="text-slate-500" />
+                  <span>Oddiy shaxs</span>
+                </span>
+              )}
+              {user.auth_provider === 'oneid' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSwitchAccountType(user.account_type === 'company' ? 'company' : 'individual');
+                    setSwitchCompanyName(user.company_name || '');
+                    setSwitchInn(user.inn || '');
+                    setSwitchError(null);
+                    setShowRoleSwitchModal(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition shadow-xs cursor-pointer active:scale-95"
+                  title="Hisob turini (Oddiy shaxs / Yuridik shaxs) almashtirish"
+                >
+                  <RefreshCw size={12} className="text-blue-600 dark:text-blue-400" />
+                  <span>Almashtirish</span>
+                </button>
               )}
               {user.auth_provider === 'google' && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-red-50 dark:bg-red-950 text-red-600 border border-red-200">
@@ -855,6 +963,38 @@ export default function ProfileView({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-0.5 text-xs">
+                  <div className="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Hisob turi</span>
+                      <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        {user.account_type === 'company' ? (
+                          <>
+                            <Building2 size={13} className="text-indigo-600 shrink-0" />
+                            <span>Yuridik shaxs</span>
+                          </>
+                        ) : (
+                          <>
+                            <User size={13} className="text-blue-600 shrink-0" />
+                            <span>Oddiy shaxs</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSwitchAccountType(user.account_type === 'company' ? 'company' : 'individual');
+                        setSwitchCompanyName(user.company_name || '');
+                        setSwitchInn(user.inn || '');
+                        setSwitchError(null);
+                        setShowRoleSwitchModal(true);
+                      }}
+                      className="px-2 py-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/40 rounded-lg border border-blue-200 dark:border-blue-800/60 transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw size={11} />
+                      <span>Almashtirish</span>
+                    </button>
+                  </div>
                   <div className="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">{t.profilePinfl}</span>
                     <span className="font-mono font-extrabold text-blue-600 dark:text-blue-400 text-sm tracking-wider">{user.pinfl || '—'}</span>
@@ -865,12 +1005,21 @@ export default function ProfileView({
                       {pinflData ? `${pinflData.birthDate} (${pinflData.gender})` : 'Davlat reestridan tasdiqlangan'}
                     </span>
                   </div>
-                  <div className="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">{t.profileRegion}</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
-                      {location || (pinflData ? pinflData.region : 'O‘zbekiston')}
-                    </span>
-                  </div>
+                  {user.account_type === 'company' && (
+                    <div className="bg-indigo-50/80 dark:bg-indigo-950/50 p-2.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60 col-span-1 sm:col-span-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Building2 size={15} className="text-indigo-600 dark:text-indigo-400" />
+                        <span className="font-bold text-xs text-indigo-950 dark:text-indigo-100">
+                          Tashkilot: {user.company_name || 'Kompaniya'}
+                        </span>
+                      </div>
+                      {user.inn && (
+                        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                          STIR (INN): {user.inn}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -1254,6 +1403,195 @@ export default function ProfileView({
             </button>
           </div>
         </form>
+      )}
+
+      {/* Modal: Hisob turini almashtirish (Oddiy shaxs <-> Yuridik shaxs) */}
+      {showRoleSwitchModal && (
+        <div
+          onClick={() => setShowRoleSwitchModal(false)}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#003B95] via-[#0047BA] to-[#0A58CA] text-white p-4 sm:p-5 flex items-center justify-between shadow-md">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-white/20 shrink-0 shadow-inner">
+                  <RefreshCw size={20} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
+                    Hisob turini almashtirish
+                  </h3>
+                  <p className="text-[11px] text-blue-100 font-medium">
+                    Oddiy shaxs (Nomzod) yoki Yuridik shaxs (Ish beruvchi)
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowRoleSwitchModal(false)}
+                className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSwitchAccountType} className="p-5 sm:p-6 space-y-4">
+              {switchError && (
+                <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-2 text-xs text-red-700 dark:text-red-300">
+                  <AlertCircle size={16} className="shrink-0" />
+                  <span>{switchError}</span>
+                </div>
+              )}
+
+              {switchSuccess && (
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 animate-fadeIn">
+                  <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+                  <span>Hisob turi muvaffaqiyatli almashtirildi!</span>
+                </div>
+              )}
+
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Quyidagi hisob turlaridan birini tanlang. Tanlangan yo‘nalish bo‘yicha platformadagi imkoniyatlaringiz darhol yangilanadi:
+              </p>
+
+              {/* Two Options */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Oddiy shaxs */}
+                <div
+                  onClick={() => setSwitchAccountType('individual')}
+                  className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left flex flex-col justify-between ${
+                    switchAccountType === 'individual'
+                      ? 'border-[#0047BA] bg-blue-50/70 dark:bg-blue-950/50 shadow-md ring-2 ring-blue-500/20'
+                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        switchAccountType === 'individual'
+                          ? 'bg-[#0047BA] text-white shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                      }`}>
+                        <User size={18} />
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        switchAccountType === 'individual'
+                          ? 'border-[#0047BA] bg-[#0047BA] text-white'
+                          : 'border-slate-300 dark:border-slate-600'
+                      }`}>
+                        {switchAccountType === 'individual' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">
+                        Oddiy shaxs
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Fuqaro / Nomzod. Ish qidirish, rezyume yaratish va arizalar topshirish.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Yuridik shaxs */}
+                <div
+                  onClick={() => setSwitchAccountType('company')}
+                  className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left flex flex-col justify-between ${
+                    switchAccountType === 'company'
+                      ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 shadow-md ring-2 ring-indigo-500/20'
+                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        switchAccountType === 'company'
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                      }`}>
+                        <Building2 size={18} />
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        switchAccountType === 'company'
+                          ? 'border-indigo-600 bg-indigo-600 text-white'
+                          : 'border-slate-300 dark:border-slate-600'
+                      }`}>
+                        {switchAccountType === 'company' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">
+                        Yuridik shaxs
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Kompaniya / Ish beruvchi. Vakansiya va e’lonlar berish.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Company Inputs */}
+              {switchAccountType === 'company' && (
+                <div className="p-3.5 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200 dark:border-indigo-900/60 space-y-3 animate-fadeIn">
+                  <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 dark:text-indigo-200">
+                    <Briefcase size={14} />
+                    <span>Tashkilot rekvizitlari</span>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Tashkilot / Kompaniya nomi *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={switchCompanyName}
+                      onChange={(e) => setSwitchCompanyName(e.target.value)}
+                      placeholder="Korxona yoki tashkilot nomini kiriting"
+                      className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      STIR / INN (9 xonali) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={9}
+                      value={switchInn}
+                      onChange={(e) => setSwitchInn(e.target.value.replace(/\D/g, ''))}
+                      placeholder="9 xonali STIR (masalan: 301234567)"
+                      className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Buttons */}
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRoleSwitchModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  type="submit"
+                  disabled={switchLoading}
+                  className="flex-1 py-2.5 rounded-xl bg-[#0047BA] hover:bg-[#003B95] text-white text-xs font-bold transition shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <Save size={14} />
+                  <span>{switchLoading ? 'Saqlanmoqda...' : 'Saqlash va almashtirish'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
