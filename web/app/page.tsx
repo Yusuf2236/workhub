@@ -760,7 +760,21 @@ export default function WZonePortal() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] flex flex-col font-sans transition-colors duration-200 text-slate-900 dark:text-slate-100">
+    <div className="relative min-h-screen bg-slate-50/70 dark:bg-[#0b0f19] flex flex-col font-sans transition-colors duration-200 text-slate-900 dark:text-slate-100 overflow-x-hidden">
+      {/* Ambient background blur orbs & mesh gradient (Frosted Glass backdrop) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        {/* Top-left soft cyan-blue ambient orb */}
+        <div className="absolute -top-32 -left-32 w-[550px] h-[550px] bg-gradient-to-br from-blue-400/25 via-cyan-300/20 to-transparent dark:from-blue-600/15 dark:via-cyan-600/10 rounded-full blur-3xl transform-gpu" />
+        {/* Center-right soft indigo-violet ambient orb */}
+        <div className="absolute top-1/4 -right-32 w-[600px] h-[600px] bg-gradient-to-bl from-indigo-400/20 via-purple-300/15 to-transparent dark:from-indigo-600/15 dark:via-purple-600/10 rounded-full blur-3xl transform-gpu" />
+        {/* Bottom-left soft sky-blue ambient orb */}
+        <div className="absolute bottom-1/4 left-10 w-[500px] h-[500px] bg-gradient-to-tr from-sky-400/20 via-blue-200/15 to-transparent dark:from-blue-700/10 dark:via-slate-800/10 rounded-full blur-3xl transform-gpu" />
+        {/* Bottom-right ambient glow */}
+        <div className="absolute -bottom-40 right-1/4 w-[550px] h-[550px] bg-gradient-to-tl from-indigo-300/20 via-blue-300/15 to-transparent dark:from-indigo-900/15 dark:via-slate-900/10 rounded-full blur-3xl transform-gpu" />
+        {/* Subtle dot mesh texture overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:24px_24px] opacity-20" />
+      </div>
+
       {/* Top Navigation Header */}
       <Header
         user={user}

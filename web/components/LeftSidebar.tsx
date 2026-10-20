@@ -45,7 +45,7 @@ export default function LeftSidebar({
   return (
     <aside className="w-64 shrink-0 hidden lg:block sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pb-2">
 
-      <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-2xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm space-y-1.5">
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-3 shadow-xs space-y-1.5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;

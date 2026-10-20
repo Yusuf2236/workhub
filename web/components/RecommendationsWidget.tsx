@@ -36,7 +36,7 @@ export default function RecommendationsWidget({ user, onSelectVacancy, onOpenPro
   if (!user || !loaded) return null;
 
   return (
-    <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm space-y-3">
+    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-4 shadow-xs space-y-3">
       <h5 className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         <Sparkles size={14} className="text-purple-500" />
         {t.recommendedTitle}

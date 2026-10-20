@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { api, getCurrentUser, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
+import FlagIcon from './FlagIcon';
 
 interface ProfileViewProps {
   user: any;
@@ -1221,13 +1222,14 @@ export default function ProfileView({
                       key={l}
                       type="button"
                       onClick={() => onLanguageChange && onLanguageChange(l)}
-                      className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition cursor-pointer ${
+                      className={`flex-1 py-2 px-1 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                         lang === l
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
                           : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
                       }`}
                     >
-                      {l === 'uz' ? 'O‘zbekcha' : l === 'ru' ? 'Русский' : 'English'}
+                      <FlagIcon lang={l} className="w-4 h-3" />
+                      <span>{l === 'uz' ? 'O‘zbekcha' : l === 'ru' ? 'Русский' : 'English'}</span>
                     </button>
                   ))}
                 </div>

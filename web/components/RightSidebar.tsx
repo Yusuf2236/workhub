@@ -39,7 +39,7 @@ export default function RightSidebar({
       )}
 
       {/* Telegram Bot Card */}
-      <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-4 shadow-xs">
         <div className="flex items-center gap-3 mb-2.5">
           <div className="w-9 h-9 rounded-xl bg-sky-500 text-white flex items-center justify-center shadow-md shadow-sky-500/20">
             <Send size={18} />
@@ -64,7 +64,7 @@ export default function RightSidebar({
       </div>
 
       {/* Platform stats */}
-      <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-4 shadow-xs">
         <h5 className="text-[11px] font-black text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">
           {t.statsTitle}
         </h5>

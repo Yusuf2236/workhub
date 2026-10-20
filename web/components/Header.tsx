@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Plus, Bell, Sun, Moon, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe, Lock, ShieldCheck } from 'lucide-react';
+import { Search, Plus, Bell, Sun, Moon, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe, Lock, ShieldCheck, Check } from 'lucide-react';
 import { api } from '../lib/api';
 import { Language, translations } from '../lib/translations';
+import FlagIcon from './FlagIcon';
 
 interface HeaderProps {
   user: any;
@@ -53,14 +54,14 @@ export default function Header({
     onUserLogout();
   };
 
-  const languages: { code: Language; label: string; flag: string }[] = [
-    { code: 'uz', label: 'O‘zbekcha', flag: '🇺🇿' },
-    { code: 'ru', label: 'Русский', flag: '🇷🇺' },
-    { code: 'en', label: 'English', flag: '🇺🇸' },
+  const languages: { code: Language; label: string; sub: string }[] = [
+    { code: 'uz', label: 'O‘zbekcha', sub: 'O‘zbek' },
+    { code: 'ru', label: 'Русский', sub: 'Русский' },
+    { code: 'en', label: 'English', sub: 'English' },
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+    <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 transition-colors shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Animated WZone Logo */}
         <div className="flex items-center gap-3 shrink-0 group cursor-pointer">
@@ -182,34 +183,45 @@ export default function Header({
           <div className="relative">
             <button
               onClick={() => setShowLangMenu(!showLangMenu)}
-              className="px-2.5 py-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 sm:bg-transparent dark:bg-slate-800/80 sm:dark:bg-transparent hover:bg-slate-200 dark:hover:bg-slate-800 transition flex items-center gap-1.5 text-xs font-bold"
+              className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100/90 sm:bg-slate-100/70 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 sm:gap-2 text-xs font-bold border border-slate-200/80 dark:border-slate-700/80 shadow-xs"
               title="Tilni tanlash"
             >
-              <Globe size={15} className="text-blue-600 dark:text-blue-400" />
-              <span className="uppercase text-[11px] sm:text-xs">{lang}</span>
-              <ChevronDown size={12} className="text-slate-400" />
+              <FlagIcon lang={lang} className="w-5 h-3.5" />
+              <span className="uppercase text-[11px] sm:text-xs tracking-wider">
+                {lang === 'uz' ? 'O‘z' : lang === 'ru' ? 'Ру' : 'En'}
+              </span>
+              <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 ${showLangMenu ? 'rotate-180' : ''}`} />
             </button>
 
             {showLangMenu && (
-              <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 animate-fadeIn">
-                {languages.map((l) => (
-                  <button
-                    key={l.code}
-                    onClick={() => {
-                      onSelectLang(l.code);
-                      setShowLangMenu(false);
-                    }}
-                    className={`w-full px-3.5 py-2 text-left text-xs font-semibold flex items-center gap-2 transition ${
-                      lang === l.code
-                        ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <span>{l.flag}</span>
-                    <span>{l.label}</span>
-                  </button>
-                ))}
-              </div>
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowLangMenu(false)} />
+                <div className="absolute right-0 mt-2 w-44 bg-white/95 dark:bg-slate-850/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-1.5 z-50 animate-fadeIn">
+                  <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 mb-1">
+                    Tilni tanlang
+                  </div>
+                  {languages.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => {
+                        onSelectLang(l.code);
+                        setShowLangMenu(false);
+                      }}
+                      className={`w-full px-2.5 py-2 text-left rounded-xl text-xs font-bold flex items-center justify-between transition ${
+                        lang === l.code
+                          ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400'
+                          : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <FlagIcon lang={l.code} className="w-5 h-3.5" />
+                        <span>{l.label}</span>
+                      </div>
+                      {lang === l.code && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
