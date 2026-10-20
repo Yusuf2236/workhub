@@ -346,6 +346,19 @@ export interface TranslationDictionary {
   themeDark: string;
   themeSystem: string;
   themeSystemDesc: string;
+  selectTheme: string;
+  themeAutoBadge: string;
+  themeTooltip: string;
+  selectLang: string;
+  langTooltip: string;
+  listingLockedTitle: string;
+  listingLockedDesc: string;
+  registerWithOneId: string;
+  googleLockedNotice: string;
+  legalEntityPrefix: string;
+  legalEntity: string;
+  employerIdTitle: string;
+  employerIdDesc: string;
   profileNotificationsTitle: string;
   profileNotifyJobsLabel: string;
   profileNotifyJobsDesc: string;
@@ -806,6 +819,19 @@ export const translations: Record<Language, TranslationDictionary> = {
     themeDark: 'Qorong‘i',
     themeSystem: 'Tizim (Avto)',
     themeSystemDesc: 'Qurilmangiz sozlamasiga avtomatik moslashadi',
+    selectTheme: 'Mavzuni tanlang',
+    themeAutoBadge: 'Avto',
+    themeTooltip: 'Mavzuni tanlash (Yorug‘ / Qorong‘i / Tizim)',
+    selectLang: 'Tilni tanlang',
+    langTooltip: 'Tilni tanlash',
+    listingLockedTitle: 'E’lon berish yopiq',
+    listingLockedDesc: 'Ochilishi uchun OneID bilan ro‘yxatdan o‘ting',
+    registerWithOneId: 'OneID orqali ro‘yxatdan o‘tish',
+    googleLockedNotice: 'Google hisobi orqali kirilganda e’lon berish imkoni yopiq. Davlat OneID tizimi orqali kiring.',
+    legalEntityPrefix: 'Yuridik',
+    legalEntity: 'Yuridik shaxs',
+    employerIdTitle: 'Rasmiy ish beruvchi identifikatsiyasi (OneID)',
+    employerIdDesc: 'Soxta e’lonlarning oldini olish va nomzodlar xavfsizligini ta’minlash maqsadida vakansiya berish faqat davlat OneID tizimi orqali amalga oshiriladi. Google orqali kirish vakansiya berish uchun taqiqlangan.',
     profileNotificationsTitle: 'Bildirishnomalar va Ogohlantirishlar',
     profileNotifyJobsLabel: 'Yangi mos vakansiyalar haqida xabar',
     profileNotifyJobsDesc: 'Sizning ko‘nikmalaringizga mos ish e’lonlari chiqqanda push-bildirishnoma',
@@ -1265,6 +1291,19 @@ export const translations: Record<Language, TranslationDictionary> = {
     themeDark: 'Тёмная',
     themeSystem: 'Системная (Авто)',
     themeSystemDesc: 'Автоматически адаптируется под настройки устройства',
+    selectTheme: 'Выберите тему',
+    themeAutoBadge: 'Авто',
+    themeTooltip: 'Выбор темы (Светлая / Тёмная / Системная)',
+    selectLang: 'Выберите язык',
+    langTooltip: 'Выбор языка',
+    listingLockedTitle: 'Публикация закрыта',
+    listingLockedDesc: 'Для открытия зарегистрируйтесь через OneID',
+    registerWithOneId: 'Регистрация через OneID',
+    googleLockedNotice: 'При входе через Google публикация недоступна. Войдите через государственную систему OneID.',
+    legalEntityPrefix: 'Юр. лицо',
+    legalEntity: 'Юридическое лицо',
+    employerIdTitle: 'Официальная идентификация работодателя (OneID)',
+    employerIdDesc: 'В целях предотвращения мошеннических объявлений и защиты кандидатов публикация вакансий осуществляется исключительно через государственную систему OneID. Вход через Google для публикации вакансий отключен.',
     profileNotificationsTitle: 'Уведомления и оповещения',
     profileNotifyJobsLabel: 'Уведомления о подходящих вакансиях',
     profileNotifyJobsDesc: 'Push-уведомления при появлении вакансий, соответствующих вашим навыкам',
@@ -1724,6 +1763,19 @@ export const translations: Record<Language, TranslationDictionary> = {
     themeDark: 'Dark',
     themeSystem: 'System (Auto)',
     themeSystemDesc: 'Automatically adapts to device system settings',
+    selectTheme: 'Select theme',
+    themeAutoBadge: 'Auto',
+    themeTooltip: 'Choose theme (Light / Dark / System)',
+    selectLang: 'Select language',
+    langTooltip: 'Select language',
+    listingLockedTitle: 'Posting is locked',
+    listingLockedDesc: 'Sign in with OneID to unlock posting',
+    registerWithOneId: 'Register with OneID',
+    googleLockedNotice: 'Posting is unavailable when logged in via Google. Please sign in via government OneID.',
+    legalEntityPrefix: 'Company',
+    legalEntity: 'Legal entity',
+    employerIdTitle: 'Official Employer Identification (OneID)',
+    employerIdDesc: 'To prevent fraudulent job posts and protect candidates, vacancy publishing is strictly handled via government OneID. Posting via Google is disabled.',
     profileNotificationsTitle: 'Notifications & Alerts',
     profileNotifyJobsLabel: 'Matching job alerts',
     profileNotifyJobsDesc: 'Receive push notifications when vacancies matching your skills appear',

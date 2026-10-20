@@ -16,7 +16,7 @@ export default function FlagIcon({ lang, className = 'w-5 h-3.5' }: FlagIconProp
     return (
       <svg
         viewBox="0 0 32 24"
-        className={`inline-block shrink-0 rounded-xs shadow-xs border border-slate-300/40 dark:border-slate-600/40 overflow-hidden ${className}`}
+        className={`inline-block shrink-0 rounded-sm shadow-sm border border-slate-300/60 dark:border-slate-600/60 overflow-hidden ${className}`}
         aria-label="O‘zbekiston bayrog‘i"
       >
         {/* Top sky blue stripe */}
@@ -61,7 +61,7 @@ export default function FlagIcon({ lang, className = 'w-5 h-3.5' }: FlagIconProp
     return (
       <svg
         viewBox="0 0 32 24"
-        className={`inline-block shrink-0 rounded-xs shadow-xs border border-slate-300/40 dark:border-slate-600/40 overflow-hidden ${className}`}
+        className={`inline-block shrink-0 rounded-sm shadow-sm border border-slate-300/60 dark:border-slate-600/60 overflow-hidden ${className}`}
         aria-label="Rossiya bayrog‘i"
       >
         <rect width="32" height="8" fill="#FFFFFF" />
@@ -75,7 +75,7 @@ export default function FlagIcon({ lang, className = 'w-5 h-3.5' }: FlagIconProp
   return (
     <svg
       viewBox="0 0 32 24"
-      className={`inline-block shrink-0 rounded-xs shadow-xs border border-slate-300/40 dark:border-slate-600/40 overflow-hidden ${className}`}
+      className={`inline-block shrink-0 rounded-sm shadow-sm border border-slate-300/60 dark:border-slate-600/60 overflow-hidden ${className}`}
       aria-label="English Flag"
     >
       <rect width="32" height="24" fill="#012169" />

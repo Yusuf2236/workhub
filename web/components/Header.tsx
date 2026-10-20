@@ -110,7 +110,7 @@ export default function Header({
                   ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
                   : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-sm'
               }`}
-              title={isOneIdUser ? t.addListing : 'Ochilishi uchun OneID bilan ro‘yxatdan o‘ting'}
+              title={isOneIdUser ? t.addListing : t.listingLockedDesc}
             >
               {isOneIdUser ? (
                 <Plus size={17} />
@@ -165,10 +165,10 @@ export default function Header({
                     <Lock size={20} />
                   </div>
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                    E’lon berish yopiq
+                    {t.listingLockedTitle}
                   </h4>
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 mt-1 mb-4 leading-relaxed">
-                    Ochilishi uchun OneID bilan ro‘yxatdan o‘ting
+                    {t.listingLockedDesc}
                   </p>
                   <button
                     onClick={() => {
@@ -178,11 +178,11 @@ export default function Header({
                     className="w-full py-2.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/25 active:scale-95 transition flex items-center justify-center gap-2"
                   >
                     <ShieldCheck size={16} />
-                    <span>OneID orqali ro‘yxatdan o‘tish</span>
+                    <span>{t.registerWithOneId}</span>
                   </button>
                   {user && user.auth_provider === 'google' && (
                     <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-700/60 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-                      Google hisobi orqali kirilganda e’lon berish imkoni yopiq. Davlat OneID tizimi orqali kiring.
+                      {t.googleLockedNotice}
                     </div>
                   )}
                 </div>
@@ -195,9 +195,9 @@ export default function Header({
             <button
               onClick={() => setShowLangMenu(!showLangMenu)}
               className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100/90 sm:bg-slate-100/70 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 sm:gap-2 text-xs font-bold border border-slate-200/80 dark:border-slate-700/80 shadow-xs"
-              title="Tilni tanlash"
+              title={t.langTooltip}
             >
-              <FlagIcon lang={lang} className="w-5 h-3.5" />
+              <FlagIcon lang={lang} className="w-5.5 h-4" />
               <span className="uppercase text-xs sm:text-sm tracking-wider">
                 {lang === 'uz' ? 'O‘z' : lang === 'ru' ? 'Ру' : 'En'}
               </span>
@@ -207,9 +207,9 @@ export default function Header({
             {showLangMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowLangMenu(false)} />
-                <div className="absolute right-0 mt-2 w-48 bg-white/95 dark:bg-slate-850/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-1.5 z-50 animate-fadeIn">
-                  <div className="px-2.5 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 mb-1">
-                    Tilni tanlang
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 animate-fadeIn ring-1 ring-black/5 dark:ring-white/10">
+                  <div className="px-3 py-1.5 text-[11px] font-extrabold text-slate-400 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 mb-1">
+                    {t.selectLang}
                   </div>
                   {languages.map((l) => (
                     <button
@@ -220,12 +220,12 @@ export default function Header({
                       }}
                       className={`w-full px-3 py-2.5 text-left rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition ${
                         lang === l.code
-                          ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400'
-                          : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
+                          ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/80'
+                          : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <FlagIcon lang={l.code} className="w-5 h-3.5" />
+                        <FlagIcon lang={l.code} className="w-5.5 h-4" />
                         <span>{l.label}</span>
                       </div>
                       {lang === l.code && <Check size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />}
@@ -254,7 +254,7 @@ export default function Header({
           <div className="relative">
             <button
               onClick={() => setShowThemeMenu(!showThemeMenu)}
-              title="Mavzuni tanlash (Yorug‘ / Qorong‘i / Tizimga moslashish)"
+              title={t.themeTooltip}
               className="px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100/90 sm:bg-slate-100/70 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 border border-slate-200/80 dark:border-slate-700/80 shadow-xs"
             >
               {isCurrentDark ? (
@@ -264,7 +264,7 @@ export default function Header({
               )}
               {themeMode === 'system' && (
                 <span className="hidden md:inline-block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Avto
+                  {t.themeAutoBadge}
                 </span>
               )}
               <ChevronDown size={12} className={`text-slate-400 transition-transform duration-200 ${showThemeMenu ? 'rotate-180' : ''}`} />
@@ -273,9 +273,9 @@ export default function Header({
             {showThemeMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowThemeMenu(false)} />
-                <div className="absolute right-0 mt-2 w-52 bg-white/95 dark:bg-slate-850/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-1.5 z-50 animate-fadeIn">
-                  <div className="px-2.5 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 mb-1">
-                    Mavzuni tanlang
+                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1.5 z-50 animate-fadeIn ring-1 ring-black/5 dark:ring-white/10">
+                  <div className="px-3 py-1.5 text-[11px] font-extrabold text-slate-400 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 mb-1">
+                    {t.selectTheme}
                   </div>
 
                   {/* Light */}
@@ -286,8 +286,8 @@ export default function Header({
                     }}
                     className={`w-full px-3 py-2 text-left rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition ${
                       themeMode === 'light'
-                        ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400'
-                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
+                        ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/80'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -305,8 +305,8 @@ export default function Header({
                     }}
                     className={`w-full px-3 py-2 text-left rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition ${
                       themeMode === 'dark'
-                        ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400'
-                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
+                        ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/80'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -324,8 +324,8 @@ export default function Header({
                     }}
                     className={`w-full px-3 py-2 text-left rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition ${
                       themeMode === 'system'
-                        ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400'
-                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
+                        ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/80'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -371,11 +371,11 @@ export default function Header({
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{user.email}</p>
                       {user.account_type === 'company' ? (
                         <span className="inline-block mt-1.5 text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                          {user.company_name ? `Yuridik: ${user.company_name}` : 'Yuridik shaxs'}
+                          {user.company_name ? `${t.legalEntityPrefix}: ${user.company_name}` : t.legalEntity}
                         </span>
                       ) : user.auth_provider && (
                         <span className="inline-block mt-1.5 text-xs font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                          {user.auth_provider === 'oneid' ? 'OneID Tasdiqlangan' : user.auth_provider}
+                          {user.auth_provider === 'oneid' ? t.oneIdVerifiedBadge : user.auth_provider}
                         </span>
                       )}
                     </div>

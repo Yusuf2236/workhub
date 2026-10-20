@@ -456,9 +456,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz', aut
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl flex items-start gap-2.5 text-xs text-blue-950 dark:text-blue-100">
               <ShieldCheck size={18} className="text-[#0047BA] dark:text-blue-400 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <p className="font-bold">Rasmiy ish beruvchi identifikatsiyasi (OneID)</p>
+                <p className="font-bold">{t.employerIdTitle}</p>
                 <p className="text-blue-800/80 dark:text-blue-300/80 text-[11px] leading-relaxed">
-                  Soxta e’lonlarning oldini olish va nomzodlar xavfsizligini ta’minlash maqsadida vakansiya berish faqat davlat OneID tizimi orqali amalga oshiriladi. Google orqali kirish vakansiya berish uchun taqiqlangan.
+                  {t.employerIdDesc}
                 </p>
               </div>
             </div>
@@ -500,7 +500,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz', aut
                 type="button"
                 onClick={handleRealGoogleSignIn}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-semibold text-sm transition shadow-sm hover:shadow active:scale-[0.99]"
+                className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm transition shadow-sm hover:shadow active:scale-[0.99]"
               >
                 <GoogleIcon />
                 <span>
