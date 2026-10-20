@@ -7,6 +7,7 @@ import (
 	"html"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -85,6 +86,11 @@ func (t *TelegramService) SendMessage(text string) error {
 	return nil
 }
 
+// vacancyLink is the vacancy's public page on the site (PUBLIC_SITE_URL).
+func vacancyLink(id string) string {
+	return SiteURL() + "/vacancies/" + url.PathEscape(id)
+}
+
 // BroadcastVacancy broadcasts newly posted vacancy to Telegram channel
 func (t *TelegramService) BroadcastVacancy(v *models.Vacancy) {
 	if v == nil {
@@ -99,10 +105,10 @@ func (t *TelegramService) BroadcastVacancy(v *models.Vacancy) {
 			"📂 <b>Soha:</b> %s\n"+
 			"⏰ <b>Bandlik:</b> %s\n\n"+
 			"ℹ️ <b>Batafsil ma'lumot va ariza topshirish:</b>\n"+
-			"https://workhub.uz/vacancies/%s\n\n"+
+			"%s\n\n"+
 			"#workhub #vakansiya #ishbor",
 		html.EscapeString(v.Title), html.EscapeString(v.Company), html.EscapeString(v.Location),
-		html.EscapeString(v.Salary), html.EscapeString(v.Category), html.EscapeString(v.JobType), v.ID,
+		html.EscapeString(v.Salary), html.EscapeString(v.Category), html.EscapeString(v.JobType), vacancyLink(v.ID),
 	)
 
 	go func() {

@@ -16,6 +16,12 @@ import (
 )
 
 func ListVacancies(c *gin.Context) {
+	// ids=<uuid,...> loads specific vacancies (e.g. the user's saved list)
+	if rawIDs := strings.TrimSpace(c.Query("ids")); rawIDs != "" {
+		listVacanciesByIDs(c, rawIDs)
+		return
+	}
+
 	ctx := c.Request.Context()
 	search := c.Query("q")
 	if search == "" {
@@ -153,6 +159,15 @@ func CreateVacancy(c *gin.Context) {
 		payload.Company = "Maxfiy ish beruvchi"
 	}
 
+	// Employers confirm their email before posting, so fake accounts cannot spam the feed.
+	// Enforced only when outgoing email is configured, otherwise nobody could verify.
+	if services.MailEnabled() && !isAdmin(c) && userRepo != nil {
+		if u, err := userRepo.GetByID(currentUserID(c)); err == nil && u != nil && !u.EmailVerified {
+			response.Error(c, http.StatusForbidden, "Vakansiya joylash uchun avval emailingizni tasdiqlang")
+			return
+		}
+	}
+
 	// Server-controlled fields must never come from the client
 	payload.CreatedBy = currentUserID(c)
 	payload.ID = uuid.NewString()
@@ -173,14 +188,7 @@ func CreateVacancy(c *gin.Context) {
 			return
 		}
 
-		// Invalidate cache (SCAN instead of KEYS so Redis is not blocked)
-		if redisClient != nil {
-			ctx := c.Request.Context()
-			iter := redisClient.Scan(ctx, 0, "vacancies:*", 200).Iterator()
-			for iter.Next(ctx) {
-				_ = redisClient.Del(ctx, iter.Val()).Err()
-			}
-		}
+		invalidateVacancyCache(c)
 	} else {
 		vacancies[payload.ID] = payload
 	}
@@ -189,4 +197,217 @@ func CreateVacancy(c *gin.Context) {
 	services.GetTelegramService().BroadcastVacancy(&payload)
 
 	response.Success(c, http.StatusCreated, gin.H{"vacancy": payload})
+}
+
+// invalidateVacancyCache drops cached list pages (SCAN instead of KEYS so Redis is not blocked)
+func invalidateVacancyCache(c *gin.Context) {
+	if redisClient == nil {
+		return
+	}
+	ctx := c.Request.Context()
+	iter := redisClient.Scan(ctx, 0, "vacancies:*", 200).Iterator()
+	for iter.Next(ctx) {
+		_ = redisClient.Del(ctx, iter.Val()).Err()
+	}
+}
+
+const maxVacancyIDsPerRequest = 100
+
+func listVacanciesByIDs(c *gin.Context, rawIDs string) {
+	var ids []string
+	seen := map[string]bool{}
+	for _, id := range strings.Split(rawIDs, ",") {
+		id = strings.TrimSpace(id)
+		if _, err := uuid.Parse(id); err != nil || seen[id] {
+			continue
+		}
+		seen[id] = true
+		ids = append(ids, id)
+		if len(ids) == maxVacancyIDsPerRequest {
+			break
+		}
+	}
+
+	items := []models.Vacancy{}
+	if vacancyRepo != nil {
+		var err error
+		items, err = vacancyRepo.ListByIDs(ids)
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "failed to query vacancies")
+			return
+		}
+	} else {
+		for _, id := range ids {
+			if v, ok := vacancies[id]; ok {
+				items = append(items, v)
+			}
+		}
+	}
+	response.Success(c, http.StatusOK, gin.H{
+		"vacancies": items,
+		"total":     len(items),
+		"page":      1,
+		"limit":     len(items),
+		"has_more":  false,
+	})
+}
+
+// ListMyVacancies returns the vacancies the caller posted.
+func ListMyVacancies(c *gin.Context) {
+	userID := currentUserID(c)
+	items := []models.Vacancy{}
+	if vacancyRepo != nil {
+		var err error
+		items, err = vacancyRepo.ListByCreator(userID)
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "failed to query vacancies")
+			return
+		}
+	} else {
+		for _, v := range vacancies {
+			if v.CreatedBy != "" && v.CreatedBy == userID {
+				items = append(items, v)
+			}
+		}
+	}
+	response.Success(c, http.StatusOK, gin.H{"vacancies": items, "total": len(items)})
+}
+
+// findOwnedVacancy loads a vacancy and checks that the caller posted it (or is an admin).
+// It writes the error response itself and returns nil when the caller may not proceed.
+func findOwnedVacancy(c *gin.Context) *models.Vacancy {
+	id := c.Param("id")
+	var v *models.Vacancy
+	if vacancyRepo != nil {
+		found, err := vacancyRepo.Get(id)
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "failed to query vacancy")
+			return nil
+		}
+		v = found
+	} else if found, ok := vacancies[id]; ok {
+		v = &found
+	}
+	if v == nil {
+		response.Error(c, http.StatusNotFound, "vacancy not found")
+		return nil
+	}
+	if !isAdmin(c) && (v.CreatedBy == "" || v.CreatedBy != currentUserID(c)) {
+		response.Error(c, http.StatusForbidden, "Faqat vakansiya egasi uni o‘zgartira oladi")
+		return nil
+	}
+	return v
+}
+
+func UpdateVacancy(c *gin.Context) {
+	v := findOwnedVacancy(c)
+	if v == nil {
+		return
+	}
+
+	// Pointer fields: omitted fields keep their stored value
+	var payload struct {
+		Title       *string `json:"title"`
+		Company     *string `json:"company"`
+		Location    *string `json:"location"`
+		Description *string `json:"description"`
+		Salary      *string `json:"salary"`
+		Category    *string `json:"category"`
+		JobType     *string `json:"job_type"`
+		Experience  *string `json:"experience"`
+		Tags        *string `json:"tags"`
+		CompanyLogo *string `json:"company_logo"`
+		IsFeatured  *bool   `json:"is_featured"`
+		IsVerified  *bool   `json:"is_verified"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	set := func(dst *string, src *string) {
+		if src != nil {
+			*dst = strings.TrimSpace(*src)
+		}
+	}
+	set(&v.Title, payload.Title)
+	set(&v.Company, payload.Company)
+	set(&v.Location, payload.Location)
+	set(&v.Salary, payload.Salary)
+	set(&v.Category, payload.Category)
+	set(&v.JobType, payload.JobType)
+	set(&v.Experience, payload.Experience)
+	set(&v.Tags, payload.Tags)
+	if payload.Description != nil {
+		v.Description = *payload.Description
+	}
+	if payload.CompanyLogo != nil {
+		if !isSafeLink(*payload.CompanyLogo) {
+			response.Error(c, http.StatusBadRequest, "Noto‘g‘ri logotip manzili")
+			return
+		}
+		v.CompanyLogo = strings.TrimSpace(*payload.CompanyLogo)
+	}
+	if v.Title == "" {
+		response.Error(c, http.StatusBadRequest, "title is required")
+		return
+	}
+	if v.Company == "" {
+		v.Company = "Maxfiy ish beruvchi"
+	}
+	// Badges are granted by moderators only
+	if isAdmin(c) {
+		if payload.IsFeatured != nil {
+			v.IsFeatured = *payload.IsFeatured
+		}
+		if payload.IsVerified != nil {
+			v.IsVerified = *payload.IsVerified
+		}
+	}
+	v.UpdatedAt = time.Now().UTC()
+
+	if vacancyRepo != nil {
+		if err := vacancyRepo.Update(*v); err != nil {
+			response.Error(c, http.StatusInternalServerError, "failed to update vacancy")
+			return
+		}
+		invalidateVacancyCache(c)
+	} else {
+		vacancies[v.ID] = *v
+	}
+	response.Success(c, http.StatusOK, gin.H{"vacancy": v})
+}
+
+func DeleteVacancy(c *gin.Context) {
+	v := findOwnedVacancy(c)
+	if v == nil {
+		return
+	}
+	if vacancyRepo != nil {
+		if err := vacancyRepo.Delete(v.ID); err != nil {
+			response.Error(c, http.StatusInternalServerError, "failed to delete vacancy")
+			return
+		}
+		invalidateVacancyCache(c)
+	} else {
+		delete(vacancies, v.ID)
+	}
+	response.Success(c, http.StatusOK, gin.H{"deleted": true, "id": v.ID})
+}
+
+// sitemapLimit matches the maximum number of URLs in one sitemap file
+const sitemapLimit = 50000
+
+// VacancySitemap lists vacancy IDs for the web app's sitemap.xml.
+func VacancySitemap(c *gin.Context) {
+	if vacancyRepo == nil {
+		response.Success(c, http.StatusOK, gin.H{"vacancies": []any{}})
+		return
+	}
+	entries, err := vacancyRepo.ListForSitemap(sitemapLimit)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to query vacancies")
+		return
+	}
+	response.Success(c, http.StatusOK, gin.H{"vacancies": entries})
 }

@@ -10,6 +10,16 @@ import (
 
 var configuredSecret string
 
+// tokenTTL is how long issued tokens stay valid (JWT_TTL, 7 days by default).
+var tokenTTL = 7 * 24 * time.Hour
+
+// SetTTL sets the token lifetime; non-positive values keep the default.
+func SetTTL(ttl time.Duration) {
+	if ttl > 0 {
+		tokenTTL = ttl
+	}
+}
+
 // SetSecret sets the signing secret loaded from config (including .env files,
 // which are not visible through os.Getenv).
 func SetSecret(secret string) {
@@ -43,7 +53,7 @@ func GenerateToken(userID, email string, role ...string) (string, error) {
 		Email:  email,
 		Role:   r,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
