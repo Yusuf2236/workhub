@@ -186,5 +186,25 @@ func TestOneIDCallbackPortalAndQR(t *testing.T) {
 			t.Fatalf("expected 200 OK, got %d. Body: %s", w.Code, w.Body.String())
 		}
 	})
+
+	t.Run("Rejects OneID demo code in production", func(t *testing.T) {
+		isProduction = true
+		defer func() { isProduction = false }()
+
+		payload := map[string]string{
+			"code":      "one_code-demo-qr-998877",
+			"pinfl":     "31201991234567",
+			"full_name": "Yusuf Usmonov",
+		}
+		bodyBytes, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/auth/oneid/callback", bytes.NewBuffer(bodyBytes))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code == http.StatusOK {
+			t.Fatalf("expected error in production for demo code, got 200 OK: %s", w.Body.String())
+		}
+	})
 }
 
