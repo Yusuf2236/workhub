@@ -473,12 +473,12 @@ export default function HomeFeedView({
       } finally {
         isFetchingRef.current = false;
       }
-    }, 1_000); // 1 second real-time polling
+    }, 15_000);
 
     return () => clearInterval(interval);
   }, [expandedVacancyIds]);
 
-  // 1-second continuous real-time polling for the comments stream tab
+  // Real-time polling for the comments stream tab
   useEffect(() => {
     if (streamFilter !== 'comments') return;
     const isFetchingRecentRef = { current: false };
@@ -510,7 +510,7 @@ export default function HomeFeedView({
       } finally {
         isFetchingRecentRef.current = false;
       }
-    }, 1_000); // 1 second real-time polling
+    }, 15_000);
 
     return () => clearInterval(interval);
   }, [streamFilter, surveyFilterKey]);
@@ -783,10 +783,6 @@ export default function HomeFeedView({
                   <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                     {lang === 'ru' ? 'Лента живых комментариев' : lang === 'en' ? 'Live Comments Stream' : 'Jonli Izohlar va Savollar Oqimi'}
                   </h3>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-extrabold animate-pulse">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    1s Real-time
-                  </span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                   {lang === 'ru'
@@ -923,10 +919,6 @@ export default function HomeFeedView({
                           <h4 className="text-xs font-black text-slate-900 dark:text-white">
                             {lang === 'ru' ? 'Обсуждения вакансии' : lang === 'en' ? 'Vacancy Discussions' : 'Vakansiya bo‘yicha izohlar'} ({commentsList.length})
                           </h4>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                            1s Real-time
-                          </span>
                         </div>
                         <button
                           type="button"

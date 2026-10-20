@@ -81,11 +81,9 @@ export default function VacancyDetailModal({
     }
 
     fetchComments();
-
-    // 1-second continuous real-time comments polling
     const interval = setInterval(() => {
       fetchComments(true);
-    }, 1_000);
+    }, 15_000);
 
     return () => {
       isMounted = false;
@@ -292,10 +290,6 @@ export default function VacancyDetailModal({
                 <MessageCircle size={18} className="text-blue-600" />
                 <span>{lang === 'ru' ? 'Вопросы и обсуждение' : lang === 'en' ? 'Questions & Discussion' : 'Savollar va Fikr-mulohazalar'} ({comments.length})</span>
               </h4>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                1s Real-time
-              </span>
             </div>
 
             {/* Comments List */}

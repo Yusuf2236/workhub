@@ -48,10 +48,9 @@ export default function LiveCommentsWidget({
 
   useEffect(() => {
     fetchComments();
-    // Continuous 1-second real-time polling
     const interval = setInterval(() => {
       fetchComments(true);
-    }, 1_000);
+    }, 15_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -87,15 +86,8 @@ export default function LiveCommentsWidget({
             <MessageCircle size={15} />
           </div>
           <div>
-            <h5 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-              <span>{lang === 'ru' ? 'Живые комментарии' : lang === 'en' ? 'Live Discussions' : 'Jonli Izohlar'}</span>
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                1s Real-time
-              </span>
+            <h5 className="text-xs font-black text-slate-900 dark:text-white">
+              {lang === 'ru' ? 'Живые комментарии' : lang === 'en' ? 'Live Discussions' : 'Jonli Izohlar'}
             </h5>
           </div>
         </div>
