@@ -167,19 +167,17 @@ export default function VacancyCard({
             </span>
           )}
 
-          {vacancy.comments_count !== undefined && vacancy.comments_count > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(vacancy);
-              }}
-              className="text-[11px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 hover:underline mr-1"
-              title={t.commentsTitle}
-            >
-              <MessageCircle size={13} />
-              <span>{vacancy.comments_count}</span>
-            </button>
-          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(vacancy);
+            }}
+            className="text-[11px] text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 font-bold flex items-center gap-1 transition px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 mr-1"
+            title={t.commentsTitle}
+          >
+            <MessageCircle size={13} className="text-blue-500" />
+            <span>{vacancy.comments_count || 0}</span>
+          </button>
 
           <button
             onClick={(e) => {

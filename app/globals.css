@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
+  --background: #f1f5f9;
   --foreground: #0f172a;
 }
 
@@ -12,13 +12,107 @@
   --foreground: #f8fafc;
 }
 
+/* ─── Base ─────────────────────────────────────── */
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   color: var(--foreground);
   background-color: var(--background);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom modern scrollbar */
+/* ─── Light mode explicit overrides (only when html is NOT dark) ───── */
+html:not(.dark) .bg-white {
+  background-color: #ffffff;
+}
+
+/* Ensure slate text is dark enough on light bg */
+html:not(.dark) .text-slate-400 {
+  color: #64748b;
+}
+html:not(.dark) .text-slate-500 {
+  color: #475569;
+}
+html:not(.dark) .text-slate-600 {
+  color: #334155;
+}
+html:not(.dark) .text-slate-700 {
+  color: #1e293b;
+}
+
+/* Input fields in light mode (only when no explicit bg- is provided) */
+html:not(.dark) input:not([class*="bg-"]),
+html:not(.dark) select:not([class*="bg-"]),
+html:not(.dark) textarea:not([class*="bg-"]) {
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+
+/* Dark mode select options and color scheme */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  color-scheme: dark;
+}
+
+html.dark option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+/* ─── Animations ─────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+.animate-fadeIn  { animation: fadeIn  0.25s ease both; }
+.animate-slideUp { animation: slideUp 0.3s  ease both; }
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+
+@keyframes shimmerGlow {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.animate-shimmer {
+  animation: shimmerGlow 3.5s infinite;
+}
+
+.animate-float-slow {
+  animation: floatSlow 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+/* ─── Custom modern scrollbar ─────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -44,3 +138,4 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+

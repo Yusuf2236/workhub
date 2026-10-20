@@ -15,6 +15,8 @@ import {
   User,
   Clock,
   ExternalLink,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { Language, translations } from '../lib/translations';
@@ -23,17 +25,26 @@ interface VacancyDetailModalProps {
   vacancy: any | null;
   onClose: () => void;
   onApply: (v: any) => void;
+  /** Shown to the vacancy owner (and admins) */
+  onEdit?: (v: any) => void;
+  onDelete?: (v: any) => void;
   currentUser?: any;
   lang?: Language;
+  /** 'pane' renders inline as a sticky side panel (desktop split view) instead of a modal */
+  variant?: 'modal' | 'pane';
 }
 
 export default function VacancyDetailModal({
   vacancy,
   onClose,
   onApply,
+  onEdit,
+  onDelete,
   currentUser,
   lang = 'uz',
+  variant = 'modal',
 }: VacancyDetailModalProps) {
+  const isPane = variant === 'pane';
   const t = translations[lang] || translations.uz;
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -44,24 +55,41 @@ export default function VacancyDetailModal({
   useEffect(() => {
     if (!vacancy?.id) return;
     let isMounted = true;
+    let isFetching = false;
 
-    async function fetchComments() {
-      setLoadingComments(true);
+    async function fetchComments(silent = false) {
+      if (isFetching) return;
+      isFetching = true;
+      if (!silent) setLoadingComments(true);
       try {
         const res = await api.getVacancyComments(vacancy.id);
-        if (isMounted && res.success && res.data?.comments) {
-          setComments(res.data.comments);
+        if (isMounted && res.success && Array.isArray(res.data?.comments)) {
+          const incoming = res.data.comments;
+          setComments((prev) => {
+            if (prev.length !== incoming.length || incoming.some((c: any, i: number) => !prev[i] || prev[i].id !== c.id)) {
+              return incoming;
+            }
+            return prev;
+          });
         }
       } catch (err) {
         console.error('Failed to load comments', err);
       } finally {
-        if (isMounted) setLoadingComments(false);
+        isFetching = false;
+        if (isMounted && !silent) setLoadingComments(false);
       }
     }
 
     fetchComments();
+
+    // 1-second continuous real-time comments polling
+    const interval = setInterval(() => {
+      fetchComments(true);
+    }, 1_000);
+
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, [vacancy?.id]);
 
@@ -71,10 +99,22 @@ export default function VacancyDetailModal({
     ? vacancy.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
     : [];
 
-  const handleShare = () => {
-    if (typeof window !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
-      alert('Havola nusxalandi!');
+  const canManage =
+    Boolean(currentUser) && (currentUser.role === 'admin' || (vacancy.created_by && vacancy.created_by === currentUser.id));
+
+  // The vacancy's public page (server-rendered, indexed by search engines)
+  const handleShare = async () => {
+    if (typeof window === 'undefined') return;
+    const link = `${window.location.origin}/vacancies/${encodeURIComponent(vacancy.id)}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: vacancy.title, url: link });
+        return;
+      }
+      await navigator.clipboard.writeText(link);
+      alert(t.linkCopied);
+    } catch {
+      // The user closed the share sheet or clipboard access was denied
     }
   };
 
@@ -115,8 +155,18 @@ export default function VacancyDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl max-h-[90vh] shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+    <div
+      className={
+        isPane
+          ? 'sticky top-20'
+          : 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn'
+      }
+    >
+      <div
+        className={`bg-white dark:bg-slate-900 w-full border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden ${
+          isPane ? 'rounded-2xl max-h-[calc(100vh-6rem)] shadow-sm' : 'rounded-3xl max-w-2xl max-h-[90vh] shadow-2xl'
+        }`}
+      >
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900">
           <div className="flex items-start gap-4">
@@ -149,19 +199,21 @@ export default function VacancyDetailModal({
             >
               <Share2 size={18} />
             </button>
+            {!isPane && (
             <button
               onClick={onClose}
               className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             >
               <X size={18} />
             </button>
+            )}
           </div>
         </div>
 
         {/* Scrollable Content */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           {/* Key Metrics Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className={`grid grid-cols-2 gap-3 ${isPane ? '' : 'sm:grid-cols-4'}`}>
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
               <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
                 <DollarSign size={13} /> {lang === 'ru' ? 'Зарплата' : lang === 'en' ? 'Salary' : 'Maosh'}
@@ -235,6 +287,10 @@ export default function VacancyDetailModal({
                 <MessageCircle size={18} className="text-blue-600" />
                 <span>{lang === 'ru' ? 'Вопросы и обсуждение' : lang === 'en' ? 'Questions & Discussion' : 'Savollar va Fikr-mulohazalar'} ({comments.length})</span>
               </h4>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                1s Real-time
+              </span>
             </div>
 
             {/* Comments List */}
@@ -324,6 +380,24 @@ export default function VacancyDetailModal({
           </div>
 
           <div className="flex items-center gap-2">
+          {canManage && onEdit && (
+            <button
+              onClick={() => onEdit(vacancy)}
+              title={t.editBtn}
+              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition"
+            >
+              <Pencil size={15} />
+            </button>
+          )}
+          {canManage && onDelete && (
+            <button
+              onClick={() => onDelete(vacancy)}
+              title={t.deleteBtn}
+              className="p-2.5 rounded-xl border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
           {typeof vacancy.source_url === 'string' && vacancy.source_url.startsWith('https://') && (
             <a
               href={vacancy.source_url}
@@ -337,6 +411,9 @@ export default function VacancyDetailModal({
               </span>
             </a>
           )}
+          {/* Owners cannot apply to their own vacancy; imported ones are applied to on the source site */}
+          {!(currentUser && vacancy.created_by && vacancy.created_by === currentUser.id) &&
+            !(!vacancy.created_by && typeof vacancy.source_url === 'string' && vacancy.source_url.startsWith('https://')) && (
           <button
             onClick={() => {
               onClose();
@@ -347,6 +424,7 @@ export default function VacancyDetailModal({
             <span>{t.applyBtn}</span>
             <ArrowRight size={16} />
           </button>
+          )}
           </div>
         </div>
       </div>

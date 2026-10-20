@@ -27,9 +27,11 @@ import { api } from '../lib/api';
 import {
   generateResumeWithAI,
   analyzeResumeText,
+  hasResumePlaceholders,
   AIResumeOutput,
   AIResumeAnalysis,
 } from '../lib/aiResumeGenerator';
+import { detectCurrentLocation } from '../lib/geolocation';
 import { Language, translations } from '../lib/translations';
 
 interface CreateResumeModalProps {
@@ -37,6 +39,8 @@ interface CreateResumeModalProps {
   onClose: () => void;
   onSuccess: () => void;
   currentUser?: any;
+  /** When set the modal edits this resume instead of creating a new one */
+  initialResume?: any | null;
   lang?: Language;
 }
 
@@ -56,6 +60,7 @@ export default function CreateResumeModal({
   onClose,
   onSuccess,
   currentUser,
+  initialResume = null,
   lang = 'uz',
 }: CreateResumeModalProps) {
   const t = translations[lang || 'uz'];
@@ -63,15 +68,18 @@ export default function CreateResumeModal({
 
   // Form Fields
   const [title, setTitle] = useState('');
-  const [fullName, setFullName] = useState(currentUser?.name || 'Yusuf Usmonov');
-  const [phone, setPhone] = useState('+998 (90) 123-45-67');
-  const [email, setEmail] = useState(currentUser?.email || 'usmonovyusuf693@gmail.com');
+  const [fullName, setFullName] = useState(currentUser?.name || '');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState(currentUser?.email || '');
   const [location, setLocation] = useState('Toshkent shahri');
   const [summary, setSummary] = useState('');
   const [fileUrl, setFileUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const isEditing = Boolean(initialResume?.id);
 
   // AI states
   const [aiLoading, setAiLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [aiData, setAiData] = useState<AIResumeOutput | null>(null);
   const [analysis, setAnalysis] = useState<AIResumeAnalysis | null>(null);
@@ -85,9 +93,52 @@ export default function CreateResumeModal({
     if (currentUser?.email) setEmail(currentUser.email);
   }, [currentUser]);
 
+  // Load the resume being edited, or reset the form for a new one
+  useEffect(() => {
+    if (!isOpen) return;
+    setError(null);
+    setTitle(initialResume?.title || '');
+    setSummary(initialResume?.summary || '');
+    setFileUrl(initialResume?.file_url || '');
+    setActiveTab('edit');
+  }, [isOpen, initialResume]);
+
+  // Uploads a PDF/DOC file: a new resume when creating, the edited resume's attachment otherwise
+  const handleFileUpload = async (file: File) => {
+    setError(null);
+    setUploading(true);
+    try {
+      const res = await api.uploadResumeFile(file, title.trim() || undefined, initialResume?.id);
+      if (res.success && res.data?.file_url) {
+        if (isEditing) {
+          setFileUrl(res.data.file_url);
+        } else {
+          onSuccess();
+          onClose();
+        }
+      } else {
+        setError(res.error || t.applyError);
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDetectLocation = async () => {
+    setLocating(true);
+    try {
+      const detected = await detectCurrentLocation();
+      if (detected) setLocation(detected);
+    } catch {
+      setLocation('Toshkent shahri');
+    } finally {
+      setLocating(false);
+    }
+  };
+
   if (!isOpen) return null;
 
-  const handleAIGenerate = (customTitle?: string) => {
+  const handleAIGenerate = async (customTitle?: string) => {
     const targetTitle = (customTitle || title || '').trim();
     if (!targetTitle) {
       setTitle('Matematika o‘qituvchisi');
@@ -97,34 +148,37 @@ export default function CreateResumeModal({
     setAiLoading(true);
     setAiSuccessMessage(null);
 
-    setTimeout(() => {
-      try {
-        const result = generateResumeWithAI({
-          title: activeTitle,
-          fullName: fullName.trim() || undefined,
-          email: email.trim() || undefined,
-          phone: phone.trim() || undefined,
-          location: location.trim() || undefined,
-        });
+    try {
+      // Pull real vacancies from the backend API for this profession/role
+      const searchRes = await api.getVacancies({ q: activeTitle, limit: 10 }).catch(() => null);
+      const realVacancies = (searchRes && searchRes.success && searchRes.data?.vacancies) || [];
 
-        setTitle(result.title);
-        setFullName(result.fullName);
-        setEmail(result.email);
-        setPhone(result.phone);
-        setLocation(result.location);
-        setSummary(result.fullFormattedCV);
-        setAiData(result);
-        setAnalysis(result.analysis);
+      const result = generateResumeWithAI({
+        title: activeTitle,
+        fullName: fullName.trim() || undefined,
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+        location: location.trim() || undefined,
+        realMarketData: realVacancies,
+      });
 
-        setAiSuccessMessage(
-          `✨ AI «${result.title}» uchun mukammal original rezyume va ATS tahlilini tayyorladi!`
-        );
-      } catch (err) {
-        console.error('AI Resume Generation error', err);
-      } finally {
-        setAiLoading(false);
-      }
-    }, 320);
+      setTitle(result.title);
+      setFullName(result.fullName);
+      setEmail(result.email);
+      setPhone(result.phone);
+      setLocation(result.location);
+      setSummary(result.fullFormattedCV);
+      setAiData(result);
+      setAnalysis(result.analysis);
+
+      setAiSuccessMessage(
+        `✨ AI backenddagi real bozor ma’lumotlari asosida «${result.title}» uchun mukammal original rezyumeni shakllantirdi!`
+      );
+    } catch (err) {
+      console.error('AI Resume Generation error', err);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSelectSample = (sample: string) => {
@@ -159,11 +213,14 @@ export default function CreateResumeModal({
     setLoading(true);
 
     try {
-      const res = await api.createResume({
+      const payload = {
         title: title.trim() || 'Malakali Mutaxassis',
         summary: summary.trim(),
         file_url: fileUrl.trim() || undefined,
-      });
+      };
+      const res = isEditing
+        ? await api.updateResume(initialResume.id, { ...payload, file_url: fileUrl.trim() })
+        : await api.createResume(payload);
 
       if (res.success) {
         onSuccess();
@@ -195,7 +252,7 @@ export default function CreateResumeModal({
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-                Yangi rezyume joylashtirish
+                {isEditing ? t.editResumeTitle : 'Yangi rezyume joylashtirish'}
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-950/60 dark:to-indigo-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                   AI Tahlilchi
                 </span>
@@ -208,6 +265,7 @@ export default function CreateResumeModal({
 
           <button
             onClick={onClose}
+            aria-label="Close resume modal"
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X size={18} />
@@ -304,31 +362,32 @@ export default function CreateResumeModal({
           {/* TAB 1: EDIT MODE */}
           {activeTab === 'edit' && (
             <div className="space-y-4 animate-fadeIn">
-              {/* Job Title with AI Action Button */}
+              {/* Job Title with AI Action Button inside */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Kasbiy mutaxassislik / Lavozim nomi *
-                  </label>
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                  Kasbiy mutaxassislik / Lavozim nomi *
+                </label>
+
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    required
+                    placeholder="masalan: Matematika o‘qituvchisi, Senior Go Developer, Bosh buxgalter..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full pl-3.5 pr-12 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white transition"
+                  />
+
                   <button
                     type="button"
                     onClick={() => handleAIGenerate()}
                     disabled={aiLoading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition disabled:opacity-50"
+                    title="AI orqali real rezyume ma'lumotlarini to'ldirish"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 text-xs font-bold rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-sm hover:shadow-md active:scale-95 transition disabled:opacity-50"
                   >
-                    <Sparkles size={13} className={aiLoading ? 'animate-spin' : 'animate-pulse text-amber-300'} />
-                    <span>{aiLoading ? 'AI rezyume tuzmoqda...' : '✨ AI bilan to‘ldirish'}</span>
+                    <Sparkles size={16} className={aiLoading ? 'animate-spin text-amber-300' : 'text-amber-300'} />
                   </button>
                 </div>
-
-                <input
-                  type="text"
-                  required
-                  placeholder="masalan: Matematika o‘qituvchisi, Senior Go Developer, Bosh buxgalter..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
-                />
 
                 {/* Sample Chips */}
                 <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -346,8 +405,8 @@ export default function CreateResumeModal({
                 </div>
               </div>
 
-              {/* Personal Details Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Personal Details Row with Shahar / Manzil & Geolocation */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     To‘liq ism-sharifingiz
@@ -370,6 +429,30 @@ export default function CreateResumeModal({
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Shahar / Manzil
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      placeholder="masalan: Toshkent shahri"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="w-full pl-3 pr-9 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      disabled={locating}
+                      title="Haqiqiy joylashuvni aniqlash"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                      <MapPin size={15} className={locating ? 'animate-bounce text-blue-600' : ''} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -402,7 +485,7 @@ export default function CreateResumeModal({
                 <textarea
                   rows={9}
                   required
-                  placeholder="Ish tajribangiz, ta’limingiz, vazifalaringiz va asosiy ko‘nikmalaringiz (yoki yuqoridagi «AI bilan to‘ldirish» tugmasini bosing)..."
+                  placeholder="Ish tajribangiz, ta’limingiz, vazifalaringiz va asosiy ko‘nikmalaringiz (yoki yuqoridagi AI tugmasini bosing)..."
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
                   className="w-full p-3 text-xs leading-relaxed rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-mono text-[11px]"
@@ -416,11 +499,33 @@ export default function CreateResumeModal({
                 </label>
                 <input
                   type="text"
-                  placeholder="https://... yoki /uploads/resumes/my_cv.pdf"
+                  placeholder="https://..."
                   value={fileUrl}
                   onChange={(e) => setFileUrl(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
                 />
+              </div>
+
+              {/* Upload a ready-made resume file */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {t.uploadResumeFileLabel}
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                    e.target.value = '';
+                  }}
+                  className="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-bold hover:file:bg-blue-100 disabled:opacity-50"
+                />
+                {uploading && <p className="text-[11px] text-slate-500 mt-1">Yuklanmoqda...</p>}
+                {isEditing && fileUrl.startsWith('/uploads/') && (
+                  <p className="text-[11px] text-emerald-600 mt-1">✓ {t.resumeFileAttached}</p>
+                )}
               </div>
             </div>
           )}
@@ -432,7 +537,7 @@ export default function CreateResumeModal({
                 {/* CV Header */}
                 <div className="border-b border-slate-200 dark:border-slate-800 pb-5">
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
-                    {fullName || 'Yusuf Usmonov'}
+                    {fullName || '[Ism Familiya]'}
                   </h2>
                   <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-0.5">
                     {title || 'Malakali Mutaxassis'}
@@ -658,7 +763,7 @@ export default function CreateResumeModal({
               className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50"
             >
               <Plus size={16} />
-              <span>{loading ? 'Saqlanmoqda...' : 'Rezyumeni saqlash va e‘lon qilish'}</span>
+              <span>{loading ? 'Saqlanmoqda...' : isEditing ? t.saveChangesBtn : 'Rezyumeni saqlash va e‘lon qilish'}</span>
             </button>
           </div>
         </form>

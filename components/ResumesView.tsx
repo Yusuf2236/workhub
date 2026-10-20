@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Users, FileText, Download, MessageSquare, Clock, Plus, RefreshCw } from 'lucide-react';
+import { Users, FileText, Download, MessageSquare, Clock, Plus, RefreshCw, Pencil, Trash2, Lock } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
+import { resolveUploadUrl } from '../lib/api';
 
 interface ResumesViewProps {
   resumes: any[];
@@ -10,6 +11,9 @@ interface ResumesViewProps {
   onOpenChat: (resume?: any) => void;
   onRefresh?: () => void;
   loading?: boolean;
+  currentUserId?: string;
+  onEditResume?: (resume: any) => void;
+  onDeleteResume?: (resume: any) => void;
   lang?: Language;
 }
 
@@ -19,6 +23,9 @@ export default function ResumesView({
   onOpenChat,
   onRefresh,
   loading = false,
+  currentUserId,
+  onEditResume,
+  onDeleteResume,
   lang = 'uz',
 }: ResumesViewProps) {
   const t = translations[lang] || translations.uz;
@@ -74,7 +81,9 @@ export default function ResumesView({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {resumes.map((resume) => (
+          {resumes.map((resume) => {
+            const isOwn = Boolean(currentUserId) && resume.user_id === currentUserId;
+            return (
             <div
               key={resume.id}
               className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex flex-col justify-between shadow-sm hover:border-blue-400 dark:hover:border-blue-700 transition group"
@@ -95,6 +104,28 @@ export default function ResumesView({
                       </p>
                     </div>
                   </div>
+                  {isOwn && (onEditResume || onDeleteResume) && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      {onEditResume && (
+                        <button
+                          onClick={() => onEditResume(resume)}
+                          title={t.editBtn}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      )}
+                      {onDeleteResume && (
+                        <button
+                          onClick={() => onDeleteResume(resume)}
+                          title={t.deleteBtn}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <p className="text-xs text-slate-700 dark:text-slate-200 line-clamp-3 leading-relaxed mb-4 font-normal">
@@ -105,7 +136,7 @@ export default function ResumesView({
               <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
                 {resume.file_url ? (
                   <a
-                    href={resume.file_url}
+                    href={resolveUploadUrl(resume.file_url)}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
@@ -113,10 +144,16 @@ export default function ResumesView({
                     <Download size={14} />
                     <span>{t.viewFilePdf}</span>
                   </a>
+                ) : !isOwn ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400" title={t.contactsHiddenNote}>
+                    <Lock size={12} />
+                    {t.onlineProfile}
+                  </span>
                 ) : (
                   <span className="text-[11px] font-semibold text-slate-400">{t.onlineProfile}</span>
                 )}
 
+                {!isOwn && (
                 <button
                   onClick={() => onOpenChat(resume)}
                   className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-800 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
@@ -124,9 +161,11 @@ export default function ResumesView({
                   <MessageSquare size={14} />
                   <span>{t.contactCandidate}</span>
                 </button>
+                )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
