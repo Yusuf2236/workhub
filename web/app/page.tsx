@@ -1028,7 +1028,7 @@ export default function WZonePortal() {
                     <button
                       key={cat}
                       onClick={() => setSelectedCategory(cat)}
-                      className={`px-3.5 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition ${
+                      className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition ${
                         selectedCategory === cat
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold'
@@ -1041,15 +1041,15 @@ export default function WZonePortal() {
 
                 {/* Sub-Filters: 14 Regions of Uzbekistan & Job Type */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                  <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
                     {/* Region Selector with all 14 provinces */}
                     <div className="flex items-center gap-1.5">
-                      <MapPin size={14} className="text-blue-600 dark:text-blue-400" />
+                      <MapPin size={15} className="text-blue-600 dark:text-blue-400" />
                       <span className="font-bold text-slate-700 dark:text-slate-300">{t.regionLabel}</span>
                       <select
                         value={selectedLocation}
                         onChange={(e) => setSelectedLocation(e.target.value)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       >
                         {REGIONS.map((loc) => (
                           <option key={loc} value={loc}>
@@ -1061,12 +1061,12 @@ export default function WZonePortal() {
 
                     {/* Job Type Selector */}
                     <div className="flex items-center gap-1.5">
-                      <Briefcase size={14} className="text-blue-600 dark:text-blue-400" />
+                      <Briefcase size={15} className="text-blue-600 dark:text-blue-400" />
                       <span className="font-bold text-slate-700 dark:text-slate-300">{t.jobTypeLabel}</span>
                       <select
                         value={selectedJobType}
                         onChange={(e) => setSelectedJobType(e.target.value)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       >
                         {JOB_TYPES.map((jt) => (
                           <option key={jt} value={jt}>
@@ -1079,19 +1079,19 @@ export default function WZonePortal() {
 
                   <div className="flex items-center gap-2">
                     {vacanciesRefreshed && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold animate-fadeIn">
-                        <CheckCircle2 size={12} />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-xs font-bold animate-fadeIn">
+                        <CheckCircle2 size={13} />
                         {t.vacanciesRefreshedBadge}
                       </span>
                     )}
-                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <span className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">
                       {displayedVacancies().length} {t.vacanciesCount}
                     </span>
                     <button
                       onClick={isListTab && currentTab !== 'vacancies' ? fetchTabVacancies : handleRefreshVacancies}
                       disabled={listLoading}
                       title={t.refresh}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60 transition"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60 transition"
                     >
                       <RefreshCw size={14} className={listLoading ? 'animate-spin text-blue-600' : ''} />
                       <span>{t.refreshBtn}</span>
@@ -1218,7 +1218,7 @@ export default function WZonePortal() {
           }`}>
             <Home size={20} className={currentTab === 'feed' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
           </div>
-          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
             currentTab === 'feed'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
@@ -1242,7 +1242,7 @@ export default function WZonePortal() {
           }`}>
             <Briefcase size={20} className={currentTab === 'vacancies' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
           </div>
-          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
             currentTab === 'vacancies'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
@@ -1267,7 +1267,7 @@ export default function WZonePortal() {
             <MessageSquare size={20} className={currentTab === 'chat' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
             <span className="absolute top-1 right-2.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
           </div>
-          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
             currentTab === 'chat'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
@@ -1291,12 +1291,12 @@ export default function WZonePortal() {
           }`}>
             <FileCheck size={20} className={currentTab === 'applications' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
             {applications.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[10px] font-black flex items-center justify-center shadow-sm">
                 {applications.length}
               </span>
             )}
           </div>
-          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
             currentTab === 'applications'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
@@ -1324,7 +1324,7 @@ export default function WZonePortal() {
           }`}>
             <UserIcon size={20} className={currentTab === 'profile' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
           </div>
-          <span className={`text-[10.5px] tracking-tight mt-0.5 leading-none transition-colors ${
+          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
             currentTab === 'profile'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'

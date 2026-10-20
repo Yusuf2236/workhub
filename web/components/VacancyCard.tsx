@@ -63,25 +63,25 @@ export default function VacancyCard({
 
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
                 {vacancy.company}
               </span>
               {vacancy.is_verified !== false && (
-                <CheckCircle size={14} className="text-blue-600 fill-blue-100 dark:fill-blue-950" />
+                <CheckCircle size={15} className="text-blue-600 fill-blue-100 dark:fill-blue-950" />
               )}
-              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
+              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
                 WZone
               </span>
-              <span className="text-[11px] text-slate-400">•</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
-                <Clock size={12} />
+              <span className="text-xs text-slate-400">•</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
+                <Clock size={13} />
                 {formatRelativeTime(vacancy.created_at)}
               </span>
             </div>
 
             <h3
               onClick={() => onSelect(vacancy)}
-              className="text-base font-extrabold text-slate-900 dark:text-white mt-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 cursor-pointer transition line-clamp-1 leading-snug"
+              className="text-lg font-extrabold text-slate-900 dark:text-white mt-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 cursor-pointer transition line-clamp-1 leading-snug"
             >
               {vacancy.title}
             </h3>
@@ -108,27 +108,27 @@ export default function VacancyCard({
       {/* Badges: Salary, Location, Job Type */}
       <div className="flex flex-wrap items-center gap-2 mt-4">
         {vacancy.salary && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-black">
-            <DollarSign size={14} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm font-black">
+            <DollarSign size={15} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
             <span>{vacancy.salary}</span>
           </div>
         )}
 
         {vacancy.location && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 text-xs font-bold">
-            <MapPin size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-bold">
+            <MapPin size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
             <span>{vacancy.location}</span>
           </div>
         )}
 
         {vacancy.job_type && (
-          <div className="inline-flex items-center px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-800">
+          <div className="inline-flex items-center px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 text-xs sm:text-sm font-bold border border-blue-200 dark:border-blue-800">
             {vacancy.job_type}
           </div>
         )}
 
         {vacancy.category && (
-          <div className="inline-flex items-center px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 text-xs font-semibold">
+          <div className="inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-semibold">
             {vacancy.category}
           </div>
         )}
@@ -136,7 +136,7 @@ export default function VacancyCard({
 
       {/* Description Snippet */}
       {vacancy.description && (
-        <p className="text-xs text-slate-700 dark:text-slate-300 mt-3 line-clamp-2 leading-relaxed font-normal">
+        <p className="text-sm text-slate-700 dark:text-slate-300 mt-3 line-clamp-2 leading-relaxed font-normal">
           {vacancy.description}
         </p>
       )}
@@ -147,13 +147,13 @@ export default function VacancyCard({
           {tagsList.slice(0, 4).map((tag: string, idx: number) => (
             <span
               key={idx}
-              className="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200/60 dark:border-slate-700/60"
+              className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200/60 dark:border-slate-700/60"
             >
               {tag}
             </span>
           ))}
           {tagsList.length > 4 && (
-            <span className="text-[11px] px-1.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold">
+            <span className="text-xs px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold">
               +{tagsList.length - 4}
             </span>
           )}
@@ -161,8 +161,8 @@ export default function VacancyCard({
 
         <div className="flex items-center gap-2">
           {vacancy.views_count !== undefined && (
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 mr-1 hidden sm:flex">
-              <Eye size={13} />
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 mr-1 hidden sm:flex">
+              <Eye size={14} />
               <span>{vacancy.views_count}</span>
             </span>
           )}
@@ -172,10 +172,10 @@ export default function VacancyCard({
               e.stopPropagation();
               onSelect(vacancy);
             }}
-            className="text-[11px] text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 font-bold flex items-center gap-1 transition px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 mr-1"
+            className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 font-bold flex items-center gap-1 transition px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 mr-1"
             title={t.commentsTitle}
           >
-            <MessageCircle size={13} className="text-blue-500" />
+            <MessageCircle size={14} className="text-blue-500" />
             <span>{vacancy.comments_count || 0}</span>
           </button>
 
@@ -184,10 +184,10 @@ export default function VacancyCard({
               e.stopPropagation();
               onApply(vacancy);
             }}
-            className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-bold shadow-md shadow-blue-500/20 transition flex items-center gap-1.5"
           >
             <span>{t.applyShort}</span>
-            <ArrowRight size={14} />
+            <ArrowRight size={15} />
           </button>
         </div>
       </div>

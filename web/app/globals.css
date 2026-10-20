@@ -14,6 +14,7 @@
 
 /* ─── Base ─────────────────────────────────────── */
 html {
+  font-size: 16px;
   color-scheme: light;
 }
 html.dark {
@@ -26,6 +27,21 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Typography readability boost (prevents squintingly small micro-fonts) ───── */
+.text-\[9px\] {
+  font-size: 0.72rem !important; /* ~11.5px */
+  line-height: 1rem !important;
+}
+.text-\[10px\],
+.text-\[10\.5px\] {
+  font-size: 0.75rem !important; /* 12px */
+  line-height: 1.05rem !important;
+}
+.text-\[11px\] {
+  font-size: 0.8125rem !important; /* 13px */
+  line-height: 1.15rem !important;
 }
 
 /* ─── Light mode explicit overrides (only when html is NOT dark) ───── */

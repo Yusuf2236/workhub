@@ -220,37 +220,37 @@ export default function VacancyDetailModal({
           {/* Key Metrics Grid */}
           <div className={`grid grid-cols-2 gap-3 ${isPane ? '' : 'sm:grid-cols-4'}`}>
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-              <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                <DollarSign size={13} /> {lang === 'ru' ? 'Зарплата' : lang === 'en' ? 'Salary' : 'Maosh'}
+              <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                <DollarSign size={14} /> {lang === 'ru' ? 'Зарплата' : lang === 'en' ? 'Salary' : 'Maosh'}
               </span>
-              <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                 {vacancy.salary || t.salaryNegotiable}
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-              <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                <MapPin size={13} /> {lang === 'ru' ? 'Локация' : lang === 'en' ? 'Location' : 'Joylashuv'}
+              <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                <MapPin size={14} /> {lang === 'ru' ? 'Локация' : lang === 'en' ? 'Location' : 'Joylashuv'}
               </span>
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-1 truncate">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mt-1 truncate">
                 {t.regions[vacancy.location] || vacancy.location || (lang === 'ru' ? 'Узбекистан' : lang === 'en' ? 'Uzbekistan' : 'O‘zbekiston')}
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-              <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                <Briefcase size={13} /> {lang === 'ru' ? 'Занятость' : lang === 'en' ? 'Job Type' : 'Bandlik'}
+              <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                <Briefcase size={14} /> {lang === 'ru' ? 'Занятость' : lang === 'en' ? 'Job Type' : 'Bandlik'}
               </span>
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-1">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mt-1">
                 {t.jobTypes[vacancy.job_type] || vacancy.job_type || 'Full-time'}
               </p>
             </div>
 
             <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-              <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                <Calendar size={13} /> {lang === 'ru' ? 'Опыт' : lang === 'en' ? 'Experience' : 'Tajriba'}
+              <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                <Calendar size={14} /> {lang === 'ru' ? 'Опыт' : lang === 'en' ? 'Experience' : 'Tajriba'}
               </span>
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-1">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mt-1">
                 {vacancy.experience || '1-3 yil'}
               </p>
             </div>

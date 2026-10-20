@@ -94,7 +94,7 @@ export default function Header({
           <div className="relative hidden sm:block">
             <button
               onClick={() => setShowAddMenu(!showAddMenu)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl shadow-md transition active:scale-95 ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl shadow-md transition active:scale-95 ${
                 isOneIdUser
                   ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
                   : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-sm'
@@ -102,7 +102,7 @@ export default function Header({
               title={isOneIdUser ? t.addListing : 'Ochilishi uchun OneID bilan ro‘yxatdan o‘ting'}
             >
               {isOneIdUser ? (
-                <Plus size={16} />
+                <Plus size={17} />
               ) : (
                 <Lock size={15} className="text-amber-500 shrink-0" />
               )}
@@ -114,18 +114,18 @@ export default function Header({
             {showAddMenu && isOneIdUser && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowAddMenu(false)} />
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 animate-fadeIn">
+                <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 animate-fadeIn">
                   <button
                     onClick={() => {
                       setShowAddMenu(false);
                       onOpenCreateVacancy();
                     }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-700/60 flex items-center gap-2.5 transition"
+                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-700/60 flex items-center gap-2.5 transition"
                   >
-                    <Briefcase size={16} className="text-blue-600 shrink-0" />
+                    <Briefcase size={17} className="text-blue-600 shrink-0" />
                     <div>
                       <div className="font-bold text-slate-900 dark:text-white">{t.createVacancy}</div>
-                      <div className="text-[11px] text-slate-400">{t.createVacancySub}</div>
+                      <div className="text-xs text-slate-400">{t.createVacancySub}</div>
                     </div>
                   </button>
                   <button
@@ -133,12 +133,12 @@ export default function Header({
                       setShowAddMenu(false);
                       onOpenCreateResume();
                     }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-700/60 flex items-center gap-2.5 transition"
+                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-700/60 flex items-center gap-2.5 transition"
                   >
-                    <FileText size={16} className="text-emerald-600 shrink-0" />
+                    <FileText size={17} className="text-emerald-600 shrink-0" />
                     <div>
                       <div className="font-bold text-slate-900 dark:text-white">{t.createResume}</div>
-                      <div className="text-[11px] text-slate-400">{t.createResumeSub}</div>
+                      <div className="text-xs text-slate-400">{t.createResumeSub}</div>
                     </div>
                   </button>
                 </div>
@@ -187,7 +187,7 @@ export default function Header({
               title="Tilni tanlash"
             >
               <FlagIcon lang={lang} className="w-5 h-3.5" />
-              <span className="uppercase text-[11px] sm:text-xs tracking-wider">
+              <span className="uppercase text-xs sm:text-sm tracking-wider">
                 {lang === 'uz' ? 'O‘z' : lang === 'ru' ? 'Ру' : 'En'}
               </span>
               <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 ${showLangMenu ? 'rotate-180' : ''}`} />
@@ -196,8 +196,8 @@ export default function Header({
             {showLangMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowLangMenu(false)} />
-                <div className="absolute right-0 mt-2 w-44 bg-white/95 dark:bg-slate-850/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-1.5 z-50 animate-fadeIn">
-                  <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 mb-1">
+                <div className="absolute right-0 mt-2 w-48 bg-white/95 dark:bg-slate-850/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-1.5 z-50 animate-fadeIn">
+                  <div className="px-2.5 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 mb-1">
                     Tilni tanlang
                   </div>
                   {languages.map((l) => (
@@ -207,7 +207,7 @@ export default function Header({
                         onSelectLang(l.code);
                         setShowLangMenu(false);
                       }}
-                      className={`w-full px-2.5 py-2 text-left rounded-xl text-xs font-bold flex items-center justify-between transition ${
+                      className={`w-full px-3 py-2.5 text-left rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition ${
                         lang === l.code
                           ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400'
                           : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
@@ -217,7 +217,7 @@ export default function Header({
                         <FlagIcon lang={l.code} className="w-5 h-3.5" />
                         <span>{l.label}</span>
                       </div>
-                      {lang === l.code && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                      {lang === l.code && <Check size={15} className="text-blue-600 dark:text-blue-400 shrink-0" />}
                     </button>
                   ))}
                 </div>
@@ -256,41 +256,41 @@ export default function Header({
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-2 p-1 pl-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                 >
-                  <div className="w-7 h-7 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-sm flex items-center justify-center overflow-hidden shrink-0">
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
                       user.name?.[0]?.toUpperCase() || 'U'
                     )}
                   </div>
-                  <span className="text-xs font-bold text-slate-900 dark:text-white max-w-[110px] truncate">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white max-w-[120px] truncate">
                     {user.account_type === 'company' && user.company_name ? user.company_name : user.name}
                   </span>
                   <ChevronDown size={14} className="text-slate-400 mr-1" />
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-50 animate-fadeIn">
+                  <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-50 animate-fadeIn">
                     <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700">
-                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                         {user.account_type === 'company' && user.company_name ? user.company_name : user.name}
                       </p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{user.email}</p>
                       {user.account_type === 'company' ? (
-                        <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                        <span className="inline-block mt-1.5 text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                           {user.company_name ? `Yuridik: ${user.company_name}` : 'Yuridik shaxs'}
                         </span>
                       ) : user.auth_provider && (
-                        <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        <span className="inline-block mt-1.5 text-xs font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                           {user.auth_provider === 'oneid' ? 'OneID Tasdiqlangan' : user.auth_provider}
                         </span>
                       )}
                     </div>
                     <button
                       onClick={handleLogout}
-                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2 transition"
+                      className="w-full px-4 py-2.5 text-left text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2 transition"
                     >
-                      <LogOut size={15} />
+                      <LogOut size={16} />
                       <span>{t.logoutBtn}</span>
                     </button>
                   </div>
@@ -299,7 +299,7 @@ export default function Header({
             ) : (
               <button
                 onClick={() => onOpenAuth('default')}
-                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition shadow-sm"
+                className="px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 active:scale-95 transition shadow-sm"
               >
                 {t.loginBtn}
               </button>

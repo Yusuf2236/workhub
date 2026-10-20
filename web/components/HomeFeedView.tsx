@@ -548,7 +548,7 @@ export default function HomeFeedView({
     <button
       key={key}
       onClick={() => setStreamFilter(key)}
-      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+      className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition ${
         streamFilter === key
           ? 'bg-blue-600 text-white shadow-sm'
           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -573,7 +573,7 @@ export default function HomeFeedView({
 
           {/* Top Bar: Live Beacon Badge & Slide Dots */}
           <div className="flex items-center justify-between gap-2 mb-2 relative z-10 flex-wrap">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-[11px] font-bold text-blue-200">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-xs font-bold text-blue-200">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -606,10 +606,10 @@ export default function HomeFeedView({
                   {PROMO_SLIDES[promoSlide].badge}
                 </span>
               </div>
-              <h3 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug line-clamp-2 h-[2.75rem] sm:h-[2.85rem] flex items-center">
+              <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug line-clamp-2 h-[2.75rem] sm:h-[2.85rem] flex items-center">
                 {PROMO_SLIDES[promoSlide].title}
               </h3>
-              <p className="text-xs text-slate-300 leading-relaxed font-medium line-clamp-2 h-[2.4rem] flex items-center">
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium line-clamp-2 h-[2.4rem] flex items-center">
                 {PROMO_SLIDES[promoSlide].desc}
               </p>
             </div>
@@ -618,16 +618,16 @@ export default function HomeFeedView({
               <button
                 type="button"
                 onClick={PROMO_SLIDES[promoSlide].action}
-                className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r ${PROMO_SLIDES[promoSlide].accent} hover:brightness-110 active:scale-95 transition shadow-md shadow-black/30 group`}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold rounded-xl text-white bg-gradient-to-r ${PROMO_SLIDES[promoSlide].accent} hover:brightness-110 active:scale-95 transition shadow-md shadow-black/30 group`}
               >
                 <span>{PROMO_SLIDES[promoSlide].cta}</span>
-                <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
           </div>
 
           {/* Interactive Feature Highlights Strip */}
-          <div className="mt-3 pt-2.5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-semibold text-slate-300 relative z-10">
+          <div className="mt-3 pt-2.5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-semibold text-slate-300 relative z-10">
             <div className="flex items-center gap-1.5">
               <Sparkles size={13} className="text-amber-400 shrink-0" />
               <span>Real bozor AI tahlili</span>

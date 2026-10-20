@@ -9,6 +9,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontSize: {
+        xs: ['0.8125rem', { lineHeight: '1.2rem' }],   // 13px (was 12px)
+        sm: ['0.90625rem', { lineHeight: '1.35rem' }], // 14.5px (was 14px)
+        base: ['1rem', { lineHeight: '1.5rem' }],       // 16px
+        lg: ['1.125rem', { lineHeight: '1.75rem' }],    // 18px
+        xl: ['1.25rem', { lineHeight: '1.75rem' }],     // 20px
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],      // 24px
+      },
       colors: {
         workhub: {
           50: "#eff6ff",
