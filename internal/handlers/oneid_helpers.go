@@ -86,6 +86,10 @@ func parsePINFL(pinfl string) (gender, birthDate, region string) {
 }
 
 func OneIDQRGenerate(c *gin.Context) {
+	if !oneIDQREnabled() {
+		response.Error(c, http.StatusNotFound, "OneID QR orqali kirish o‘chirilgan")
+		return
+	}
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get("https://id.egov.uz/api/identity/auth/qr/generate")
 	if err != nil {

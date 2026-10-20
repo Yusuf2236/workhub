@@ -131,3 +131,60 @@ func TestOneIDCallbackRejectsSelfDeclaredPINFL(t *testing.T) {
 		t.Fatalf("self-declared PINFL must not log in outside demo mode. Body: %s", w.Body.String())
 	}
 }
+
+func TestOneIDCallbackPortalAndQR(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.POST("/api/v1/auth/oneid/callback", OneIDCallback)
+
+	t.Run("Accepts OneID portal login with citizen details", func(t *testing.T) {
+		payload := map[string]string{
+			"code":       "one_code-portal-test-123456",
+			"pinfl":      "31201991234567",
+			"full_name":  "Yusuf Usmonov",
+			"phone":      "+998901234567",
+			"location":   "Toshkent shahri",
+			"birth_date": "12.01.1999",
+			"gender":     "Erkak",
+		}
+		bodyBytes, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/auth/oneid/callback", bytes.NewBuffer(bodyBytes))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d. Body: %s", w.Code, w.Body.String())
+		}
+
+		var resp map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("expected valid JSON: %v", err)
+		}
+		data, ok := resp["data"].(map[string]any)
+		if !ok || data["token"] == "" {
+			t.Fatalf("expected token in response data: %v", resp)
+		}
+		if data["pinfl"] != "31201991234567" {
+			t.Fatalf("expected PINFL in response data: %v", data)
+		}
+	})
+
+	t.Run("Accepts OneID simulated QR login", func(t *testing.T) {
+		payload := map[string]string{
+			"code":      "one_code-demo-qr-998877",
+			"pinfl":     "31201991234567",
+			"full_name": "Yusuf Usmonov",
+		}
+		bodyBytes, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/auth/oneid/callback", bytes.NewBuffer(bodyBytes))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d. Body: %s", w.Code, w.Body.String())
+		}
+	})
+}
+

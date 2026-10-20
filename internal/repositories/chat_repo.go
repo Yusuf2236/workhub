@@ -46,17 +46,22 @@ func (r *postgresChatRepo) SaveMessage(msg models.ChatMessage) error {
 }
 
 func (r *postgresChatRepo) ListByRoom(roomID string) ([]models.ChatMessage, error) {
+	// Take the newest 100 messages, then return them oldest-first for display
 	query := `
-		SELECT 
-			m.id, m.room_id, COALESCE(m.user_id::text, ''), m.content, m.created_at,
-			COALESCE(NULLIF(m.sender_name, ''), u.name, 'WZone Foydalanuvchisi') as sender_name,
-			COALESCE(NULLIF(m.sender_avatar, ''), p.avatar_url, u.avatar_url, '') as sender_avatar
-		FROM chat_messages m
-		LEFT JOIN users u ON m.user_id = u.id
-		LEFT JOIN profiles p ON m.user_id = p.user_id
-		WHERE m.room_id = $1
-		ORDER BY m.created_at ASC
-		LIMIT 100`
+		SELECT id, room_id, user_id, content, created_at, sender_name, sender_avatar
+		FROM (
+			SELECT
+				m.id, m.room_id, COALESCE(m.user_id::text, '') AS user_id, m.content, m.created_at,
+				COALESCE(NULLIF(m.sender_name, ''), u.name, 'WZone Foydalanuvchisi') AS sender_name,
+				COALESCE(NULLIF(m.sender_avatar, ''), p.avatar_url, u.avatar_url, '') AS sender_avatar
+			FROM chat_messages m
+			LEFT JOIN users u ON m.user_id = u.id
+			LEFT JOIN profiles p ON m.user_id = p.user_id
+			WHERE m.room_id = $1
+			ORDER BY m.created_at DESC
+			LIMIT 100
+		) recent
+		ORDER BY created_at ASC`
 	rows, err := r.db.Query(query, roomID)
 	if err != nil {
 		return nil, err

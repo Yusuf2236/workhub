@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Yusuf2236/workhub/backend/internal/middleware"
 	"github.com/Yusuf2236/workhub/backend/internal/models"
-	"github.com/Yusuf2236/workhub/backend/pkg/jwt"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -133,6 +134,7 @@ func (c *WsClient) readPump(h *ChatHub) {
 	}()
 
 	c.conn.SetReadLimit(65536)
+	windowStart, sentInWindow := time.Now(), 0
 
 	for {
 		_, rawMsg, err := c.conn.ReadMessage()
@@ -176,7 +178,17 @@ func (c *WsClient) readPump(h *ChatHub) {
 			continue
 		}
 
-		now := time.Now().UTC()
+		// Flood protection: at most wsMessagesPerWindow messages per window per socket
+		now := time.Now()
+		if now.Sub(windowStart) >= wsRateWindow {
+			windowStart, sentInWindow = now, 0
+		}
+		if sentInWindow >= wsMessagesPerWindow {
+			c.safeSend([]byte(`{"type":"error","error":"Juda tez yozyapsiz, biroz kuting"}`))
+			continue
+		}
+		sentInWindow++
+
 		chatMsg := models.ChatMessage{
 			ID:           uuid.NewString(),
 			RoomID:       c.roomID,
@@ -184,7 +196,7 @@ func (c *WsClient) readPump(h *ChatHub) {
 			SenderName:   c.userName,
 			SenderAvatar: c.avatarURL,
 			Content:      content,
-			CreatedAt:    now,
+			CreatedAt:    now.UTC(),
 		}
 
 		if chatRepo != nil {
@@ -195,10 +207,16 @@ func (c *WsClient) readPump(h *ChatHub) {
 	}
 }
 
-const maxChatMessageLen = 4000
+const (
+	maxChatMessageLen   = 4000
+	wsMessagesPerWindow = 10
+	wsRateWindow        = 10 * time.Second
+)
 
-// canAccessRoom enforces that direct-message rooms ("dm_<userA>_<userB>") are only
-// readable/writable by their two participants. Public rooms are open to everyone.
+// canAccessRoom enforces hh.uz style permissions:
+// - "app_<appID>": ONLY accessible by the candidate who sent the CV (app.UserID)
+//   or the employer who posted the vacancy (vacancy.CreatedBy).
+// - "dm_<userA>_<userB>": only accessible by userA and userB.
 func canAccessRoom(roomID, userID string) bool {
 	if roomID == "" || len(roomID) > 120 {
 		return false
@@ -208,18 +226,53 @@ func canAccessRoom(roomID, userID string) bool {
 			return false
 		}
 	}
-	if !strings.HasPrefix(roomID, "dm_") {
-		return true
-	}
-	if userID == "" || userID == "guest" {
+
+	if strings.HasPrefix(roomID, "app_") {
+		if userID == "" || userID == "guest" {
+			return false
+		}
+		appID := strings.TrimPrefix(roomID, "app_")
+		if applicationRepo != nil {
+			app, err := applicationRepo.Get(appID)
+			if err != nil || app == nil {
+				return false
+			}
+			if app.UserID == userID {
+				return true
+			}
+			if vacancyRepo != nil {
+				vac, err := vacancyRepo.Get(app.VacancyID)
+				if err == nil && vac != nil && vac.CreatedBy == userID {
+					return true
+				}
+			}
+			return false
+		}
+		if a, ok := applications[appID]; ok {
+			if a.UserID == userID {
+				return true
+			}
+			if v, ok := vacancies[a.VacancyID]; ok && v.CreatedBy == userID {
+				return true
+			}
+		}
 		return false
 	}
-	for _, participant := range strings.Split(strings.TrimPrefix(roomID, "dm_"), "_") {
-		if participant == userID {
-			return true
+
+	if strings.HasPrefix(roomID, "dm_") {
+		if userID == "" || userID == "guest" {
+			return false
 		}
+		for _, participant := range strings.Split(strings.TrimPrefix(roomID, "dm_"), "_") {
+			if participant == userID {
+				return true
+			}
+		}
+		return false
 	}
-	return false
+
+	// Legacy public rooms
+	return true
 }
 
 func ChatHealth(c *gin.Context) {
@@ -349,12 +402,72 @@ func SendChatMessage(c *gin.Context) {
 }
 
 func ListChatRooms(c *gin.Context) {
-	rooms := []gin.H{
-		{"id": "general", "name": "Umumiy IT Muloqot", "description": "Barcha IT mutaxassislar va qidiruvchilar uchun ochiq suhbat", "icon": "hash"},
-		{"id": "ish-qidiruvchilar", "name": "Nomzodlar & Dasturchilar", "description": "Ish qidirayotgan dasturchilar va rezyume muhokamasi", "icon": "users"},
-		{"id": "ish-beruvchilar", "name": "Ish beruvchilar & HR", "description": "HR menejerlar va kompaniya vakillari muloqoti", "icon": "briefcase"},
-		{"id": "savol-javob", "name": "Savol-Javob & Intervyu", "description": "IT intervyulari, test savollari va maslahatlar", "icon": "help-circle"},
+	userID := currentUserID(c)
+	if userID == "" || userID == "guest" {
+		response.Success(c, http.StatusOK, gin.H{"rooms": []gin.H{}})
+		return
 	}
+
+	var rooms []gin.H
+
+	if applicationRepo != nil {
+		// 1. Applications submitted by this candidate
+		myApps, _ := applicationRepo.ListByUser(userID)
+		for _, a := range myApps {
+			companyName := a.VacancyCompany
+			if companyName == "" {
+				companyName = "Kompaniya"
+			}
+			rooms = append(rooms, gin.H{
+				"id":              fmt.Sprintf("app_%s", a.ID),
+				"application_id":  a.ID,
+				"vacancy_id":      a.VacancyID,
+				"name":            companyName,
+				"role":            "employer",
+				"role_label":      "Ish beruvchi",
+				"opponent_name":   companyName,
+				"vacancy_title":   a.VacancyTitle,
+				"vacancy_company": a.VacancyCompany,
+				"applicant_name":  a.ApplicantName,
+				"status":          a.Status,
+				"resume_title":    a.ResumeTitle,
+				"created_at":      a.CreatedAt.Format(time.RFC3339),
+				"description":     fmt.Sprintf("«%s» vakansiyasi bo‘yicha ariza", a.VacancyTitle),
+				"icon":            "briefcase",
+			})
+		}
+
+		// 2. Applications received by this employer for vacancies they posted
+		recApps, _ := applicationRepo.ListForVacancyOwner(userID)
+		for _, a := range recApps {
+			candidateName := a.ApplicantName
+			if candidateName == "" {
+				candidateName = "Nomzod"
+			}
+			rooms = append(rooms, gin.H{
+				"id":              fmt.Sprintf("app_%s", a.ID),
+				"application_id":  a.ID,
+				"vacancy_id":      a.VacancyID,
+				"name":            candidateName,
+				"role":            "applicant",
+				"role_label":      "Nomzod (CV topshirgan)",
+				"opponent_name":   candidateName,
+				"vacancy_title":   a.VacancyTitle,
+				"vacancy_company": a.VacancyCompany,
+				"applicant_name":  candidateName,
+				"status":          a.Status,
+				"resume_title":    a.ResumeTitle,
+				"created_at":      a.CreatedAt.Format(time.RFC3339),
+				"description":     fmt.Sprintf("«%s» vakansiyasiga ariza (CV)", a.VacancyTitle),
+				"icon":            "user",
+			})
+		}
+	}
+
+	if rooms == nil {
+		rooms = []gin.H{}
+	}
+
 	response.Success(c, http.StatusOK, gin.H{"rooms": rooms})
 }
 
@@ -379,7 +492,7 @@ func HandleChatSocket(c *gin.Context) {
 	}
 
 	if tokenStr != "" {
-		claims, err := jwt.ParseToken(tokenStr)
+		claims, err := middleware.ParseValidToken(tokenStr)
 		if err != nil || claims.UserID == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": false, "error": "invalid token"})
 			return

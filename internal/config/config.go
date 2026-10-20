@@ -15,9 +15,9 @@ type Config struct {
 		Env  string
 	}
 	JWT struct {
-		Secret     string
-		AccessTTL  time.Duration
-		RefreshTTL time.Duration
+		Secret string
+		// TTL is how long a login lasts; logout and password reset revoke tokens earlier
+		TTL time.Duration
 	}
 	Database struct {
 		Host     string
@@ -69,8 +69,7 @@ func Load() (*Config, error) {
 	v.SetDefault("PORT", 8080)
 	v.SetDefault("APP_ENV", "development")
 	v.SetDefault("JWT_SECRET", "dev-secret")
-	v.SetDefault("JWT_ACCESS_TTL", "15m")
-	v.SetDefault("JWT_REFRESH_TTL", "168h")
+	v.SetDefault("JWT_TTL", "168h")
 	v.SetDefault("DB_HOST", "localhost")
 	v.SetDefault("DB_PORT", 5433)
 	v.SetDefault("DB_USER", "postgres")
@@ -94,8 +93,7 @@ func Load() (*Config, error) {
 	cfg.Server.Port = v.GetInt("PORT")
 	cfg.Server.Env = v.GetString("APP_ENV")
 	cfg.JWT.Secret = v.GetString("JWT_SECRET")
-	cfg.JWT.AccessTTL, _ = time.ParseDuration(v.GetString("JWT_ACCESS_TTL"))
-	cfg.JWT.RefreshTTL, _ = time.ParseDuration(v.GetString("JWT_REFRESH_TTL"))
+	cfg.JWT.TTL, _ = time.ParseDuration(v.GetString("JWT_TTL"))
 
 	cfg.Database.Host = v.GetString("DB_HOST")
 	cfg.Database.Port = v.GetInt("DB_PORT")

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -33,7 +34,7 @@ func ListResumes(c *gin.Context) {
 			response.Error(c, http.StatusInternalServerError, "failed to query resumes")
 			return
 		}
-		response.Success(c, http.StatusOK, gin.H{"resumes": items})
+		response.Success(c, http.StatusOK, gin.H{"resumes": redactForViewer(c, items)})
 		return
 	}
 
@@ -44,7 +45,7 @@ func ListResumes(c *gin.Context) {
 		}
 		items = append(items, r)
 	}
-	response.Success(c, http.StatusOK, gin.H{"resumes": items})
+	response.Success(c, http.StatusOK, gin.H{"resumes": redactForViewer(c, items)})
 }
 
 func CreateResume(c *gin.Context) {
@@ -105,6 +106,20 @@ func UploadResumeFile(c *gin.Context) {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	// resume_id attaches the file to an existing resume instead of creating a new one
+	var target *models.Resume
+	if id := strings.TrimSpace(c.PostForm("resume_id")); id != "" {
+		target, err = findResume(id)
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "failed to query resume")
+			return
+		}
+		if target == nil || target.UserID != userID.(string) {
+			response.Error(c, http.StatusNotFound, "resume not found")
+			return
+		}
+	}
 	uniqueFilename := fmt.Sprintf("%s_%s%s", userID.(string), uuid.NewString(), ext)
 	uploadDir := "./uploads/resumes"
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
@@ -119,6 +134,26 @@ func UploadResumeFile(c *gin.Context) {
 	}
 
 	fileURL := fmt.Sprintf("/uploads/resumes/%s", uniqueFilename)
+
+	if target != nil {
+		oldFile := target.FileURL
+		target.FileURL = fileURL
+		target.UpdatedAt = time.Now().UTC()
+		if resumeRepo != nil {
+			if err := resumeRepo.Update(*target); err != nil {
+				_ = os.Remove(dst)
+				response.Error(c, http.StatusInternalServerError, "failed to update resume")
+				return
+			}
+		} else {
+			resumes[target.ID] = *target
+		}
+		if strings.HasPrefix(oldFile, "/uploads/resumes/") {
+			_ = os.Remove(filepath.Join(uploadDir, filepath.Base(oldFile)))
+		}
+		response.Success(c, http.StatusOK, gin.H{"resume": target, "file_url": fileURL})
+		return
+	}
 
 	title := strings.TrimSpace(c.PostForm("title"))
 	if title == "" {
@@ -197,7 +232,79 @@ func GetResume(c *gin.Context) {
 		response.Error(c, http.StatusNotFound, "resume not found")
 		return
 	}
+	if !canSeeResumeContacts(c, resume) {
+		redacted := redactResume(*resume)
+		resume = &redacted
+	}
 	response.Success(c, http.StatusOK, gin.H{"resume": resume})
+}
+
+var (
+	resumeEmailPattern    = regexp.MustCompile(`[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}`)
+	resumePhonePattern    = regexp.MustCompile(`\+?\d[\d\s\-()]{7,}\d`)
+	resumeTelegramPattern = regexp.MustCompile(`(?i)(t\.me/|@)[A-Za-z0-9_]{4,}`)
+)
+
+// redactResume hides contact details from people browsing the candidate pool.
+// They reach the candidate through the in-app chat instead; the full resume is
+// shared with an employer once the candidate applies to their vacancy.
+func redactResume(r models.Resume) models.Resume {
+	summary := resumeEmailPattern.ReplaceAllString(r.Summary, "[email yashirilgan]")
+	summary = resumePhonePattern.ReplaceAllStringFunc(summary, func(match string) string {
+		// Year ranges like "2019 - 2023" also match the pattern; phones have 9+ digits
+		digits := 0
+		for _, ch := range match {
+			if ch >= '0' && ch <= '9' {
+				digits++
+			}
+		}
+		if digits < 9 {
+			return match
+		}
+		return "[telefon yashirilgan]"
+	})
+	summary = resumeTelegramPattern.ReplaceAllString(summary, "[telegram yashirilgan]")
+	r.Summary = summary
+	r.FileURL = ""
+	return r
+}
+
+// canSeeResumeContacts allows the owner, admins and employers who received an
+// application with this resume.
+func canSeeResumeContacts(c *gin.Context, r *models.Resume) bool {
+	viewer := currentUserID(c)
+	if isAdmin(c) || (viewer != "" && r.UserID == viewer) {
+		return true
+	}
+	if applicationRepo == nil || viewer == "" {
+		return false
+	}
+	received, err := applicationRepo.ListForVacancyOwner(viewer)
+	if err != nil {
+		return false
+	}
+	for _, app := range received {
+		if app.ResumeID == r.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func redactForViewer(c *gin.Context, items []models.Resume) []models.Resume {
+	viewer := currentUserID(c)
+	if isAdmin(c) {
+		return items
+	}
+	out := make([]models.Resume, len(items))
+	for i, r := range items {
+		if r.UserID == viewer {
+			out[i] = r
+		} else {
+			out[i] = redactResume(r)
+		}
+	}
+	return out
 }
 
 func UpdateResume(c *gin.Context) {

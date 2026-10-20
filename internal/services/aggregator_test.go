@@ -44,3 +44,32 @@ func TestHHMapping(t *testing.T) {
 		t.Errorf("stripHH = %q", got)
 	}
 }
+
+func TestCategorizeVacancyTitles(t *testing.T) {
+	cases := map[string]string{
+		"Оператор колл-центра (НОЧНАЯ СМЕНА)":                   "Mijozlarga xizmat",
+		"Tikuv sexiga ayollarni tikuvchilarni ishga taklif":     "Qurilish & Ishlab chiqarish",
+		"Savdo agenti (Torgoviy predstavitel)":                  "Marketing & Savdo",
+		"Taom yetkazib berishga kuryer":                         "Transport & Logistika",
+		"Диспетчер (Logistika)":                                 "Transport & Logistika",
+		"QA Engineer":                                           "IT & Dasturlash",
+		"Python / FastAPI & Django Backend Muhandisi":           "IT & Dasturlash",
+		"Texnik ofis muhandisi":                                 "Qurilish & Ishlab chiqarish",
+		"Ищем сильного мобилографа / контент-мейкера":           "Marketing & Savdo",
+		"Matematika o‘qituvchisi":                               "Ta’lim & Fan",
+		"Sotuv menejeri (ta`lim sohasida)":                      "Marketing & Savdo",
+		"Avtomoykaga ishchilar kerak":                           "Servis & Xizmat ko‘rsatish",
+		"Credit visit studios":                                  "Servis & Xizmat ko‘rsatish", // no "it"/"ios" inside words
+		"Three shifts":                                          "Servis & Xizmat ko‘rsatish", // no "hr" inside words
+		"HR menejer":                                            "HR & Menejment",
+		"Texnik Qo‘llab-quvvatlash Mutaxassisi (Helpdesk / L1)": "IT & Dasturlash",
+		"Mebel sexida ish":                                      "Qurilish & Ishlab chiqarish",
+		"Матрас тикиши биладигон ишчиларни ишга оламиз": "Qurilish & Ishlab chiqarish",
+		"Kiberxavfsizlik Mutaxassisi (SOC Analyst)":     "IT & Dasturlash",
+	}
+	for title, want := range cases {
+		if got := categorizeVacancy(title); got != want {
+			t.Errorf("categorizeVacancy(%q) = %q, want %q", title, got, want)
+		}
+	}
+}

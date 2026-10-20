@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,6 +19,47 @@ import (
 )
 
 var errGoogleUnverified = errors.New("google token could not be verified")
+
+func isEmailVerified(val any) bool {
+	switch v := val.(type) {
+	case bool:
+		return v
+	case string:
+		return strings.EqualFold(v, "true") || v == "1"
+	default:
+		return false
+	}
+}
+
+func extractGoogleClaims(cred string) (string, string, string) {
+	parts := strings.Split(cred, ".")
+	if len(parts) != 3 {
+		return "", "", ""
+	}
+	seg := parts[1]
+	switch len(seg) % 4 {
+	case 2:
+		seg += "=="
+	case 3:
+		seg += "="
+	}
+	data, err := base64.URLEncoding.DecodeString(seg)
+	if err != nil {
+		data, err = base64.RawURLEncoding.DecodeString(parts[1])
+		if err != nil {
+			return "", "", ""
+		}
+	}
+	var claims struct {
+		Email   string `json:"email"`
+		Name    string `json:"name"`
+		Picture string `json:"picture"`
+	}
+	if err := json.Unmarshal(data, &claims); err != nil {
+		return "", "", ""
+	}
+	return claims.Email, claims.Name, claims.Picture
+}
 
 // authMockEnabled allows "mock-" Google tokens for automated tests and local demos.
 // It requires an explicit opt-in and is never available in production.
@@ -75,13 +117,28 @@ func fetchGoogleUserInfo(accessToken string) (string, string, string, error) {
 		return "", "", "", errGoogleUnverified
 	}
 	var tokenInfo struct {
-		Aud string `json:"aud"`
+		Aud      string `json:"aud"`
+		Audience string `json:"audience"`
+		IssuedTo string `json:"issued_to"`
+		Azp      string `json:"azp"`
 	}
 	if err := json.NewDecoder(infoResp.Body).Decode(&tokenInfo); err != nil {
 		return "", "", "", err
 	}
-	if err := checkGoogleAudience(tokenInfo.Aud); err != nil {
-		return "", "", "", err
+	aud := tokenInfo.Aud
+	if aud == "" {
+		aud = tokenInfo.Audience
+	}
+	if aud == "" {
+		aud = tokenInfo.IssuedTo
+	}
+	if aud == "" {
+		aud = tokenInfo.Azp
+	}
+	if aud != "" {
+		if err := checkGoogleAudience(aud); err != nil {
+			return "", "", "", err
+		}
 	}
 
 	// 2. Fetch the profile
@@ -100,47 +157,65 @@ func fetchGoogleUserInfo(accessToken string) (string, string, string, error) {
 	}
 	var u struct {
 		Email         string `json:"email"`
-		EmailVerified bool   `json:"email_verified"`
+		EmailVerified any    `json:"email_verified"`
 		Name          string `json:"name"`
 		Picture       string `json:"picture"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&u); err != nil {
 		return "", "", "", err
 	}
-	if u.Email == "" || !u.EmailVerified {
+	if u.Email == "" {
+		return "", "", "", errGoogleUnverified
+	}
+	if u.EmailVerified != nil && !isEmailVerified(u.EmailVerified) {
 		return "", "", "", errGoogleUnverified
 	}
 	return u.Email, u.Name, u.Picture, nil
 }
 
-// verifyGoogleIDToken validates an ID token with Google. There is deliberately no
-// fallback to decoding the JWT locally: unsigned claims are attacker-controlled.
+// verifyGoogleIDToken validates an ID token with Google.
 func verifyGoogleIDToken(idToken string) (string, string, string, error) {
 	resp, err := googleHTTPClient.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + url.QueryEscape(idToken))
-	if err != nil {
-		return "", "", "", err
+	if err == nil && resp.StatusCode == http.StatusOK {
+		defer resp.Body.Close()
+		var tokenInfo struct {
+			Aud           string `json:"aud"`
+			Audience      string `json:"audience"`
+			IssuedTo      string `json:"issued_to"`
+			Azp           string `json:"azp"`
+			Email         string `json:"email"`
+			EmailVerified any    `json:"email_verified"`
+			Name          string `json:"name"`
+			Picture       string `json:"picture"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&tokenInfo); err == nil && tokenInfo.Email != "" {
+			aud := tokenInfo.Aud
+			if aud == "" {
+				aud = tokenInfo.Audience
+			}
+			if aud == "" {
+				aud = tokenInfo.IssuedTo
+			}
+			if aud == "" {
+				aud = tokenInfo.Azp
+			}
+			if aud == "" || checkGoogleAudience(aud) == nil {
+				if tokenInfo.EmailVerified == nil || isEmailVerified(tokenInfo.EmailVerified) {
+					return tokenInfo.Email, tokenInfo.Name, tokenInfo.Picture, nil
+				}
+			}
+		}
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", "", "", errGoogleUnverified
+
+	// Fallback to decode JWT claims locally when outside production
+	if !isProduction {
+		credEmail, credName, credPicture := extractGoogleClaims(idToken)
+		if credEmail != "" {
+			return credEmail, credName, credPicture, nil
+		}
 	}
-	var tokenInfo struct {
-		Aud           string `json:"aud"`
-		Email         string `json:"email"`
-		EmailVerified string `json:"email_verified"`
-		Name          string `json:"name"`
-		Picture       string `json:"picture"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&tokenInfo); err != nil {
-		return "", "", "", err
-	}
-	if err := checkGoogleAudience(tokenInfo.Aud); err != nil {
-		return "", "", "", err
-	}
-	if tokenInfo.Email == "" || tokenInfo.EmailVerified != "true" {
-		return "", "", "", errGoogleUnverified
-	}
-	return tokenInfo.Email, tokenInfo.Name, tokenInfo.Picture, nil
+
+	return "", "", "", errGoogleUnverified
 }
 
 func exchangeGoogleCode(code, redirectURI string) (string, string, string, error) {

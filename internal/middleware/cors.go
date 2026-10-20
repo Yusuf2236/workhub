@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -48,10 +51,32 @@ func isOriginAllowed(origin string) bool {
 	return false
 }
 
+// IsSameHostOrigin accepts pages served from the same host as the API (any port), e.g. the
+// site behind nginx on its own domain, or the admin on :3001 talking to the API on :80/:8080.
+func IsSameHostOrigin(r *http.Request, origin string) bool {
+	u, err := url.Parse(origin)
+	if err != nil || u.Hostname() == "" || (u.Scheme != "http" && u.Scheme != "https") {
+		return false
+	}
+	for _, h := range []string{r.Host, r.Header.Get("X-Forwarded-Host")} {
+		h = strings.TrimSpace(strings.Split(h, ",")[0])
+		if h == "" {
+			continue
+		}
+		if host, _, err := net.SplitHostPort(h); err == nil {
+			h = host
+		}
+		if strings.EqualFold(h, u.Hostname()) {
+			return true
+		}
+	}
+	return false
+}
+
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
-		if isOriginAllowed(origin) {
+		if isOriginAllowed(origin) || (origin != "" && IsSameHostOrigin(c.Request, origin)) {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		} else if origin == "" {
