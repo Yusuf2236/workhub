@@ -30,6 +30,7 @@ const (
 	hhPerPage      = 100
 	hhMaxPages     = 20 // hh returns at most 2000 results per query
 	hhSource       = "hh.uz"
+	hhTimeLayout   = "2006-01-02T15:04:05-0700"
 )
 
 type AggregatorConfig struct {
@@ -65,6 +66,9 @@ type aggregator struct {
 	client   *http.Client
 	token    string
 	lastSync time.Time
+	baseURL  string
+	// store saves one vacancy and reports whether it was new (a.upsert; replaced in tests)
+	store func(ctx context.Context, it hhVacancy) (bool, error)
 }
 
 // StartBackgroundAggregator syncs vacancies immediately and then every cfg.Interval.
@@ -73,7 +77,8 @@ func StartBackgroundAggregator(db *sql.DB, rdb *redis.Client, cfg AggregatorConf
 		log.Println("[Aggregator] disabled: no database connection")
 		return
 	}
-	a := &aggregator{cfg: cfg, db: db, rdb: rdb, client: &http.Client{Timeout: 20 * time.Second}, token: cfg.AppToken}
+	a := &aggregator{cfg: cfg, db: db, rdb: rdb, client: &http.Client{Timeout: 20 * time.Second}, token: cfg.AppToken, baseURL: hhAPIBase}
+	a.store = a.upsert
 	go func() {
 		time.Sleep(10 * time.Second)
 		ticker := time.NewTicker(cfg.Interval)
@@ -86,8 +91,17 @@ func StartBackgroundAggregator(db *sql.DB, rdb *redis.Client, cfg AggregatorConf
 	log.Printf("[Aggregator] hh.uz sync enabled, every %s", cfg.Interval)
 }
 
+// hh returns at most hhMaxResults items for one search, so the first sync walks back one day
+// at a time (splitting busier periods further) instead of asking for everything at once.
+const (
+	hhMaxResults  = hhPerPage * hhMaxPages
+	hhInitialDays = 30 // hh keeps a vacancy published for 30 days
+)
+
+type syncStats struct{ inserted, updated int }
+
 func (a *aggregator) sync() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 
 	if a.token == "" {
@@ -100,43 +114,69 @@ func (a *aggregator) sync() {
 	}
 
 	started := time.Now()
-	// After the first full sweep only ask for postings newer than the previous run (with overlap)
-	var dateFrom time.Time
-	if !a.lastSync.IsZero() {
-		dateFrom = a.lastSync.Add(-15 * time.Minute)
+	var stats syncStats
+	var err error
+	if a.lastSync.IsZero() {
+		to := started
+		for day := 0; day < hhInitialDays && err == nil; day++ {
+			from := to.Add(-24 * time.Hour)
+			err = a.syncWindow(ctx, from, to, &stats)
+			to = from
+		}
+	} else {
+		// Overlap with the previous run so postings published during it are not missed
+		err = a.syncWindow(ctx, a.lastSync.Add(-15*time.Minute), started, &stats)
 	}
 
-	upserted, inserted := 0, 0
-	for page := 0; page < hhMaxPages; page++ {
-		items, pages, err := a.fetchPage(ctx, page, dateFrom)
-		if err != nil {
-			log.Printf("[Aggregator] page %d failed: %v", page, err)
-			break
+	if stats.inserted > 0 {
+		a.invalidateCache(ctx)
+	}
+	if err != nil {
+		// lastSync stays where it was, so the next run fetches this period again
+		log.Printf("[Aggregator] hh.uz sync stopped: %v (%d new, %d updated so far)", err, stats.inserted, stats.updated)
+		return
+	}
+	a.lastSync = started
+	log.Printf("[Aggregator] hh.uz sync done: %d new, %d updated in %s", stats.inserted, stats.updated, time.Since(started).Round(time.Second))
+}
+
+// syncWindow imports every vacancy published between from and to.
+func (a *aggregator) syncWindow(ctx context.Context, from, to time.Time, stats *syncStats) error {
+	items, pages, found, err := a.fetchPage(ctx, 0, from, to)
+	if err != nil {
+		return err
+	}
+	if found > hhMaxResults && to.Sub(from) > time.Minute {
+		mid := from.Add(to.Sub(from) / 2)
+		if err := a.syncWindow(ctx, mid, to, stats); err != nil {
+			return err
+		}
+		return a.syncWindow(ctx, from, mid, stats)
+	}
+
+	for page := 0; ; page++ {
+		if page > 0 {
+			time.Sleep(300 * time.Millisecond)
+			if items, _, _, err = a.fetchPage(ctx, page, from, to); err != nil {
+				return err
+			}
 		}
 		for _, it := range items {
-			isNew, err := a.upsert(ctx, it)
+			isNew, err := a.store(ctx, it)
 			if err != nil {
 				log.Printf("[Aggregator] upsert hh vacancy %s: %v", it.ID, err)
 				continue
 			}
-			upserted++
 			if isNew {
-				inserted++
+				stats.inserted++
+			} else {
+				stats.updated++
 			}
 		}
-		if page+1 >= pages {
-			break
+		if page+1 >= pages || page+1 >= hhMaxPages {
+			return nil
 		}
-		time.Sleep(300 * time.Millisecond)
 	}
-
-	if upserted > 0 {
-		a.lastSync = started
-	}
-	if inserted > 0 {
-		a.invalidateCache(ctx)
-	}
-	log.Printf("[Aggregator] hh.uz sync done: %d new, %d updated in %s", inserted, upserted-inserted, time.Since(started).Round(time.Second))
 }
 
 func (a *aggregator) fetchAppToken(ctx context.Context) (string, error) {
@@ -145,7 +185,7 @@ func (a *aggregator) fetchAppToken(ctx context.Context) (string, error) {
 		"client_id":     {a.cfg.ClientID},
 		"client_secret": {a.cfg.ClientSecret},
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, hhAPIBase+"/token", strings.NewReader(form.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, a.baseURL+"/token", strings.NewReader(form.Encode()))
 	if err != nil {
 		return "", err
 	}
@@ -209,26 +249,27 @@ type hhVacancy struct {
 	AlternateURL string `json:"alternate_url"`
 }
 
-func (a *aggregator) fetchPage(ctx context.Context, page int, dateFrom time.Time) ([]hhVacancy, int, error) {
+// fetchPage returns one page of vacancies published between from and to, the page count
+// and the total number of matches (which may exceed what hh lets us page through).
+func (a *aggregator) fetchPage(ctx context.Context, page int, from, to time.Time) ([]hhVacancy, int, int, error) {
 	q := url.Values{
-		"area":     {hhAreaUzbekist},
-		"per_page": {strconv.Itoa(hhPerPage)},
-		"page":     {strconv.Itoa(page)},
-		"order_by": {"publication_time"},
+		"area":      {hhAreaUzbekist},
+		"per_page":  {strconv.Itoa(hhPerPage)},
+		"page":      {strconv.Itoa(page)},
+		"order_by":  {"publication_time"},
+		"date_from": {from.Format(hhTimeLayout)},
+		"date_to":   {to.Format(hhTimeLayout)},
 	}
-	if !dateFrom.IsZero() {
-		q.Set("date_from", dateFrom.Format("2006-01-02T15:04:05-0700"))
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, hhAPIBase+"/vacancies?"+q.Encode(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, a.baseURL+"/vacancies?"+q.Encode(), nil)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
 	req.Header.Set("Authorization", "Bearer "+a.token)
 	req.Header.Set("HH-User-Agent", a.cfg.UserAgent)
 	req.Header.Set("User-Agent", a.cfg.UserAgent)
 	resp, err := a.client.Do(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
@@ -236,19 +277,20 @@ func (a *aggregator) fetchPage(ctx context.Context, page int, dateFrom time.Time
 		if a.cfg.ClientID != "" {
 			a.token = ""
 		}
-		return nil, 0, fmt.Errorf("hh API returned %d (check HH_APP_TOKEN / HH_CLIENT_ID)", resp.StatusCode)
+		return nil, 0, 0, fmt.Errorf("hh API returned %d (check HH_APP_TOKEN / HH_CLIENT_ID)", resp.StatusCode)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, 0, fmt.Errorf("hh API returned %d", resp.StatusCode)
+		return nil, 0, 0, fmt.Errorf("hh API returned %d", resp.StatusCode)
 	}
 	var body struct {
 		Items []hhVacancy `json:"items"`
 		Pages int         `json:"pages"`
+		Found int         `json:"found"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
-	return body.Items, body.Pages, nil
+	return body.Items, body.Pages, body.Found, nil
 }
 
 func (a *aggregator) upsert(ctx context.Context, it hhVacancy) (inserted bool, err error) {
@@ -271,9 +313,9 @@ func (a *aggregator) upsert(ctx context.Context, it hhVacancy) (inserted bool, e
 	category := categorizeVacancy(title + " " + strings.Join(roles, " ") + " " + desc)
 	location := normalizeRegion(it.Area.Name + " " + title)
 	jobType := hhJobType(it)
-	tags := joinNonEmpty(", ", strings.Split(category, " & ")[0], jobType, strings.Fields(location)[0])
+	tags := joinNonEmpty(", ", categoryTag(category), jobType, strings.Fields(location)[0])
 
-	createdAt, perr := time.Parse("2006-01-02T15:04:05-0700", it.PublishedAt)
+	createdAt, perr := time.Parse(hhTimeLayout, it.PublishedAt)
 	if perr != nil || createdAt.After(time.Now().Add(time.Hour)) {
 		createdAt = time.Now().UTC()
 	}
@@ -442,31 +484,50 @@ func normalizeRegion(text string) string {
 	return "Toshkent shahri"
 }
 
+// categoryKeywords maps words in a vacancy (Russian, Uzbek Latin/Cyrillic, English) to the
+// portal's categories. Earlier entries win, so specific trades come before broad words
+// like "менеджер"; finance and logistics precede IT so "1C" in "Buxgalter (1C)" does not win. Category names must match the web app's category list.
 var categoryKeywords = []struct {
 	name string
 	keys []string
 }{
-	{"Tibbiyot & Salomatlik", []string{"врач", "медсест", "фармацевт", "провизор", "стоматолог", "shifokor", "hamshira", "doctor", "nurse", "медицин"}},
-	{"IT & Dasturlash", []string{"developer", "разработчик", "программист", "dasturchi", "engineer", "frontend", "backend", "golang", "python", "java", "react", "flutter", "devops", "qa ", "тестировщик", "data", "аналитик данных", "full-stack", "fullstack", "1с", "1c", "php", "ios", "android", "системный администратор"}},
-	{"Dizayn & UX", []string{"дизайн", "design", "ui/ux", "figma", "grafik", "motion"}},
-	{"Marketing & Savdo", []string{"marketing", "маркет", "smm", "sales", "продаж", "торгов", "savdo", "reklama", "реклам", "seo", "таргет"}},
-	{"Moliya & Buxgalteriya", []string{"бухгалтер", "buxgalter", "финанс", "moliya", "аудит", "кассир", "accountant", "finance", "экономист", "кредит"}},
-	{"Mijozlarga xizmat", []string{"оператор", "operator", "call", "колл", "поддержк", "консультант", "администратор зала", "ресепшн"}},
-	{"Qurilish & Ishlab chiqarish", []string{"строит", "qurilish", "инженер", "muhandis", "производ", "технолог", "завод", "электрик", "сварщик", "монтаж", "механик"}},
-	{"Transport & Logistika", []string{"водитель", "haydovchi", "курьер", "kuryer", "логист", "склад", "driver", "экспедитор"}},
-	{"Ta’lim", []string{"учитель", "преподават", "o‘qituvchi", "teacher", "mentor", "ментор", "репетитор", "педагог"}},
-	{"Servis & Xizmat ko‘rsatish", []string{"повар", "официант", "бариста", "уборщ", "горничн", "oshpaz", "ofitsiant", "парикмахер", "охран"}},
-	{"HR & Menejment", []string{"hr", "рекрут", "recruiter", "менеджер", "manager", "директор", "руководит", "head of", "администратор"}},
+	{"Tibbiyot & Salomatlik", []string{"врач", "медсест", "фармацевт", "провизор", "стоматолог", "shifokor", "hamshira", "doctor", "nurse", "медицин", "dorixona", "аптек"}},
+	{"Moliya & Buxgalteriya", []string{"бухгалтер", "buxgalter", "финанс", "moliya", "аудит", "кассир", "kassir", "accountant", "finance", "экономист", "кредит"}},
+	{"Transport & Logistika", []string{"водитель", "haydovchi", "курьер", "kuryer", "логист", "logist", "склад", "sklad", "driver", "экспедитор", "yetkazib", "ombor", "омбор", "диспетчер", "dispetcher"}},
+	{"IT & Dasturlash", []string{"developer", "разработчик", "программист", "dasturchi", "frontend", "backend", "golang", "python", "java", "react", "flutter", "devops", "qa", "тестировщик", "data scien", "data engineer", "аналитик данных", "full-stack", "fullstack", "1с", "1c", "php", "ios", "android", "системный администратор", "sysadmin", "it", "software", "helpdesk", "kiberxavfsizlik", "кибербезопас", "telegram bot", "soc analyst"}},
+	{"Dizayn & UX", []string{"дизайн", "design", "ui/ux", "figma", "grafik", "motion", "видеомонтаж", "montajchi"}},
+	{"Ta’lim & Fan", []string{"учитель", "преподават", "o‘qituvchi", "o'qituvchi", "oqituvchi", "teacher", "mentor", "ментор", "репетитор", "педагог", "tarbiyachi", "воспитател", "ustoz"}},
+	{"Mijozlarga xizmat", []string{"оператор", "operator", "call", "колл", "поддержк", "консультант", "konsultant", "ресепшн", "resepshn", "qo‘llab-quvvatlash", "qo'llab-quvvatlash"}},
+	{"Qurilish & Ishlab chiqarish", []string{"строит", "qurilish", "инженер", "muhandis", "engineer", "производ", "ishlab chiqarish", "технолог", "завод", "zavod", "электрик", "elektrik", "сварщик", "svarshik", "монтаж", "механик", "mexanik", "tikuv", "швея", "швеи", "upakov", "упаков", "sex", "цех", "slesar", "слесар", "sexi", "sexga", "тикиш", "tikish", "текстил", "tekstil", "mebel", "мебел", "курилиш", "қурилиш", "ишлаб чиқар", "ishlab chig", "svarchik", "kafel", "кафел", "poyafzal", "обивщик", "обившик"}},
+	{"Marketing & Savdo", []string{"marketing", "маркет", "smm", "sales", "продаж", "торгов", "savdo", "sotuv", "reklama", "реклам", "seo", "таргет", "target", "контент", "kontent", "мобилограф", "mobilograf", "agent", "агент", "promouter", "промоутер", "mobilag", "мобилаг"}},
+	{"Servis & Xizmat ko‘rsatish", []string{"повар", "официант", "бариста", "уборщ", "горничн", "oshpaz", "ofitsiant", "парикмахер", "охран", "qorovul", "avtomoyka", "автомойк", "farrosh", "tozalash", "клининг", "kliner", "буфет", "restoran", "ресторан", "техничк", "fast food", "fasd fod"}},
+	{"HR & Menejment", []string{"hr", "рекрут", "recruiter", "менеджер", "manager", "menejer", "директор", "direktor", "руководит", "rahbar", "head of", "администратор", "administrator", "adminstrator"}},
 }
+
+// categoryWordRe splits text into words; short ASCII keys ("hr", "qa", "ios") must match a whole word.
+var categoryWordRe = regexp.MustCompile(`[\p{L}\p{N}]+`)
 
 func categorizeVacancy(text string) string {
 	t := strings.ToLower(text)
+	words := map[string]bool{}
+	for _, w := range categoryWordRe.FindAllString(t, -1) {
+		words[w] = true
+	}
 	for _, c := range categoryKeywords {
 		for _, k := range c.keys {
+			if len(k) <= 3 && categoryWordRe.MatchString(k) && categoryWordRe.FindString(k) == k {
+				if words[k] {
+					return c.name
+				}
+				continue
+			}
 			if strings.Contains(t, k) {
 				return c.name
 			}
 		}
 	}
-	return "Servis & Xizmat ko‘rsatish"
+	return fallbackCategory
 }
+
+// fallbackCategory is used when no keyword matches
+const fallbackCategory = "Servis & Xizmat ko‘rsatish"

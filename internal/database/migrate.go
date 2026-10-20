@@ -89,3 +89,35 @@ func AutoMigrate(db *sql.DB) error {
 
 	return nil
 }
+
+// RunOnce runs a data migration written in Go inside a transaction and records it in
+// schema_migrations under version, so it never runs twice.
+func RunOnce(db *sql.DB, version string, fn func(tx *sql.Tx) error) error {
+	if db == nil {
+		return nil
+	}
+	var done bool
+	if err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)", version).Scan(&done); err != nil {
+		return fmt.Errorf("check %s: %w", version, err)
+	}
+	if done {
+		return nil
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("run %s: %w", version, err)
+	}
+	if _, err := tx.Exec("INSERT INTO schema_migrations (version) VALUES ($1)", version); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("record %s: %w", version, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	log.Printf("[DB Migrate] Successfully applied %s", version)
+	return nil
+}

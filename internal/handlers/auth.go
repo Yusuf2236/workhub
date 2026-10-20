@@ -89,6 +89,7 @@ func Register(c *gin.Context) {
 	} else {
 		users[email] = user
 	}
+	sendVerificationEmail(&user)
 
 	token, err := jwt.GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {

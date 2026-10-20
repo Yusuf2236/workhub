@@ -17,6 +17,7 @@ var (
 	notificationRepo repositories.NotificationRepo
 	subscriptionRepo repositories.SubscriptionRepo
 	commentRepo      repositories.CommentRepo
+	authTokenRepo    repositories.AuthTokenRepo
 	redisClient      *redis.Client
 	isProduction     bool
 )
@@ -33,6 +34,7 @@ func Init(db *sql.DB, rdb *redis.Client, production bool) {
 		notificationRepo = repositories.NewPostgresNotificationRepo(db)
 		subscriptionRepo = repositories.NewPostgresSubscriptionRepo(db)
 		commentRepo = repositories.NewPostgresCommentRepo(db)
+		authTokenRepo = repositories.NewPostgresAuthTokenRepo(db)
 	}
 	redisClient = rdb
 }

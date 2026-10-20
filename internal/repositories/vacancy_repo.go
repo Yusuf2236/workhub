@@ -5,14 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Yusuf2236/workhub/backend/internal/models"
+	"github.com/google/uuid"
 )
 
 type VacancyRepo interface {
 	List() ([]models.Vacancy, error)
 	ListFiltered(search, category, location, jobType string, skills []string, page, limit int) ([]models.Vacancy, int, error)
 	Get(id string) (*models.Vacancy, error)
+	ListByCreator(userID string) ([]models.Vacancy, error)
+	ListByIDs(ids []string) ([]models.Vacancy, error)
+	// ListForSitemap returns IDs and last-change times of the newest vacancies
+	ListForSitemap(limit int) ([]SitemapEntry, error)
 	Create(v models.Vacancy) error
 	Update(v models.Vacancy) error
 	Delete(id string) error
@@ -92,8 +98,8 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 		return nil, 0, err
 	}
 
-	// Skills from the user's profile boost (not filter) matching vacancies
-	orderBy := "is_featured DESC, created_at DESC, id DESC"
+	// New vacancies must always come first. A featured vacancy is only prioritized if it was created in the last 7 days.
+	orderBy := "(CASE WHEN is_featured = true AND created_at >= NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) DESC, created_at DESC, id DESC"
 	if len(skills) > 0 {
 		var score []string
 		for _, sk := range skills {
@@ -101,7 +107,7 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 			args = append(args, "%"+likeEscaper.Replace(sk)+"%")
 			argIdx++
 		}
-		orderBy = "is_featured DESC, (" + strings.Join(score, " + ") + ") DESC, created_at DESC, id DESC"
+		orderBy = "(CASE WHEN is_featured = true AND created_at >= NOW() - INTERVAL '7 days' THEN 1 ELSE 0 END) DESC, (" + strings.Join(score, " + ") + ") DESC, created_at DESC, id DESC"
 	}
 
 	// 2. Query paginated data
@@ -144,6 +150,9 @@ func (r *postgresVacancyRepo) ListFiltered(search, category, location, jobType s
 }
 
 func (r *postgresVacancyRepo) Get(id string) (*models.Vacancy, error) {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, nil
+	}
 	query := `
 		SELECT id, title, company, COALESCE(location, ''), COALESCE(description, ''),
 		       COALESCE(salary, ''), COALESCE(category, 'IT & Dasturlash'), COALESCE(job_type, 'Full-time'),
@@ -169,6 +178,85 @@ func (r *postgresVacancyRepo) Get(id string) (*models.Vacancy, error) {
 		return nil, err
 	}
 	return &v, nil
+}
+
+const vacancyColumns = `
+	SELECT id, title, company, COALESCE(location, ''), COALESCE(description, ''),
+	       COALESCE(salary, ''), COALESCE(category, 'IT & Dasturlash'), COALESCE(job_type, 'Full-time'),
+	       COALESCE(experience, '1-3 yil'), COALESCE(tags, ''), COALESCE(company_logo, ''),
+	       COALESCE(is_verified, true), COALESCE(is_featured, false), COALESCE(views_count, 0),
+	       COALESCE((SELECT COUNT(*) FROM vacancy_comments vc WHERE vc.vacancy_id = vacancies.id), 0) AS comments_count,
+	       COALESCE(source, 'WZone') AS source, COALESCE(source_url, ''),
+	       COALESCE(created_by::text, ''), created_at, updated_at
+	FROM vacancies`
+
+func scanVacancies(rows *sql.Rows) ([]models.Vacancy, error) {
+	defer rows.Close()
+	vacancies := []models.Vacancy{}
+	for rows.Next() {
+		var v models.Vacancy
+		if err := rows.Scan(
+			&v.ID, &v.Title, &v.Company, &v.Location, &v.Description,
+			&v.Salary, &v.Category, &v.JobType, &v.Experience, &v.Tags,
+			&v.CompanyLogo, &v.IsVerified, &v.IsFeatured, &v.ViewsCount,
+			&v.CommentsCount, &v.Source, &v.SourceURL,
+			&v.CreatedBy, &v.CreatedAt, &v.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		vacancies = append(vacancies, v)
+	}
+	return vacancies, rows.Err()
+}
+
+func (r *postgresVacancyRepo) ListByCreator(userID string) ([]models.Vacancy, error) {
+	if _, err := uuid.Parse(userID); err != nil {
+		return []models.Vacancy{}, nil
+	}
+	rows, err := r.db.Query(vacancyColumns+` WHERE created_by = $1 ORDER BY created_at DESC`, userID)
+	if err != nil {
+		return nil, err
+	}
+	return scanVacancies(rows)
+}
+
+func (r *postgresVacancyRepo) ListByIDs(ids []string) ([]models.Vacancy, error) {
+	if len(ids) == 0 {
+		return []models.Vacancy{}, nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+	rows, err := r.db.Query(vacancyColumns+` WHERE id::text IN (`+strings.Join(placeholders, ",")+`) ORDER BY created_at DESC`, args...)
+	if err != nil {
+		return nil, err
+	}
+	return scanVacancies(rows)
+}
+
+type SitemapEntry struct {
+	ID        string    `json:"id"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (r *postgresVacancyRepo) ListForSitemap(limit int) ([]SitemapEntry, error) {
+	rows, err := r.db.Query(`SELECT id::text, updated_at FROM vacancies ORDER BY created_at DESC LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	entries := []SitemapEntry{}
+	for rows.Next() {
+		var e SitemapEntry
+		if err := rows.Scan(&e.ID, &e.UpdatedAt); err != nil {
+			return nil, err
+		}
+		entries = append(entries, e)
+	}
+	return entries, rows.Err()
 }
 
 func (r *postgresVacancyRepo) Create(v models.Vacancy) error {
@@ -216,11 +304,17 @@ func (r *postgresVacancyRepo) Update(v models.Vacancy) error {
 }
 
 func (r *postgresVacancyRepo) Delete(id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil
+	}
 	_, err := r.db.Exec(`DELETE FROM vacancies WHERE id = $1`, id)
 	return err
 }
 
 func (r *postgresVacancyRepo) IncrementViews(id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil
+	}
 	_, err := r.db.Exec(`UPDATE vacancies SET views_count = views_count + 1 WHERE id = $1`, id)
 	return err
 }

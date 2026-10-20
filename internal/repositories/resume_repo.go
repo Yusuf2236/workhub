@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/Yusuf2236/workhub/backend/internal/models"
+	"github.com/google/uuid"
 )
 
 type ResumeRepo interface {
@@ -27,9 +28,13 @@ func NewPostgresResumeRepo(db *sql.DB) ResumeRepo {
 
 func (r *postgresResumeRepo) ListAll() ([]models.Resume, error) {
 	query := `
-		SELECT id, user_id, title, COALESCE(summary, ''), COALESCE(file_url, ''), created_at, updated_at
-		FROM resumes
-		ORDER BY created_at DESC`
+		SELECT r.id, r.user_id, r.title, COALESCE(r.summary, ''), COALESCE(r.file_url, ''), r.created_at, r.updated_at
+		FROM resumes r
+		LEFT JOIN profiles p ON p.user_id = r.user_id
+		-- Users who switched "profile public" off are hidden from the candidate pool
+		WHERE COALESCE(p.settings->>'profile_public', 'true') <> 'false'
+		ORDER BY r.created_at DESC
+		LIMIT 500`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -48,6 +53,9 @@ func (r *postgresResumeRepo) ListAll() ([]models.Resume, error) {
 }
 
 func (r *postgresResumeRepo) ListByUser(userID string) ([]models.Resume, error) {
+	if _, err := uuid.Parse(userID); err != nil {
+		return []models.Resume{}, nil
+	}
 	query := `
 		SELECT id, user_id, title, COALESCE(summary, ''), COALESCE(file_url, ''), created_at, updated_at
 		FROM resumes
@@ -71,6 +79,9 @@ func (r *postgresResumeRepo) ListByUser(userID string) ([]models.Resume, error) 
 }
 
 func (r *postgresResumeRepo) Get(id string) (*models.Resume, error) {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, nil
+	}
 	query := `
 		SELECT id, user_id, title, COALESCE(summary, ''), COALESCE(file_url, ''), created_at, updated_at
 		FROM resumes
@@ -104,6 +115,9 @@ func (r *postgresResumeRepo) Update(res models.Resume) error {
 }
 
 func (r *postgresResumeRepo) Delete(id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil
+	}
 	query := `DELETE FROM resumes WHERE id = $1`
 	_, err := r.db.Exec(query, id)
 	return err

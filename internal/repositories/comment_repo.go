@@ -26,17 +26,22 @@ func NewPostgresCommentRepo(db *sql.DB) CommentRepo {
 }
 
 func (r *postgresCommentRepo) ListByVacancy(vacancyID string) ([]models.VacancyComment, error) {
+	// The newest 200 comments, oldest first
 	query := `
-		SELECT 
-			c.id, c.vacancy_id, COALESCE(c.user_id::text, ''),
-			COALESCE(NULLIF(c.author_name, ''), u.name, 'Nomzod'),
-			COALESCE(NULLIF(c.author_avatar, ''), p.avatar_url, u.avatar_url, ''),
-			c.content, c.created_at
-		FROM vacancy_comments c
-		LEFT JOIN users u ON c.user_id = u.id
-		LEFT JOIN profiles p ON c.user_id = p.user_id
-		WHERE c.vacancy_id = $1
-		ORDER BY c.created_at ASC`
+		SELECT id, vacancy_id, user_id, author_name, author_avatar, content, created_at FROM (
+			SELECT
+				c.id, c.vacancy_id, COALESCE(c.user_id::text, '') AS user_id,
+				COALESCE(NULLIF(c.author_name, ''), u.name, 'Nomzod') AS author_name,
+				COALESCE(NULLIF(c.author_avatar, ''), p.avatar_url, u.avatar_url, '') AS author_avatar,
+				c.content, c.created_at
+			FROM vacancy_comments c
+			LEFT JOIN users u ON c.user_id = u.id
+			LEFT JOIN profiles p ON c.user_id = p.user_id
+			WHERE c.vacancy_id = $1
+			ORDER BY c.created_at DESC
+			LIMIT 200
+		) recent
+		ORDER BY created_at ASC`
 
 	rows, err := r.db.Query(query, vacancyID)
 	if err != nil {

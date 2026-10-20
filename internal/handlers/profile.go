@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -14,6 +15,34 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+// allowedProfileSettings are the preference switches the profile settings page stores
+var allowedProfileSettings = map[string]bool{
+	"notify_job_alerts":    true,
+	"notify_app_status":    true,
+	"notify_chat_messages": true,
+	"notify_telegram":      true,
+	"profile_public":       true,
+	"phone_verified_only":  true,
+}
+
+// userWantsNotification reports whether the user left the given notification switch on.
+// Missing settings default to enabled.
+func userWantsNotification(userID, key string) bool {
+	if profileRepo == nil || userID == "" {
+		return true
+	}
+	p, err := profileRepo.GetByUserID(userID)
+	if err != nil || p == nil || len(p.Settings) == 0 {
+		return true
+	}
+	var settings map[string]bool
+	if json.Unmarshal(p.Settings, &settings) != nil {
+		return true
+	}
+	enabled, ok := settings[key]
+	return !ok || enabled
+}
 
 func GetProfile(c *gin.Context) {
 	userID, ok := c.Get("user_id")
@@ -58,14 +87,18 @@ func UpdateProfile(c *gin.Context) {
 	// Pointer fields: a field omitted from the request keeps its stored value, so
 	// partial updates (e.g. saving only skills) never wipe the rest of the profile.
 	var payload struct {
-		Name      *string `json:"name"`
-		Email     *string `json:"email"`
-		Bio       *string `json:"bio"`
-		Skills    *string `json:"skills"`
-		Phone     *string `json:"phone"`
-		Location  *string `json:"location"`
-		Website   *string `json:"website"`
-		AvatarURL *string `json:"avatar_url"`
+		Name        *string         `json:"name"`
+		Email       *string         `json:"email"`
+		Bio         *string         `json:"bio"`
+		Skills      *string         `json:"skills"`
+		Phone       *string         `json:"phone"`
+		Location    *string         `json:"location"`
+		Website     *string         `json:"website"`
+		AvatarURL   *string         `json:"avatar_url"`
+		AccountType *string         `json:"account_type"`
+		CompanyName *string         `json:"company_name"`
+		INN         *string         `json:"inn"`
+		Settings    map[string]bool `json:"settings"`
 	}
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
@@ -139,6 +172,16 @@ func UpdateProfile(c *gin.Context) {
 	if payload.AvatarURL != nil {
 		profile.AvatarURL = str(payload.AvatarURL)
 	}
+	if payload.Settings != nil {
+		settings := make(map[string]bool, len(payload.Settings))
+		for key, val := range payload.Settings {
+			if allowedProfileSettings[key] {
+				settings[key] = val
+			}
+		}
+		raw, _ := json.Marshal(settings)
+		profile.Settings = raw
+	}
 	profile.UpdatedAt = now
 
 	if profileRepo != nil {
@@ -156,6 +199,19 @@ func UpdateProfile(c *gin.Context) {
 				return
 			}
 		}
+		if payload.AccountType != nil {
+			accType := str(payload.AccountType)
+			if accType == "" {
+				accType = "individual"
+			}
+			compName := str(payload.CompanyName)
+			innNum := str(payload.INN)
+			role := "user"
+			if accType == "company" {
+				role = "employer"
+			}
+			_ = userRepo.UpdateAccountType(userID.(string), accType, compName, innNum, role)
+		}
 	} else {
 		for key, u := range users {
 			if u.ID == userID.(string) {
@@ -170,6 +226,22 @@ func UpdateProfile(c *gin.Context) {
 					delete(users, key)
 					u.Email = trimmedEmail
 					key = trimmedEmail
+				}
+				if payload.AccountType != nil {
+					accType := str(payload.AccountType)
+					if accType == "" {
+						accType = "individual"
+					}
+					u.AccountType = accType
+					u.CompanyName = str(payload.CompanyName)
+					u.INN = str(payload.INN)
+					if u.Role != "admin" {
+						if accType == "company" {
+							u.Role = "employer"
+						} else {
+							u.Role = "user"
+						}
+					}
 				}
 				users[key] = u
 				break
