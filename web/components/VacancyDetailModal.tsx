@@ -124,7 +124,12 @@ export default function VacancyDetailModal({
 
     setSubmitting(true);
     try {
-      const authorName = currentUser?.name || guestName.trim() || 'WZone Foydalanuvchisi';
+      const authorName =
+        (currentUser?.account_type === 'company' && currentUser?.company_name
+          ? currentUser.company_name
+          : currentUser?.name) ||
+        guestName.trim() ||
+        'WZone Foydalanuvchisi';
       const authorAvatar = currentUser?.avatar_url || '';
 
       const res = await api.createVacancyComment(vacancy.id, {

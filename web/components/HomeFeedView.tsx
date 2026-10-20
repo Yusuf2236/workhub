@@ -269,7 +269,12 @@ export default function HomeFeedView({
     const content = (commentDrafts[vacancyId] || '').trim();
     if (!content) return;
 
-    const authorName = currentUser?.name || guestName.trim() || (lang === 'ru' ? 'Гость' : lang === 'en' ? 'Guest' : 'Mehmon');
+    const authorName =
+      (currentUser?.account_type === 'company' && currentUser?.company_name
+        ? currentUser.company_name
+        : currentUser?.name) ||
+      guestName.trim() ||
+      (lang === 'ru' ? 'Гость' : lang === 'en' ? 'Guest' : 'Mehmon');
     const authorAvatar = currentUser?.avatar_url || '';
 
     setSubmittingCommentMap((prev) => ({ ...prev, [vacancyId]: true }));

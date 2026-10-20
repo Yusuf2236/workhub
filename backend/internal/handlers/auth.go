@@ -161,6 +161,9 @@ func Me(c *gin.Context) {
 			return
 		}
 		if user != nil {
+			if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
+				user.Name = strings.TrimSpace(user.CompanyName)
+			}
 			if profileRepo != nil && user.AvatarURL == "" {
 				if p, _ := profileRepo.GetByUserID(user.ID); p != nil && p.AvatarURL != "" {
 					user.AvatarURL = p.AvatarURL
@@ -172,6 +175,9 @@ func Me(c *gin.Context) {
 	} else {
 		for _, user := range users {
 			if user.ID == userID.(string) {
+				if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
+					user.Name = strings.TrimSpace(user.CompanyName)
+				}
 				response.Success(c, http.StatusOK, gin.H{"user": user})
 				return
 			}

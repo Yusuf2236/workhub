@@ -14,7 +14,7 @@ import {
   MapPin,
   Check,
 } from 'lucide-react';
-import { api } from '../lib/api';
+import { api, getCurrentUser } from '../lib/api';
 import { generateVacancyWithAI, AIVacancyOutput } from '../lib/aiVacancyGenerator';
 import { detectCurrentLocation } from '../lib/geolocation';
 import { Language, translations } from '../lib/translations';
@@ -79,9 +79,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
   // Fill the form with the vacancy being edited, or reset it for a new one
   useEffect(() => {
     if (!isOpen) return;
+    const currentUser = getCurrentUser();
+    const defaultCompany =
+      currentUser?.account_type === 'company' && currentUser?.company_name
+        ? currentUser.company_name
+        : currentUser?.company_name || '';
     const v = initialVacancy || {};
     setTitle(v.title || '');
-    setCompany(v.company || '');
+    setCompany(v.company || defaultCompany);
     setLocation(v.location || 'Toshkent shahri');
     setSalary(v.salary || '');
     setCategory(v.category || 'Ta’lim & Fan');
@@ -180,10 +185,17 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
     setError(null);
     setLoading(true);
 
+    const currentUser = getCurrentUser();
+    const finalCompany =
+      company.trim() ||
+      (currentUser?.account_type === 'company' && currentUser?.company_name
+        ? currentUser.company_name
+        : 'Maxfiy ish beruvchi');
+
     try {
       const payload = {
         title,
-        company: company.trim() || 'Maxfiy ish beruvchi',
+        company: finalCompany,
         location: location.trim() || 'Toshkent shahri',
         salary,
         category,
@@ -306,11 +318,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Kompaniya / Korxona (ixtiyoriy)
+                Kompaniya / Korxona nomi
               </label>
               <input
                 type="text"
-                placeholder="masalan: Registon Ta’lim Markazi yoki bo‘sh qoldiring"
+                placeholder="masalan: Najot Ta’lim yoki Tashkilot nomi"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"

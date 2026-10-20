@@ -208,16 +208,21 @@ export default function ProfileView({
         account_type: switchAccountType,
         company_name: switchAccountType === 'company' ? switchCompanyName.trim() : '',
         inn: switchAccountType === 'company' ? switchInn.trim() : '',
+        name: switchAccountType === 'company' ? switchCompanyName.trim() : undefined,
       });
 
       if (res.success) {
         const updated = (res.data as any)?.user || {
           ...user,
+          name: switchAccountType === 'company' ? switchCompanyName.trim() : user.name,
           account_type: switchAccountType,
           company_name: switchAccountType === 'company' ? switchCompanyName.trim() : '',
           inn: switchAccountType === 'company' ? switchInn.trim() : '',
           role: switchAccountType === 'company' ? 'employer' : 'user',
         };
+        if (switchAccountType === 'company' && switchCompanyName.trim()) {
+          updated.name = switchCompanyName.trim();
+        }
         setCurrentUser(updated);
         onUserUpdated(updated);
         setSwitchSuccess(true);
@@ -368,7 +373,7 @@ export default function ProfileView({
     }
 
     try {
-      const res = await api.updateProfile({
+      const updateData: any = {
         name: cleanName,
         email: cleanEmail,
         bio,
@@ -377,13 +382,18 @@ export default function ProfileView({
         location,
         website,
         avatar_url: avatarUrl,
-      });
+      };
+      if (user.account_type === 'company') {
+        updateData.company_name = cleanName;
+      }
+      const res = await api.updateProfile(updateData);
 
       if (res.success) {
         setPersonalSavedSuccess(true);
         const updated = (res.data as any)?.user || {
           ...user,
           name: cleanName,
+          company_name: user.account_type === 'company' ? cleanName : user.company_name,
           email: cleanEmail,
           avatar_url: avatarUrl,
         };
@@ -505,7 +515,7 @@ export default function ProfileView({
           <div className="text-center sm:text-left flex-1 min-w-0">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                {user.name}
+                {user.account_type === 'company' && user.company_name ? user.company_name : user.name}
               </h2>
               {user.auth_provider === 'oneid' && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-xs">
@@ -775,7 +785,7 @@ export default function ProfileView({
                       )}
 
                       <span className="text-[11px] font-bold text-slate-500">
-                        {user.name}
+                        {user.account_type === 'company' && user.company_name ? user.company_name : user.name}
                       </span>
                     </div>
                   </div>
@@ -1063,13 +1073,19 @@ export default function ProfileView({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                  To‘liq ism-sharifingiz (F.I.O) *
+                  {user.account_type === 'company'
+                    ? 'Tashkilot / Kompaniya nomi *'
+                    : 'To‘liq ism-sharifingiz (F.I.O) *'}
                 </label>
                 <input
                   ref={nameInputRef}
                   type="text"
                   required
-                  placeholder="Masalan: Yusuf Usmonov"
+                  placeholder={
+                    user.account_type === 'company'
+                      ? 'Masalan: Najot Ta’lim MCHJ'
+                      : 'Masalan: Yusuf Usmonov'
+                  }
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"

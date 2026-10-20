@@ -235,6 +235,9 @@ func UpdateProfile(c *gin.Context) {
 					u.AccountType = accType
 					u.CompanyName = str(payload.CompanyName)
 					u.INN = str(payload.INN)
+					if accType == "company" && u.CompanyName != "" {
+						u.Name = u.CompanyName
+					}
 					if u.Role != "admin" {
 						if accType == "company" {
 							u.Role = "employer"
@@ -260,6 +263,9 @@ func UpdateProfile(c *gin.Context) {
 				break
 			}
 		}
+	}
+	if updatedUser != nil && updatedUser.AccountType == "company" && strings.TrimSpace(updatedUser.CompanyName) != "" {
+		updatedUser.Name = strings.TrimSpace(updatedUser.CompanyName)
 	}
 
 	response.Success(c, http.StatusOK, gin.H{
