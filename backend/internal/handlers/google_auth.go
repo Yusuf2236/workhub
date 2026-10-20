@@ -299,7 +299,11 @@ func GoogleAuth(c *gin.Context) {
 	case payload.Code != "":
 		redirectURI := payload.RedirectURI
 		if redirectURI == "" {
-			redirectURI = "http://localhost:3000/api/auth/callback/google"
+			if isProduction {
+				redirectURI = "https://wzone.uz/api/auth/callback/google"
+			} else {
+				redirectURI = "http://localhost:3000/api/auth/callback/google"
+			}
 		}
 		verifiedEmail, verifiedName, verifiedAvatar, _ = exchangeGoogleCode(payload.Code, redirectURI)
 	}

@@ -164,7 +164,7 @@ func setupRoutes(r *gin.Engine) {
 
 	// Per-IP limits against password guessing and spam
 	authLimit := middleware.RateLimit(20, time.Minute)
-	qrLimit := middleware.RateLimit(60, time.Minute)
+	qrLimit := middleware.RateLimit(120, time.Minute)
 	writeLimit := middleware.RateLimit(30, time.Minute)
 	chatLimit := middleware.RateLimit(60, time.Minute)
 

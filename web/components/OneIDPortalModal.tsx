@@ -1,7 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Lock, ShieldCheck, KeyRound, Smartphone, FileText, CheckCircle2, AlertCircle, ArrowRight, Upload, QrCode, ScanLine, RefreshCw, Sparkles, User, Building2, Briefcase } from 'lucide-react';
+import {
+  X,
+  Lock,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
+  QrCode,
+  RefreshCw,
+  Sparkles,
+  User,
+  Building2,
+  Briefcase,
+  ExternalLink,
+  KeyRound,
+} from 'lucide-react';
 import QRCode from 'qrcode';
 import { api, setAuthToken, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
@@ -13,82 +28,35 @@ interface OneIDPortalModalProps {
   lang?: Language;
 }
 
-function parsePINFL(pinfl: string) {
-  const clean = pinfl.replace(/\D/g, '');
-  if (clean.length !== 14) return null;
-  const first = clean[0];
-  const gender = ['1', '3', '5'].includes(first) ? 'Erkak' : 'Ayol';
-  const prefix = ['1', '2'].includes(first) ? '18' : ['5', '6'].includes(first) ? '20' : '19';
-  const day = clean.slice(1, 3);
-  const month = clean.slice(3, 5);
-  const year = prefix + clean.slice(5, 7);
-  const birthDate = `${day}.${month}.${year}`;
-
-  const regCode = clean.slice(7, 9);
-  const regions: Record<string, string> = {
-    '01': 'Andijon viloyati', '02': 'Andijon viloyati',
-    '03': 'Buxoro viloyati', '04': 'Buxoro viloyati',
-    '05': 'Farg‘ona viloyati', '06': 'Farg‘ona viloyati',
-    '07': 'Jizzax viloyati', '08': 'Jizzax viloyati',
-    '09': 'Xorazm viloyati', '10': 'Xorazm viloyati',
-    '11': 'Namangan viloyati', '12': 'Namangan viloyati',
-    '13': 'Navoiy viloyati', '14': 'Navoiy viloyati',
-    '17': 'Qashqadaryo viloyati', '18': 'Qashqadaryo viloyati',
-    '19': 'Qoraqalpog‘iston Respublikasi', '20': 'Qoraqalpog‘iston Respublikasi',
-    '21': 'Samarqand viloyati', '22': 'Samarqand viloyati',
-    '23': 'Sirdaryo viloyati', '24': 'Sirdaryo viloyati',
-    '25': 'Surxondaryo viloyati', '26': 'Surxondaryo viloyati',
-    '27': 'Toshkent shahri', '28': 'Toshkent viloyati', '29': 'Toshkent viloyati',
-  };
-  const location = regions[regCode] || 'Toshkent shahri';
-  return { gender, birthDate, location };
-}
-
 export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'uz' }: OneIDPortalModalProps) {
   const t = translations[lang || 'uz'];
-  const [tab, setTab] = useState<'password' | 'qr' | 'eri' | 'mobile'>('password');
-
-  // Input states - clean and empty (no sample presets)
-  const [pinflInput, setPinflInput] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
-  const [fullNameInput, setFullNameInput] = useState('');
-  const [eriFileName, setEriFileName] = useState('');
-  const [eriPassword, setEriPassword] = useState('');
-  const [mobilePhone, setMobilePhone] = useState('');
-  const [smsSent, setSmsSent] = useState(false);
-  const [smsCode, setSmsCode] = useState('');
-  const [countdown, setCountdown] = useState(120);
+  const [tab, setTab] = useState<'qr' | 'sso'>('qr');
 
   // Real OneID QR code states
   const [qrCodeData, setQrCodeData] = useState<{ code: string; hash: string } | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [qrCountdown, setQrCountdown] = useState(180);
   const [qrStatus, setQrStatus] = useState<'idle' | 'loading' | 'waiting' | 'approved' | 'expired'>('idle');
-  const [approvedCitizen, setApprovedCitizen] = useState<any>(null);
 
   // Role & account selection states
   const [accountType, setAccountType] = useState<'individual' | 'company'>('individual');
   const [companyName, setCompanyName] = useState('');
   const [companyInn, setCompanyInn] = useState('');
 
-  // Flow states: 1. 'auth' -> 2. 'consent' -> 3. 'role_select'
-  const [step, setStep] = useState<'auth' | 'consent' | 'role_select'>('auth');
+  // Flow states: 'auth' -> 'role_select'
+  const [step, setStep] = useState<'auth' | 'role_select'>('auth');
   const [loggedInUser, setLoggedInUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 1-chi OneID orqali kiriladi (auth bosqichi)
   useEffect(() => {
     if (isOpen) {
       setStep('auth');
       setError(null);
       setLoggedInUser(null);
+      setTab('qr');
     }
   }, [isOpen]);
-
-  // Live parsed info from entered JShShIR
-  const cleanPinfl = pinflInput.replace(/\D/g, '');
-  const parsedData = cleanPinfl.length === 14 ? parsePINFL(cleanPinfl) : null;
 
   // Generate dynamic QR code directly from official OneID API
   const generateQrSession = async () => {
@@ -162,15 +130,13 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
           if (res.data.status === 'approved' && res.data.token && res.data.user) {
             clearInterval(interval);
             setQrStatus('approved');
-            const citizenInfo = res.data.citizen || res.data.user;
-            setApprovedCitizen(citizenInfo);
             setAuthToken(res.data.token);
             setLoggedInUser(res.data.user);
             setTimeout(() => {
               if (isSubscribed) {
                 setStep('role_select');
               }
-            }, 800);
+            }, 600);
           } else if (res.data.status === 'expired') {
             clearInterval(interval);
             setQrStatus('expired');
@@ -179,7 +145,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
       } catch (e) {
         console.error('OneID QR check polling error', e);
       }
-    }, 2000);
+    }, 2500);
 
     return () => {
       isSubscribed = false;
@@ -187,100 +153,16 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     };
   }, [isOpen, tab, qrStatus, qrCodeData?.code, qrCodeData?.hash]);
 
-  // Countdown timer for Mobile-ID SMS
-  useEffect(() => {
-    let timer: any;
-    if (smsSent && countdown > 0) {
-      timer = setInterval(() => setCountdown((c) => c - 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [smsSent, countdown]);
-
-  if (!isOpen) return null;
-
-  const handleSendSms = () => {
-    const cleanNum = mobilePhone.replace(/\D/g, '');
-    if (cleanNum.length < 9) {
-      setError('Haqiqiy telefon raqamingizni to‘liq kiriting');
-      return;
-    }
-    setError(null);
-    setSmsSent(true);
-    setCountdown(120);
-  };
-
-  const handleProceedToConsent = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (tab === 'password') {
-      if (cleanPinfl.length !== 14) {
-        setError('JShShIR (PINFL) aynan 14 ta raqamdan iborat bo‘lishi kerak');
-        return;
-      }
-      if (!passwordInput.trim()) {
-        setError('OneID parolini kiriting');
-        return;
-      }
-    } else if (tab === 'eri') {
-      if (cleanPinfl.length !== 14) {
-        setError('ERI egasining 14 xonali JShShIR raqamini kiriting');
-        return;
-      }
-      if (!eriPassword.trim()) {
-        setError('ERI kaliti parolini kiriting');
-        return;
-      }
-    } else if (tab === 'mobile') {
-      if (!mobilePhone.trim()) {
-        setError('Telefon raqamingizni kiriting');
-        return;
-      }
-      if (!smsCode.trim() || smsCode.length < 4) {
-        setError('SMS tasdiqlash kodini to‘liq kiriting');
-        return;
-      }
-    }
-
-    setStep('consent');
-  };
-
-  const handleApproveAndLogin = async () => {
+  // Launch official OneID SSO authorization redirect (sso.egov.uz)
+  const handleLaunchSSO = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      if (cleanPinfl.length !== 14) {
-        setError('JShShIR (PINFL) aynan 14 ta raqamdan iborat bo‘lishi kerak');
-        setLoading(false);
-        return;
-      }
-      const activePinfl = cleanPinfl;
-      const code = 'one_code-portal-' + Math.random().toString(36).substring(2, 12) + Date.now();
-      const info = parsePINFL(activePinfl);
-
-      const effectiveFullName =
-        fullNameInput.trim() ||
-        (accountType === 'company' ? (companyName.trim() || 'Tashkilot') : 'OneID Fuqarosi');
-
-      const res = await api.oneIDCallback({
-        code,
-        pinfl: activePinfl,
-        full_name: effectiveFullName,
-        email: `${activePinfl}@oneid.egov.uz`,
-        phone: mobilePhone.trim() || '+998 (90) 123-45-67',
-        location: info?.location || 'Toshkent shahri',
-        birth_date: info?.birthDate || '12.01.1999',
-        gender: info?.gender || 'Erkak',
-      });
-
-      if (res.success && res.data) {
-        setAuthToken(res.data.token);
-        setLoggedInUser(res.data.user);
-        // 1-chi OneID autentifikatsiyasi tugadi -> 2-chi "Kim bo‘lib davom ettirasiz?" oynasi ochiladi
-        setStep('role_select');
+      const res = await api.getOneIDLoginUrl();
+      if (res.success && res.data?.auth_url) {
+        window.location.href = res.data.auth_url;
       } else {
-        setError(res.error || 'OneID orqali autentifikatsiyada xatolik yuz berdi');
+        setError(res.error || 'OneID SSO manzilini olishda xatolik yuz berdi');
       }
     } catch (err: any) {
       setError(err.message || 'OneID serveri bilan ulanishda xatolik');
@@ -289,7 +171,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     }
   };
 
-  // Tanlangan yo‘nalish (Oddiy shaxs / Yuridik shaxs) bo‘yicha profilni yangilab, tizimga kiritish
+  // Finalize selected account type (individual / company) and enter platform
   const handleFinalizeRole = async () => {
     setLoading(true);
     setError(null);
@@ -316,7 +198,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
 
       const finalUser = updateRes.data?.user || {
         ...(loggedInUser || {}),
-        name: accountType === 'company' ? companyName.trim() : (loggedInUser?.name || ''),
+        name: accountType === 'company' ? companyName.trim() : (loggedInUser?.name || 'OneID Fuqarosi'),
         account_type: accountType,
         company_name: accountType === 'company' ? companyName.trim() : '',
         inn: accountType === 'company' ? companyInn.trim() : '',
@@ -336,6 +218,8 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div
       onClick={onClose}
@@ -343,10 +227,10 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh]"
+        className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-scaleUp"
       >
-        {/* Browser / SSL Address Bar */}
-        <div className="bg-slate-100 dark:bg-slate-950 px-4 py-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 select-none">
+        {/* Top Browser URL Bar */}
+        <div className="bg-slate-100 dark:bg-slate-950 px-4 py-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" />
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
@@ -354,7 +238,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
             <div className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[10px] shadow-xs">
               <Lock size={11} className="text-emerald-600" />
               <span className="text-emerald-600 font-bold">https://</span>
-              <span>sso.egov.uz/sso/oauth/Authorization.do</span>
+              <span>id.egov.uz</span>
             </div>
           </div>
           <button
@@ -383,12 +267,12 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
               </div>
               <h2 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
                 <span>{t.oneIdTitle}</span>
-                <span className="px-1.5 py-0.2 bg-white/20 text-[10px] rounded font-bold">id.egov.uz</span>
+                <span className="px-1.5 py-0.5 bg-white/20 text-[10px] rounded font-bold">id.egov.uz</span>
               </h2>
             </div>
           </div>
           <div className="hidden sm:block text-right">
-            <span className="text-[10px] font-bold text-blue-200 uppercase bg-blue-900/60 px-2 py-1 rounded-md border border-blue-400/30">
+            <span className="text-[10px] font-bold text-blue-200 uppercase bg-blue-900/60 px-2.5 py-1 rounded-md border border-blue-400/30">
               Davlat portali
             </span>
           </div>
@@ -409,13 +293,13 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
               <div className="text-center space-y-1.5 pb-2 border-b border-slate-200 dark:border-slate-800">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#0047BA] dark:text-blue-400 text-[11px] font-bold border border-blue-200 dark:border-blue-800">
                   <Sparkles size={13} />
-                  <span>OneID identifikatsiyasi</span>
+                  <span>OneID identifikatsiyasi tasdiqlandi</span>
                 </div>
                 <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
                   Kim bo‘lib davom ettirasiz?
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                  OneID orqali muvaffaqiyatli autentifikatsiyadan o‘tdingiz! Platformada o‘zingizga mos hisob turini tanlang.
+                  OneID orqali muvaffaqiyatli autentifikatsiyadan o‘tdingiz! Platformada faoliyatingizga mos hisob turini tanlang.
                 </p>
               </div>
 
@@ -423,11 +307,11 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-xs text-emerald-900 dark:text-emerald-200">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                  <span>OneID orqali tasdiqlangan fuqaro: <b>{loggedInUser?.name || fullNameInput || 'OneID Fuqarosi'}</b></span>
+                  <span>OneID orqali tasdiqlangan fuqaro: <b>{loggedInUser?.name || 'OneID Fuqarosi'}</b></span>
                 </div>
-                {(loggedInUser?.pinfl || cleanPinfl) && (
+                {loggedInUser?.pinfl && (
                   <span className="font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                    JShShIR: {loggedInUser?.pinfl || cleanPinfl}
+                    JShShIR: {loggedInUser.pinfl}
                   </span>
                 )}
               </div>
@@ -460,37 +344,28 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                         {accountType === 'individual' && <div className="w-2 h-2 rounded-full bg-white" />}
                       </div>
                     </div>
-
                     <div>
-                      <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                      <h4 className="font-black text-sm text-slate-900 dark:text-white">
                         Oddiy shaxs
                       </h4>
-                      <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
-                        Jismoniy shaxs (Nomzod / Fuqaro)
-                      </span>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                        Bo‘sh ish o‘rinlarini qidirish, rezyume yaratish va vakansiyalarga ariza topshirish uchun.
+                      <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                        Fuqaro / Nomzod sifatida
                       </p>
                     </div>
-
-                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        <span>Shaxsiy rezyume yaratish</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        <span>Bir klikda vakansiyalarga ariza</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        <span>Ish beruvchilar bilan bevosita chat</span>
-                      </div>
-                    </div>
+                    <ul className="text-[11px] text-slate-600 dark:text-slate-400 space-y-1 pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                      <li className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <span>Vakansiyalarga rezyume topshirish</span>
+                      </li>
+                      <li className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <span>Ish beruvchilar bilan to‘g‘ridan-to‘g‘ri yozishish</span>
+                      </li>
+                    </ul>
                   </div>
                 </div>
 
-                {/* Card 2: Yuridik shaxs (Kompaniya / Ish beruvchi) */}
+                {/* Card 2: Yuridik shaxs (Kompaniya) */}
                 <div
                   onClick={() => { setAccountType('company'); setError(null); }}
                   className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left flex flex-col justify-between ${
@@ -516,33 +391,24 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                         {accountType === 'company' && <div className="w-2 h-2 rounded-full bg-white" />}
                       </div>
                     </div>
-
                     <div>
-                      <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                      <h4 className="font-black text-sm text-slate-900 dark:text-white">
                         Yuridik shaxs
                       </h4>
-                      <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
+                      <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                         Kompaniya / Ish beruvchi
-                      </span>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                        Tashkilot nomidan yangi vakansiyalar e’lon qilish va nomzodlar bilan chatlashish uchun.
                       </p>
                     </div>
-
-                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        <span>Vakansiya va e’lonlar berish</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        <span>Rasmiy STIR (INN) tasdiqlangan maqom</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
-                        <span>Nomzodlar bazasi bilan ishlash</span>
-                      </div>
-                    </div>
+                    <ul className="text-[11px] text-slate-600 dark:text-slate-400 space-y-1 pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                      <li className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                        <span>Kompaniya nomidan vakansiyalar e’lon qilish</span>
+                      </li>
+                      <li className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                        <span>Nomzodlar arizalarini ko‘rish va saralash</span>
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
@@ -582,7 +448,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                     </div>
                   </div>
                   <p className="text-[10px] text-indigo-700 dark:text-indigo-300">
-                    * Ushbu ma’lumotlar OneID orqali yuridik shaxs sifatida ro‘yxatdan o‘tish va e’lon berish huquqini beradi.
+                    * Barcha e’lonlar va muloqotlar shaxsiy ismingizdan emas, aynan shu tashkilot nomidan olib boriladi.
                   </p>
                 </div>
               )}
@@ -606,7 +472,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                 </button>
               </div>
             </div>
-          ) : step === 'auth' ? (
+          ) : (
             <div className="space-y-5">
               {/* Target Service Info */}
               <div className="p-3 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-200/80 dark:border-blue-900/50 flex items-center justify-between">
@@ -624,20 +490,8 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                 </span>
               </div>
 
-              {/* Tabs for Auth Methods (including QR-kod) */}
+              {/* Two Clean Tabs */}
               <div className="flex border-b border-slate-200 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => { setTab('password'); setError(null); }}
-                  className={`flex-1 pb-2.5 text-xs font-bold border-b-2 flex items-center justify-center gap-1.5 transition ${
-                    tab === 'password'
-                      ? 'border-[#0047BA] text-[#0047BA] dark:text-blue-400'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                  }`}
-                >
-                  <KeyRound size={14} />
-                  <span>{t.oneIdTabLogin}</span>
-                </button>
                 <button
                   type="button"
                   onClick={() => { setTab('qr'); setError(null); }}
@@ -652,179 +506,49 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setTab('eri'); setError(null); }}
+                  onClick={() => { setTab('sso'); setError(null); }}
                   className={`flex-1 pb-2.5 text-xs font-bold border-b-2 flex items-center justify-center gap-1.5 transition ${
-                    tab === 'eri'
+                    tab === 'sso'
                       ? 'border-[#0047BA] text-[#0047BA] dark:text-blue-400'
                       : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
                   }`}
                 >
-                  <FileText size={14} />
-                  <span>{t.oneIdTabEri}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setTab('mobile'); setError(null); }}
-                  className={`flex-1 pb-2.5 text-xs font-bold border-b-2 flex items-center justify-center gap-1.5 transition ${
-                    tab === 'mobile'
-                      ? 'border-[#0047BA] text-[#0047BA] dark:text-blue-400'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                  }`}
-                >
-                  <Smartphone size={14} />
-                  <span>{t.oneIdTabMobileId}</span>
+                  <KeyRound size={14} />
+                  <span>Rasmiy OneID SSO (Login & ERI)</span>
                 </button>
               </div>
 
-              {/* Tab 1: Password */}
-              {tab === 'password' && (
-                <form onSubmit={handleProceedToConsent} className="space-y-3.5 pt-1">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                        JShShIR (14 xonali raqam) yoki OneID Logini *
-                      </label>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {cleanPinfl.length}/14
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      maxLength={14}
-                      value={pinflInput}
-                      onChange={(e) => setPinflInput(e.target.value.replace(/\D/g, ''))}
-                      placeholder="14 xonali JShShIR raqamingizni kiriting"
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm font-mono font-bold tracking-wider rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
-                    {parsedData && (
-                      <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 rounded-lg text-emerald-900 dark:text-emerald-200 text-xs space-y-1 animate-fadeIn">
-                        <div className="flex items-center gap-1.5 font-bold text-[11px] text-emerald-700 dark:text-emerald-400">
-                          <CheckCircle2 size={13} className="text-emerald-600" />
-                          <span>{t.oneIdVerifiedNotice}</span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-1 text-[11px] pl-4">
-                          <div>{t.oneIdGender} <b>{parsedData.gender}</b></div>
-                          <div>{t.oneIdBirth} <b>{parsedData.birthDate}</b></div>
-                          <div>{t.oneIdRegion} <b>{parsedData.location}</b></div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      To‘liq ism-sharifingiz (F.I.O) *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={fullNameInput}
-                      onChange={(e) => setFullNameInput(e.target.value)}
-                      placeholder="Ism, familiya va sharifingiz"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Telefon raqamingiz (OneID tizimida)
-                    </label>
-                    <input
-                      type="text"
-                      value={mobilePhone}
-                      onChange={(e) => setMobilePhone(e.target.value)}
-                      placeholder="+998 90 123 45 67"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                        OneID maxfiy paroli *
-                      </label>
-                      <span className="text-[10px] text-blue-600 dark:text-blue-400 cursor-pointer hover:underline">
-                        Parolni unutdingizmi?
-                      </span>
-                    </div>
-                    <input
-                      type="password"
-                      required
-                      value={passwordInput}
-                      onChange={(e) => setPasswordInput(e.target.value)}
-                      placeholder="Parolingizni kiriting"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <input type="checkbox" id="remember" defaultChecked className="rounded text-blue-600" />
-                    <label htmlFor="remember" className="text-xs text-slate-600 dark:text-slate-400">
-                      Meni OneID tizimida eslab qolish
-                    </label>
-                  </div>
-
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.99] disabled:opacity-50"
-                    >
-                      <span>{t.oneIdConsentBtn}</span>
-                      <ArrowRight size={14} />
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* Tab 2: QR-kod */}
+              {/* Tab 1: QR Code Scanner (OneID Mobile App) */}
               {tab === 'qr' && (
-                <div className="space-y-4 pt-1 text-center animate-fadeIn">
-                  {/* Step Instructions */}
-                  <div className="p-3 bg-blue-50/90 dark:bg-blue-950/40 rounded-xl border border-blue-200/80 dark:border-blue-900/50 text-xs text-blue-950 dark:text-blue-200 text-left">
-                    <p className="font-bold flex items-center gap-1.5 mb-2 text-blue-900 dark:text-blue-300">
-                      <ScanLine size={16} className="text-blue-600" />
-                      OneID Mobile yoki MyGov ilovasi orqali kirish
-                    </p>
-                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-700 dark:text-slate-300">
+                <div className="space-y-4 pt-1 animate-fadeIn">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+                    <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <QrCode size={14} className="text-blue-600" />
+                      <span>OneID mobil ilovasi orqali kirish tartibi:</span>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-600 dark:text-slate-400 pl-1">
                       <li>{t.oneIdQrStep1}</li>
                       <li>{t.oneIdQrStep2}</li>
                       <li>{t.oneIdQrStep3}</li>
                     </ol>
                   </div>
 
-                  {/* Clean, 100% Scannable Official Black & White QR Code */}
-                  <div className="relative mx-auto w-64 h-64 p-3.5 bg-white rounded-2xl border-2 border-slate-300 dark:border-slate-700 shadow-xl flex items-center justify-center">
-                    {qrStatus === 'loading' ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                        <RefreshCw size={36} className="animate-spin text-blue-600" />
-                        <span className="text-xs mt-3 text-slate-600 dark:text-slate-400 font-medium">
-                          OneID QR-kodi yuklanmoqda...
-                        </span>
+                  {/* QR Image Display */}
+                  <div className="relative mx-auto w-64 h-64 p-3 bg-white rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center overflow-hidden">
+                    {qrStatus === 'approved' ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-emerald-600 animate-fadeIn">
+                        <CheckCircle2 size={56} className="mb-2 animate-bounce" />
+                        <span className="text-sm font-black">{t.oneIdConfirmed}</span>
+                        <span className="text-[11px] text-slate-500 mt-1">Hisob ma’lumotlari yuklanmoqda...</span>
                       </div>
-                    ) : qrStatus === 'approved' ? (
-                      <div className="w-full h-full bg-emerald-50 dark:bg-emerald-950/60 rounded-xl p-4 flex flex-col items-center justify-center text-emerald-800 dark:text-emerald-200 animate-fadeIn">
-                        <CheckCircle2 size={54} className="text-emerald-600 mb-2 animate-bounce" />
-                        <span className="text-sm font-bold text-center">{t.oneIdConfirmed}</span>
-                        <p className="text-xs text-center mt-1 font-medium text-emerald-700 dark:text-emerald-300">
-                          {approvedCitizen?.full_name || 'OneID Fuqarosi'}
-                        </p>
-                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
-                          JShShIR: {approvedCitizen?.pinfl || ''}
-                        </p>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
-                          WZone tizimiga kirilmoqda...
-                        </span>
-                      </div>
-                    ) : qrDataUrl ? (
-                      <div className="w-full h-full flex items-center justify-center bg-white p-1">
+                    ) : qrDataUrl && qrStatus === 'waiting' ? (
+                      <div className="relative w-full h-full flex items-center justify-center">
                         <img
                           src={qrDataUrl}
-                          alt="OneID Rasmiy QR Kod"
-                          className="w-full h-full object-contain"
-                          style={{ imageRendering: 'pixelated' }}
+                          alt="OneID Rasmiy QR Kodi"
+                          className="w-full h-full object-contain rounded-lg"
                         />
+                        <div className="absolute inset-0 border-2 border-blue-500/20 rounded-lg pointer-events-none" />
                       </div>
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
@@ -852,7 +576,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                     )}
                   </div>
 
-                  {/* Polling Live Status, Timer & Refresh */}
+                  {/* Polling Live Status & Countdown */}
                   <div className="flex flex-col items-center justify-center gap-2">
                     {qrStatus === 'waiting' && (
                       <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-full text-amber-800 dark:text-amber-200 text-xs font-medium animate-pulse">
@@ -881,247 +605,61 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                 </div>
               )}
 
-              {/* Tab 3: ERI (E-IMZO) */}
-              {tab === 'eri' && (
-                <form onSubmit={handleProceedToConsent} className="space-y-3.5 pt-1">
-                  <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 font-semibold">
-                    <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                    <span>{t.oneIdEimzoActive}</span>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      ERI egasining JShShIR raqami *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={14}
-                      value={pinflInput}
-                      onChange={(e) => setPinflInput(e.target.value.replace(/\D/g, ''))}
-                      placeholder="14 xonali JShShIR"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm font-mono font-bold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      To‘liq ism-sharifingiz (F.I.O) *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={fullNameInput}
-                      onChange={(e) => setFullNameInput(e.target.value)}
-                      placeholder="Ism, familiya va sharifingiz"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Elektron raqamli imzo (.pfx) kaliti fayli
-                    </label>
-                    <label className="flex items-center gap-2 w-full px-3.5 py-2.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 cursor-pointer hover:bg-slate-100 transition">
-                      <Upload size={16} className="text-slate-400" />
-                      <span className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                        {eriFileName || '.pfx kalit faylini tanlang'}
-                      </span>
-                      <input
-                        type="file"
-                        accept=".pfx,.key"
-                        onChange={(e) => setEriFileName(e.target.files?.[0]?.name || '')}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      ERI kalitining paroli *
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      value={eriPassword}
-                      onChange={(e) => setEriPassword(e.target.value)}
-                      placeholder="ERI parolini kiriting"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 mt-4 active:scale-[0.99]"
-                  >
-                    <span>{t.oneIdSignInEri}</span>
-                    <ArrowRight size={15} />
-                  </button>
-                </form>
-              )}
-
-              {/* Tab 4: Mobile-ID */}
-              {tab === 'mobile' && (
-                <form onSubmit={handleProceedToConsent} className="space-y-3.5 pt-1">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Mobile-ID ro‘yxatdan o‘tgan telefon raqami *
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        required
-                        value={mobilePhone}
-                        onChange={(e) => setMobilePhone(e.target.value)}
-                        placeholder="+998 90 123 45 67"
-                        className="flex-1 px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleSendSms}
-                        className="px-3 py-2 bg-blue-100 dark:bg-blue-900/60 hover:bg-blue-200 text-[#0047BA] dark:text-blue-300 font-bold text-xs rounded-xl transition shrink-0"
-                      >
-                        {smsSent ? 'Qayta yuborish' : 'SMS yuborish'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      To‘liq ism-sharifingiz (F.I.O) *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={fullNameInput}
-                      onChange={(e) => setFullNameInput(e.target.value)}
-                      placeholder="Ism, familiya va sharifingiz"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      JShShIR raqami (14 xonali)
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={14}
-                      value={pinflInput}
-                      onChange={(e) => setPinflInput(e.target.value.replace(/\D/g, ''))}
-                      placeholder="14 xonali JShShIR"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm font-mono font-bold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  {smsSent && (
-                    <div className="p-3 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl space-y-2 animate-fadeIn">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-slate-700 dark:text-slate-300">
-                          SMS tasdiqlash kodi:
-                        </span>
-                        <span className="font-mono text-blue-600 font-bold">
-                          {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
-                        </span>
+              {/* Tab 2: Rasmiy OneID SSO (Login & Parol / E-IMZO / Mobile-ID) */}
+              {tab === 'sso' && (
+                <div className="space-y-4 pt-1 animate-fadeIn">
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/30 rounded-2xl border border-blue-200 dark:border-blue-900/60 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#0047BA] text-white flex items-center justify-center font-black text-sm shrink-0 shadow-md">
+                        SSO
                       </div>
-                      <input
-                        type="text"
-                        maxLength={6}
-                        placeholder="______"
-                        value={smsCode}
-                        onChange={(e) => setSmsCode(e.target.value)}
-                        className="w-full px-3 py-2 text-center text-lg font-mono tracking-widest font-black rounded-lg bg-white dark:bg-slate-800 border border-blue-300 dark:border-blue-700 focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                      />
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                          Davlat xizmatlari yagona portali (sso.egov.uz)
+                        </h4>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
+                          Login va maxfiy parol, Elektron raqamli imzo (ERI / E-IMZO) yoki Mobile-ID orqali xavfsiz autentifikatsiya to‘g‘ridan-to‘g‘ri davlat portalida amalga oshiriladi.
+                        </p>
+                      </div>
                     </div>
-                  )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 text-[11px]">
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
+                        🔑 Login & Parol
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
+                        📜 E-IMZO (ERI kaliti)
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
+                        📱 Mobile-ID
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                    <ShieldCheck size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                    <span>
+                      Xavfsizlik talablariga asosan, fuqarolarning maxfiy parollari va ERI kalitlari hech qachon begona saytlarda so‘ralmaydi, faqat davlatning rasmiy <b>sso.egov.uz</b> manzilida kiritiladi.
+                    </span>
+                  </div>
 
                   <button
-                    type="submit"
-                    className="w-full py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 mt-4 active:scale-[0.99]"
+                    type="button"
+                    disabled={loading}
+                    onClick={handleLaunchSSO}
+                    className="w-full py-3 bg-[#0047BA] hover:bg-[#003B95] active:scale-[0.99] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <span>{t.oneIdConfirmMobileId}</span>
-                    <ArrowRight size={15} />
+                    {loading ? (
+                      <span>Ulanmoqda...</span>
+                    ) : (
+                      <>
+                        <span>Rasmiy OneID portaliga o‘tish (sso.egov.uz)</span>
+                        <ExternalLink size={15} />
+                      </>
+                    )}
                   </button>
-                </form>
+                </div>
               )}
-            </div>
-          ) : (
-            /* Step 2: Official OneID Consent Screen */
-            <div className="space-y-4 animate-fadeIn">
-              <div className="text-center pb-3 border-b border-slate-200 dark:border-slate-800">
-                <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center mx-auto mb-2 shadow-inner">
-                  <ShieldCheck size={28} />
-                </div>
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                  Shaxsiy ma’lumotlarni uzatishga rozilik
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  <b>WZone</b> portali OneID tizimidan quyidagi shaxsiy ma’lumotlaringizni so‘ramoqda:
-                </p>
-              </div>
-
-              {/* Verified Citizen Details Being Shared */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5 text-xs">
-                <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdCitizen}</span>
-                  <span className="font-extrabold text-slate-900 dark:text-white">
-                    {fullNameInput || 'OneID Fuqarosi'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdPinflLabel}</span>
-                  <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
-                    {cleanPinfl || '14 xonali JShShIR'}
-                  </span>
-                </div>
-                {parsedData && (
-                  <>
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdBirth}</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {parsedData.birthDate} ({parsedData.gender})
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdRegion}</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {parsedData.location}
-                      </span>
-                    </div>
-                  </>
-                )}
-                {mobilePhone && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">{t.oneIdPhone}</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{mobilePhone}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-[11px] text-emerald-800 dark:text-emerald-300">
-                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                <span>{t.oneIdAutoSyncNotice}</span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setStep('auth')}
-                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition"
-                >
-                  Rad etish
-                </button>
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={handleApproveAndLogin}
-                  className="flex-2 py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <ShieldCheck size={16} />
-                  <span>{loading ? 'Tasdiqlanmoqda...' : 'Ruxsat berish va kirish'}</span>
-                </button>
-              </div>
             </div>
           )}
         </div>

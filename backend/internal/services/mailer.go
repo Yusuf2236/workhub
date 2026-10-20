@@ -125,7 +125,11 @@ func SendMail(to, subject, body string, production bool) {
 func SiteURL() string {
 	base := strings.TrimRight(strings.TrimSpace(os.Getenv("PUBLIC_SITE_URL")), "/")
 	if base == "" {
-		base = "http://localhost:3000"
+		if strings.EqualFold(os.Getenv("APP_ENV"), "production") || strings.EqualFold(os.Getenv("GIN_MODE"), "release") || strings.EqualFold(os.Getenv("ENV"), "production") {
+			base = "https://wzone.uz"
+		} else {
+			base = "http://localhost:3000"
+		}
 	}
 	return base
 }

@@ -170,9 +170,7 @@ func CreateVacancy(c *gin.Context) {
 	}
 
 	if creator != nil && creator.AccountType == "company" && strings.TrimSpace(creator.CompanyName) != "" {
-		if strings.TrimSpace(payload.Company) == "" || payload.Company == "Maxfiy ish beruvchi" || (creator.Name != "" && payload.Company == creator.Name) {
-			payload.Company = strings.TrimSpace(creator.CompanyName)
-		}
+		payload.Company = strings.TrimSpace(creator.CompanyName)
 	} else if strings.TrimSpace(payload.Company) == "" {
 		payload.Company = "Maxfiy ish beruvchi"
 	}
@@ -370,7 +368,22 @@ func UpdateVacancy(c *gin.Context) {
 		response.Error(c, http.StatusBadRequest, "title is required")
 		return
 	}
-	if v.Company == "" {
+	callerID := currentUserID(c)
+	var callerUser *models.User
+	if userRepo != nil {
+		callerUser, _ = userRepo.GetByID(callerID)
+	} else {
+		for _, u := range users {
+			if u.ID == callerID {
+				uCopy := u
+				callerUser = &uCopy
+				break
+			}
+		}
+	}
+	if callerUser != nil && callerUser.AccountType == "company" && strings.TrimSpace(callerUser.CompanyName) != "" {
+		v.Company = strings.TrimSpace(callerUser.CompanyName)
+	} else if v.Company == "" {
 		v.Company = "Maxfiy ish beruvchi"
 	}
 	// Badges are granted by moderators only

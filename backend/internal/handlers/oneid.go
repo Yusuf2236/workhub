@@ -72,7 +72,11 @@ func OneIDLogin(c *gin.Context) {
 	}
 	redirectURI := os.Getenv("ONEID_REDIRECT_URI")
 	if redirectURI == "" {
-		redirectURI = "http://localhost:3000/api/auth/callback/oneid"
+		if isProduction {
+			redirectURI = "https://wzone.uz/api/auth/callback/oneid"
+		} else {
+			redirectURI = "http://localhost:3000/api/auth/callback/oneid"
+		}
 	}
 	ssoURL := os.Getenv("ONEID_SSO_URL")
 	if ssoURL == "" {
@@ -174,7 +178,11 @@ func exchangeOneIDCode(code string) (*oneIDCitizen, error) {
 	clientSecret := os.Getenv("ONEID_CLIENT_SECRET")
 	redirectURI := os.Getenv("ONEID_REDIRECT_URI")
 	if redirectURI == "" {
-		redirectURI = "http://localhost:3000/api/auth/callback/oneid"
+		if isProduction {
+			redirectURI = "https://wzone.uz/api/auth/callback/oneid"
+		} else {
+			redirectURI = "http://localhost:3000/api/auth/callback/oneid"
+		}
 	}
 
 	tokenData := url.Values{}
@@ -275,14 +283,20 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		for _, u := range users {
 			if u.PINFL == citizen.PINFL {
 				user := u
-				user.AccountType = accountType
-				user.CompanyName = citizen.CompanyName
-				user.INN = citizen.INN
-				if accountType == "company" && user.Role != "admin" {
+				if citizen.AccountType != "" {
+					user.AccountType = citizen.AccountType
+				}
+				if strings.TrimSpace(citizen.CompanyName) != "" {
+					user.CompanyName = strings.TrimSpace(citizen.CompanyName)
+				}
+				if strings.TrimSpace(citizen.INN) != "" {
+					user.INN = strings.TrimSpace(citizen.INN)
+				}
+				if user.AccountType == "company" && user.Role != "admin" {
 					user.Role = "employer"
 				}
-				if accountType == "company" && strings.TrimSpace(citizen.CompanyName) != "" {
-					user.Name = strings.TrimSpace(citizen.CompanyName)
+				if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
+					user.Name = strings.TrimSpace(user.CompanyName)
 				}
 				return &user, nil, nil
 			}
@@ -313,17 +327,23 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		return nil, nil, err
 	}
 	if user != nil {
-		user.AccountType = accountType
-		user.CompanyName = citizen.CompanyName
-		user.INN = citizen.INN
-		if accountType == "company" && user.Role != "admin" {
+		// Preserve existing company identity if incoming citizen payload didn't explicitly specify one
+		if citizen.AccountType != "" {
+			user.AccountType = citizen.AccountType
+		}
+		if strings.TrimSpace(citizen.CompanyName) != "" {
+			user.CompanyName = strings.TrimSpace(citizen.CompanyName)
+		}
+		if strings.TrimSpace(citizen.INN) != "" {
+			user.INN = strings.TrimSpace(citizen.INN)
+		}
+		if user.AccountType == "company" && user.Role != "admin" {
 			user.Role = "employer"
 		}
-		// Refresh name/photo from the government registry, keep the user's own email
+
+		// Refresh name: If user is a company, name MUST strictly be their company name
 		linkName := citizen.FullName
-		if (accountType == "company" || user.AccountType == "company") && strings.TrimSpace(citizen.CompanyName) != "" {
-			linkName = strings.TrimSpace(citizen.CompanyName)
-		} else if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
+		if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
 			linkName = strings.TrimSpace(user.CompanyName)
 		}
 		if err := userRepo.LinkOneID(user.ID, citizen.PINFL, linkName, ""); err != nil {
@@ -332,8 +352,8 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		if citizen.AvatarURL != "" {
 			_ = userRepo.Update(user.ID, "", "", citizen.AvatarURL)
 		}
-		if accountType == "company" || citizen.CompanyName != "" || citizen.INN != "" {
-			_ = userRepo.UpdateAccountType(user.ID, accountType, citizen.CompanyName, citizen.INN, role)
+		if citizen.AccountType != "" || strings.TrimSpace(citizen.CompanyName) != "" || strings.TrimSpace(citizen.INN) != "" {
+			_ = userRepo.UpdateAccountType(user.ID, user.AccountType, user.CompanyName, user.INN, user.Role)
 		}
 	} else {
 		if existing, err := userRepo.GetByEmail(email); err != nil {
@@ -364,15 +384,7 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 	if fresh, err := userRepo.GetByID(user.ID); err == nil && fresh != nil {
 		user = fresh
 	}
-	user.AccountType = accountType
-	user.CompanyName = citizen.CompanyName
-	user.INN = citizen.INN
-	if accountType == "company" && user.Role != "admin" {
-		user.Role = "employer"
-	}
-	if accountType == "company" && strings.TrimSpace(citizen.CompanyName) != "" {
-		user.Name = strings.TrimSpace(citizen.CompanyName)
-	} else if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
+	if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
 		user.Name = strings.TrimSpace(user.CompanyName)
 	}
 
@@ -497,7 +509,7 @@ func OneIDCallback(c *gin.Context) {
 			return
 		}
 
-	case oneIDDemoMode() || (strings.HasPrefix(code, "one_code-") && code != "one_code-forged" && (!strings.HasPrefix(code, "one_code-demo-") || !isProduction)) || (payload.PINFL != "" && code != "one_code-forged" && !isProduction):
+	case !isProduction && (oneIDDemoMode() || (strings.HasPrefix(code, "one_code-") && code != "one_code-forged") || (payload.PINFL != "" && code != "one_code-forged")):
 		pinfl := normalizePINFL(payload.PINFL)
 		if pinfl == "" {
 			if !isProduction && strings.TrimSpace(payload.Code) != "" {
@@ -523,9 +535,6 @@ func OneIDCallback(c *gin.Context) {
 			CompanyName: strings.TrimSpace(payload.CompanyName),
 			INN:         strings.TrimSpace(payload.INN),
 		}
-		if citizen.AccountType == "" {
-			citizen.AccountType = "individual"
-		}
 		fillFromPINFL(citizen)
 
 	case !liveConfigured:
@@ -537,12 +546,8 @@ func OneIDCallback(c *gin.Context) {
 		return
 	}
 
-	if citizen.AccountType == "" {
-		if payload.AccountType != "" {
-			citizen.AccountType = payload.AccountType
-		} else {
-			citizen.AccountType = "individual"
-		}
+	if citizen.AccountType == "" && payload.AccountType != "" {
+		citizen.AccountType = payload.AccountType
 	}
 	if citizen.CompanyName == "" && payload.CompanyName != "" {
 		citizen.CompanyName = payload.CompanyName
