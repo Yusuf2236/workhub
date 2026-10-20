@@ -155,7 +155,25 @@ func CreateVacancy(c *gin.Context) {
 		response.Error(c, http.StatusBadRequest, "title is required")
 		return
 	}
-	if strings.TrimSpace(payload.Company) == "" {
+	creatorID := currentUserID(c)
+	var creator *models.User
+	if userRepo != nil {
+		creator, _ = userRepo.GetByID(creatorID)
+	} else {
+		for _, u := range users {
+			if u.ID == creatorID {
+				uCopy := u
+				creator = &uCopy
+				break
+			}
+		}
+	}
+
+	if creator != nil && creator.AccountType == "company" && strings.TrimSpace(creator.CompanyName) != "" {
+		if strings.TrimSpace(payload.Company) == "" || payload.Company == "Maxfiy ish beruvchi" || (creator.Name != "" && payload.Company == creator.Name) {
+			payload.Company = strings.TrimSpace(creator.CompanyName)
+		}
+	} else if strings.TrimSpace(payload.Company) == "" {
 		payload.Company = "Maxfiy ish beruvchi"
 	}
 

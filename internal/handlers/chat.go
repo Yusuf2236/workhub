@@ -365,7 +365,11 @@ func SendChatMessage(c *gin.Context) {
 		senderAvatar = ""
 		if userRepo != nil {
 			if u, _ := userRepo.GetByID(userID); u != nil {
-				senderName = u.Name
+				if u.AccountType == "company" && strings.TrimSpace(u.CompanyName) != "" {
+					senderName = strings.TrimSpace(u.CompanyName)
+				} else {
+					senderName = u.Name
+				}
 				senderAvatar = u.AvatarURL
 			}
 		}
@@ -502,7 +506,11 @@ func HandleChatSocket(c *gin.Context) {
 		avatarURL = ""
 		if userRepo != nil {
 			if u, _ := userRepo.GetByID(claims.UserID); u != nil {
-				userName = u.Name
+				if u.AccountType == "company" && strings.TrimSpace(u.CompanyName) != "" {
+					userName = strings.TrimSpace(u.CompanyName)
+				} else {
+					userName = u.Name
+				}
 				avatarURL = u.AvatarURL
 			}
 		}

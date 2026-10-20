@@ -110,7 +110,11 @@ func CreateVacancyComment(c *gin.Context) {
 		authorName = ""
 		authorAvatar = ""
 		if u, _ := userRepo.GetByID(userIDStr); u != nil {
-			authorName = u.Name
+			if u.AccountType == "company" && strings.TrimSpace(u.CompanyName) != "" {
+				authorName = strings.TrimSpace(u.CompanyName)
+			} else {
+				authorName = u.Name
+			}
 			authorAvatar = u.AvatarURL
 		}
 		if profileRepo != nil && authorAvatar == "" {

@@ -188,6 +188,7 @@ func (r *postgresUserRepo) UpdateAccountType(id string, accountType string, comp
 		    company_name = $3,
 		    inn = $4,
 		    role = CASE WHEN $5 <> '' THEN $5 ELSE role END,
+		    name = CASE WHEN $2 = 'company' AND $3 <> '' THEN $3 ELSE name END,
 		    updated_at = NOW()
 		WHERE id = $1`
 	_, err := r.db.Exec(query, id, strings.TrimSpace(accountType), strings.TrimSpace(companyName), strings.TrimSpace(inn), strings.TrimSpace(role))
@@ -235,7 +236,11 @@ func (r *postgresUserRepo) LinkOneID(id string, pinfl string, name string, email
 		SET pinfl = $2,
 		    pinfl_hash = $3,
 		    auth_provider = 'oneid',
-		    name = CASE WHEN $4 <> '' THEN $4 ELSE name END,
+		    name = CASE 
+		        WHEN account_type = 'company' AND COALESCE(company_name, '') <> '' THEN company_name
+		        WHEN $4 <> '' THEN $4 
+		        ELSE name 
+		    END,
 		    email = CASE WHEN $5 <> '' THEN $5 ELSE email END,
 		    updated_at = NOW()
 		WHERE id = $1`

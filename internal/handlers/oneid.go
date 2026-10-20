@@ -266,6 +266,11 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		role = "employer"
 	}
 
+	displayName := citizen.FullName
+	if accountType == "company" && strings.TrimSpace(citizen.CompanyName) != "" {
+		displayName = strings.TrimSpace(citizen.CompanyName)
+	}
+
 	if userRepo == nil {
 		for _, u := range users {
 			if u.PINFL == citizen.PINFL {
@@ -276,6 +281,9 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 				if accountType == "company" && user.Role != "admin" {
 					user.Role = "employer"
 				}
+				if accountType == "company" && strings.TrimSpace(citizen.CompanyName) != "" {
+					user.Name = strings.TrimSpace(citizen.CompanyName)
+				}
 				return &user, nil, nil
 			}
 		}
@@ -284,7 +292,7 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		}
 		newUser := models.User{
 			ID:           uuid.NewString(),
-			Name:         citizen.FullName,
+			Name:         displayName,
 			Email:        email,
 			Role:         role,
 			AuthProvider: "oneid",
@@ -312,11 +320,20 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 			user.Role = "employer"
 		}
 		// Refresh name/photo from the government registry, keep the user's own email
-		if err := userRepo.LinkOneID(user.ID, citizen.PINFL, citizen.FullName, ""); err != nil {
+		linkName := citizen.FullName
+		if (accountType == "company" || user.AccountType == "company") && strings.TrimSpace(citizen.CompanyName) != "" {
+			linkName = strings.TrimSpace(citizen.CompanyName)
+		} else if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
+			linkName = strings.TrimSpace(user.CompanyName)
+		}
+		if err := userRepo.LinkOneID(user.ID, citizen.PINFL, linkName, ""); err != nil {
 			return nil, nil, err
 		}
 		if citizen.AvatarURL != "" {
 			_ = userRepo.Update(user.ID, "", "", citizen.AvatarURL)
+		}
+		if accountType == "company" || citizen.CompanyName != "" || citizen.INN != "" {
+			_ = userRepo.UpdateAccountType(user.ID, accountType, citizen.CompanyName, citizen.INN, role)
 		}
 	} else {
 		if existing, err := userRepo.GetByEmail(email); err != nil {
@@ -326,7 +343,7 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		}
 		newUser := models.User{
 			ID:           uuid.NewString(),
-			Name:         citizen.FullName,
+			Name:         displayName,
 			Email:        email,
 			Role:         role,
 			AuthProvider: "oneid",
@@ -352,6 +369,11 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 	user.INN = citizen.INN
 	if accountType == "company" && user.Role != "admin" {
 		user.Role = "employer"
+	}
+	if accountType == "company" && strings.TrimSpace(citizen.CompanyName) != "" {
+		user.Name = strings.TrimSpace(citizen.CompanyName)
+	} else if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
+		user.Name = strings.TrimSpace(user.CompanyName)
 	}
 
 	var profile *models.Profile
@@ -395,6 +417,9 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 }
 
 func oneIDLoginResponse(c *gin.Context, citizen *oneIDCitizen, user *models.User, profile *models.Profile, extra gin.H) {
+	if user.AccountType == "company" && strings.TrimSpace(user.CompanyName) != "" {
+		user.Name = strings.TrimSpace(user.CompanyName)
+	}
 	token, err := jwt.GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "Token yaratishda xatolik")
