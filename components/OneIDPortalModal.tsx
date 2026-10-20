@@ -250,7 +250,12 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
     setError(null);
 
     try {
-      const activePinfl = cleanPinfl.length === 14 ? cleanPinfl : '31201991234567';
+      if (cleanPinfl.length !== 14) {
+        setError('JShShIR (PINFL) aynan 14 ta raqamdan iborat bo‘lishi kerak');
+        setLoading(false);
+        return;
+      }
+      const activePinfl = cleanPinfl;
       const code = 'one_code-portal-' + Math.random().toString(36).substring(2, 12) + Date.now();
       const info = parsePINFL(activePinfl);
 
@@ -261,7 +266,7 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
       const res = await api.oneIDCallback({
         code,
         pinfl: activePinfl,
-        full_name: fullNameInput.trim() || 'OneID Fuqarosi',
+        full_name: effectiveFullName,
         email: `${activePinfl}@oneid.egov.uz`,
         phone: mobilePhone.trim() || '+998 (90) 123-45-67',
         location: info?.location || 'Toshkent shahri',
@@ -279,55 +284,6 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
       }
     } catch (err: any) {
       setError(err.message || 'OneID serveri bilan ulanishda xatolik');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDirectAutoLogin = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setError(null);
-    if (!cleanPinfl || cleanPinfl.length !== 14) {
-      setPinflInput('31201991234567');
-      if (!fullNameInput.trim()) {
-        setFullNameInput('Yusuf Usmonov');
-      }
-    }
-    await handleApproveAndLogin();
-  };
-
-  const handleSimulateQrApprove = async () => {
-    setLoading(true);
-    setQrStatus('loading');
-    setError(null);
-    try {
-      const activePinfl = cleanPinfl.length === 14 ? cleanPinfl : '31201991234567';
-      const info = parsePINFL(activePinfl);
-      const res = await api.oneIDCallback({
-        code: 'one_code-demo-qr-' + Date.now(),
-        pinfl: activePinfl,
-        full_name: fullNameInput.trim() || 'Yusuf Usmonov',
-        phone: mobilePhone.trim() || '+998 (90) 123-45-67',
-        location: info?.location || 'Toshkent shahri',
-        birth_date: info?.birthDate || '12.01.1999',
-        gender: info?.gender || 'Erkak',
-      });
-      if (res.success && res.data) {
-        setQrStatus('approved');
-        const citizenInfo = res.data.citizen || res.data.user;
-        setApprovedCitizen(citizenInfo);
-        setAuthToken(res.data.token);
-        setLoggedInUser(res.data.user);
-        setTimeout(() => {
-          setStep('role_select');
-        }, 800);
-      } else {
-        setError(res.error || 'OneID orqali autentifikatsiyada xatolik yuz berdi');
-        setQrStatus('waiting');
-      }
-    } catch (err: any) {
-      setError(err.message || 'OneID serveri bilan ulanishda xatolik');
-      setQrStatus('waiting');
     } finally {
       setLoading(false);
     }
@@ -804,20 +760,11 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                     </label>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={handleDirectAutoLogin}
-                      className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.99] disabled:opacity-50"
-                    >
-                      <Sparkles size={15} />
-                      <span>{loading ? 'Kirilmoqda...' : 'Tezkor avtomatik kirish'}</span>
-                    </button>
+                  <div className="pt-2">
                     <button
                       type="submit"
                       disabled={loading}
-                      className="flex-1 py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.99] disabled:opacity-50"
+                      className="w-full py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5 active:scale-[0.99] disabled:opacity-50"
                     >
                       <span>{t.oneIdConsentBtn}</span>
                       <ArrowRight size={14} />
@@ -923,18 +870,6 @@ export default function OneIDPortalModal({ isOpen, onClose, onSuccess, lang = 'u
                         className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
                       >
                         <RefreshCw size={14} className={qrStatus === 'loading' ? 'animate-spin' : ''} />
-                      </button>
-                    </div>
-
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={handleSimulateQrApprove}
-                        disabled={loading || qrStatus === 'approved'}
-                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 transition shadow-md active:scale-95 disabled:opacity-50"
-                      >
-                        <ShieldCheck size={15} />
-                        <span>{t.oneIdDemoConfirm}</span>
                       </button>
                     </div>
                   </div>
