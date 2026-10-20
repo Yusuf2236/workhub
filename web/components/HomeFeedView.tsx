@@ -127,7 +127,7 @@ export default function HomeFeedView({
       badge: lang === 'ru' ? 'AI Технологии' : lang === 'en' ? 'AI Powered' : 'AI Yordamchi',
       title:
         lang === 'ru'
-          ? 'Создавайте резюme и вакансии за 10 секунд с помощью AI'
+          ? 'Создавайте резюме и вакансии за 10 секунд с помощью AI'
           : lang === 'en'
           ? 'Generate professional resumes & jobs in 10 seconds with AI'
           : 'AI bilan 10 soniyada professional rezyume va vakansiyalar yarating',
@@ -566,19 +566,25 @@ export default function HomeFeedView({
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-gradient-to-br from-blue-500/15 via-indigo-500/10 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
         <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-gradient-to-tr from-purple-500/15 via-blue-500/10 to-transparent rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
 
-        {/* WZONE INTERACTIVE ANIMATED PROMO BANNER (Fixed Uniform Dimensions) */}
-        <div id="wzone-promo-banner" className="relative mb-6 rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 dark:from-slate-950 dark:via-blue-950/50 dark:to-slate-950 text-white border border-indigo-500/30 shadow-lg shadow-indigo-500/10 overflow-hidden min-h-[220px] sm:min-h-[205px] flex flex-col justify-between">
+        {/* WZONE INTERACTIVE ANIMATED PROMO BANNER */}
+        <div id="wzone-promo-banner" className="relative mb-6 rounded-2xl p-4 sm:p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 dark:from-slate-950 dark:via-blue-950/50 dark:to-slate-950 text-white border border-indigo-500/30 shadow-lg shadow-indigo-500/10 overflow-hidden flex flex-col justify-between gap-3">
           {/* Moving shimmer light streak */}
           <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 animate-shimmer pointer-events-none" />
 
           {/* Top Bar: Live Beacon Badge & Slide Dots */}
-          <div className="flex items-center justify-between gap-2 mb-2 relative z-10 flex-wrap">
+          <div className="flex items-center justify-between gap-2 relative z-10 flex-wrap">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-xs font-bold text-blue-200">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              <span>WZone 2.0 • O‘zbekiston #1 AI Karyera Ekotizimi</span>
+              <span>
+                {lang === 'ru'
+                  ? 'WZone 2.0 • #1 AI Карьерная экосистема Узбекистана'
+                  : lang === 'en'
+                  ? 'WZone 2.0 • Uzbekistan #1 AI Career Ecosystem'
+                  : 'WZone 2.0 • O‘zbekiston #1 AI Karyera Ekotizimi'}
+              </span>
             </div>
 
             {/* Slide Navigation Dots & Tabs */}
@@ -597,28 +603,28 @@ export default function HomeFeedView({
             </div>
           </div>
 
-          {/* Active Animated Slide Content (Locked Uniform Box) */}
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 py-1 min-h-[96px]">
-            <div className="space-y-1 max-w-xl flex-1 flex flex-col justify-center">
+          {/* Active Animated Slide Content */}
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 py-1">
+            <div className="space-y-1.5 max-w-xl flex-1">
               <div className="flex items-center gap-2">
                 <span className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-0.5 rounded-md ${PROMO_SLIDES[promoSlide].glow}`}>
                   {React.createElement(PROMO_SLIDES[promoSlide].icon, { size: 12, className: 'shrink-0 animate-bounce' })}
                   {PROMO_SLIDES[promoSlide].badge}
                 </span>
               </div>
-              <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug line-clamp-2 h-[2.75rem] sm:h-[2.85rem] flex items-center">
+              <h3 className="text-base sm:text-lg md:text-xl font-black text-white tracking-tight leading-snug">
                 {PROMO_SLIDES[promoSlide].title}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium line-clamp-2 h-[2.4rem] flex items-center">
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
                 {PROMO_SLIDES[promoSlide].desc}
               </p>
             </div>
 
-            <div className="shrink-0 flex items-center gap-2">
+            <div className="shrink-0 flex items-center gap-2 pt-1 md:pt-0">
               <button
                 type="button"
                 onClick={PROMO_SLIDES[promoSlide].action}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold rounded-xl text-white bg-gradient-to-r ${PROMO_SLIDES[promoSlide].accent} hover:brightness-110 active:scale-95 transition shadow-md shadow-black/30 group`}
+                className={`inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl text-white bg-gradient-to-r ${PROMO_SLIDES[promoSlide].accent} hover:brightness-110 active:scale-95 transition shadow-lg shadow-black/30 group`}
               >
                 <span>{PROMO_SLIDES[promoSlide].cta}</span>
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -627,22 +633,22 @@ export default function HomeFeedView({
           </div>
 
           {/* Interactive Feature Highlights Strip */}
-          <div className="mt-3 pt-2.5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-semibold text-slate-300 relative z-10">
+          <div className="mt-2 pt-2.5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-semibold text-slate-300 relative z-10">
             <div className="flex items-center gap-1.5">
               <Sparkles size={13} className="text-amber-400 shrink-0" />
-              <span>Real bozor AI tahlili</span>
+              <span>{lang === 'ru' ? 'AI анализ рынка' : lang === 'en' ? 'Live AI market analysis' : 'Real bozor AI tahlili'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <ShieldCheck size={13} className="text-emerald-400 shrink-0" />
-              <span>OneID rasmiy kafolati</span>
+              <span>{lang === 'ru' ? 'Гарантия OneID' : lang === 'en' ? 'OneID certified' : 'OneID rasmiy kafolati'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Zap size={13} className="text-blue-400 shrink-0" />
-              <span>60s Jonli yangilanish</span>
+              <span>{lang === 'ru' ? 'Обновления 60с' : lang === 'en' ? 'Live refresh every 60s' : '60s Jonli yangilanish'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <MapPin size={13} className="text-purple-400 shrink-0" />
-              <span>Smart GPS geolokatsiya</span>
+              <span>{lang === 'ru' ? 'GPS геолокация' : lang === 'en' ? 'Smart proximity GPS' : 'Smart GPS geolokatsiya'}</span>
             </div>
           </div>
         </div>
