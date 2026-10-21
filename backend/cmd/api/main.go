@@ -177,6 +177,8 @@ func setupRoutes(r *gin.Engine) {
 		api.POST("/auth/oneid/callback", authLimit, handlers.OneIDCallback)
 		api.GET("/auth/oneid/qr/generate", qrLimit, handlers.OneIDQRGenerate)
 		api.POST("/auth/oneid/qr/check", qrLimit, handlers.OneIDQRCheck)
+		api.POST("/auth/oneid/select-identity", middleware.AuthRequired(), handlers.SelectOneIDIdentity)
+		api.GET("/auth/oneid/organizations", middleware.AuthRequired(), handlers.GetOneIDOrganizations)
 		api.GET("/auth/me", middleware.AuthRequired(), handlers.Me)
 		api.POST("/auth/logout", middleware.AuthRequired(), handlers.Logout)
 		api.POST("/auth/password/forgot", authLimit, handlers.ForgotPassword)

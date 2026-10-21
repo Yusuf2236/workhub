@@ -33,11 +33,14 @@ import {
   Zap,
   Clock,
   ExternalLink,
+  Download,
   X,
   RefreshCw,
   ArrowRight,
 } from 'lucide-react';
-import { api, getCurrentUser, setCurrentUser } from '../lib/api';
+import { api, getCurrentUser, setCurrentUser, setAuthToken } from '../lib/api';
+import { OneIDOrganization } from './OneIDPortalModal';
+import { downloadResumeAsPDF } from '../lib/resumePdf';
 import { Language, translations } from '../lib/translations';
 import FlagIcon from './FlagIcon';
 
@@ -133,8 +136,18 @@ export default function ProfileView({
 }: ProfileViewProps) {
   const t = translations[lang] || translations.uz;
 
+  const isCompany = user?.account_type === 'company';
+
   // Active top-level subtab: Rezyumelar, Shaxsiy ma'lumotlar, Sozlamalar
-  const [activeSection, setActiveSection] = useState<'resumes-skills' | 'personal' | 'settings'>('resumes-skills');
+  const [activeSection, setActiveSection] = useState<'resumes-skills' | 'personal' | 'settings'>(
+    user?.account_type === 'company' ? 'personal' : 'resumes-skills'
+  );
+
+  useEffect(() => {
+    if (user?.account_type === 'company' && activeSection === 'resumes-skills') {
+      setActiveSection('personal');
+    }
+  }, [user?.account_type, activeSection]);
 
   // Personal Info Form
   const [name, setName] = useState(user?.name || '');
@@ -174,68 +187,123 @@ export default function ProfileView({
 
   // Role / Account Type switch modal state
   const [showRoleSwitchModal, setShowRoleSwitchModal] = useState(false);
-  const [switchAccountType, setSwitchAccountType] = useState<'individual' | 'company'>(
-    user?.account_type === 'company' ? 'company' : 'individual'
-  );
-  const [switchCompanyName, setSwitchCompanyName] = useState(user?.company_name || '');
-  const [switchInn, setSwitchInn] = useState(user?.inn || '');
   const [switchLoading, setSwitchLoading] = useState(false);
   const [switchError, setSwitchError] = useState<string | null>(null);
   const [switchSuccess, setSwitchSuccess] = useState(false);
 
+  // OneID Organizations state
+  const [organizations, setOrganizations] = useState<OneIDOrganization[]>([]);
+  const [loadingOrgs, setLoadingOrgs] = useState(false);
+  const [selectedOrgTarget, setSelectedOrgTarget] = useState<'individual' | number | 'custom'>('individual');
+  const [customOrgName, setCustomOrgName] = useState('');
+  const [customOrgInn, setCustomOrgInn] = useState('');
+  const [customOrgRole, setCustomOrgRole] = useState('Rahbar / Vakil');
+
+  const fetchOrganizations = async () => {
+    if (!user || user.auth_provider !== 'oneid') return;
+    setLoadingOrgs(true);
+    try {
+      const res = await api.getOneIDOrganizations();
+      if (res.success && res.data?.organizations) {
+        setOrganizations(res.data.organizations);
+      }
+    } catch (e) {
+      console.warn('OneID tashkilotlarini yuklashda xatolik', e);
+    } finally {
+      setLoadingOrgs(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
-      setSwitchAccountType(user.account_type === 'company' ? 'company' : 'individual');
-      setSwitchCompanyName(user.company_name || '');
-      setSwitchInn(user.inn || '');
+      if (user.account_type === 'company') {
+        const foundIdx = organizations.findIndex((o) => o.inn === user.inn);
+        if (foundIdx >= 0) {
+          setSelectedOrgTarget(foundIdx);
+        } else if (user.company_name) {
+          setSelectedOrgTarget('custom');
+          setCustomOrgName(user.company_name || '');
+          setCustomOrgInn(user.inn || '');
+        }
+      } else {
+        setSelectedOrgTarget('individual');
+      }
     }
-  }, [user?.account_type, user?.company_name, user?.inn]);
+  }, [user?.account_type, user?.company_name, user?.inn, organizations]);
 
-  const handleSwitchAccountType = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSelectIdentity = async (
+    target: 'individual' | OneIDOrganization | { name: string; inn: string; role?: string }
+  ) => {
     setSwitchLoading(true);
     setSwitchError(null);
-
-    if (switchAccountType === 'company') {
-      if (!switchCompanyName.trim()) {
-        setSwitchError('Tashkilot yoki kompaniya nomini kiriting');
-        setSwitchLoading(false);
-        return;
-      }
-      if (switchInn.trim().length !== 9) {
-        setSwitchError('STIR (INN) aynan 9 ta raqamdan iborat bo‘lishi kerak');
-        setSwitchLoading(false);
-        return;
-      }
-    }
-
     try {
-      const res = await api.updateProfile({
-        account_type: switchAccountType,
-        company_name: switchAccountType === 'company' ? switchCompanyName.trim() : '',
-        inn: switchAccountType === 'company' ? switchInn.trim() : '',
-        name: switchAccountType === 'company' ? switchCompanyName.trim() : undefined,
-      });
+      let payload: {
+        account_type: 'individual' | 'company';
+        company_name?: string;
+        inn?: string;
+        role_in_org?: string;
+        organizations?: OneIDOrganization[];
+      };
 
-      if (res.success) {
-        const updated = (res.data as any)?.user || {
-          ...user,
-          name: switchAccountType === 'company' ? switchCompanyName.trim() : user.name,
-          account_type: switchAccountType,
-          company_name: switchAccountType === 'company' ? switchCompanyName.trim() : '',
-          inn: switchAccountType === 'company' ? switchInn.trim() : '',
-          role: switchAccountType === 'company' ? 'employer' : 'user',
+      if (target === 'individual') {
+        payload = {
+          account_type: 'individual',
+          organizations,
         };
-        if (switchAccountType === 'company' && switchCompanyName.trim()) {
-          updated.name = switchCompanyName.trim();
+      } else {
+        const orgName = (target as any).name?.trim();
+        const orgInn = (target as any).inn?.replace(/\D/g, '').trim();
+        const orgRole = (target as any).role || 'Rahbar';
+        if (!orgName) {
+          setSwitchError('Tashkilot yoki kompaniya nomini kiriting');
+          setSwitchLoading(false);
+          return;
         }
+        if (orgInn.length !== 9) {
+          setSwitchError('STIR (INN) aynan 9 ta raqamdan iborat bo‘lishi kerak');
+          setSwitchLoading(false);
+          return;
+        }
+        let updatedOrgs = [...organizations];
+        if (!updatedOrgs.some((o) => o.inn === orgInn)) {
+          updatedOrgs.push({
+            inn: orgInn,
+            name: orgName,
+            role: orgRole,
+            status: 'Faol',
+            is_head: true,
+          });
+          setOrganizations(updatedOrgs);
+        }
+        payload = {
+          account_type: 'company',
+          company_name: orgName,
+          inn: orgInn,
+          role_in_org: orgRole,
+          organizations: updatedOrgs,
+        };
+      }
+
+      const res = await api.selectOneIDIdentity(payload);
+      if (res.success && res.data) {
+        if (res.data.token) {
+          setAuthToken(res.data.token);
+        }
+        const updated = res.data.user || {
+          ...user,
+          name: payload.account_type === 'company' ? payload.company_name : user.name,
+          account_type: payload.account_type,
+          company_name: payload.company_name || '',
+          inn: payload.inn || '',
+          role: payload.account_type === 'company' ? 'employer' : 'user',
+        };
         setCurrentUser(updated);
         onUserUpdated(updated);
         setSwitchSuccess(true);
         setTimeout(() => {
           setSwitchSuccess(false);
           setShowRoleSwitchModal(false);
-        }, 800);
+        }, 600);
       } else {
         setSwitchError(res.error || 'Hisob turini almashtirishda xatolik yuz berdi');
       }
@@ -243,6 +311,26 @@ export default function ProfileView({
       setSwitchError(err.message || 'Server xatosi');
     } finally {
       setSwitchLoading(false);
+    }
+  };
+
+  const handleSwitchAccountType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedOrgTarget === 'individual') {
+      await handleSelectIdentity('individual');
+    } else if (typeof selectedOrgTarget === 'number') {
+      const org = organizations[selectedOrgTarget];
+      if (org) {
+        await handleSelectIdentity(org);
+      } else {
+        setSwitchError('Tashkilot tanlanmadi');
+      }
+    } else {
+      await handleSelectIdentity({
+        name: customOrgName.trim(),
+        inn: customOrgInn.trim(),
+        role: customOrgRole.trim(),
+      });
     }
   };
 
@@ -273,6 +361,12 @@ export default function ProfileView({
 
           // Settings are stored server-side; switches missing from the profile stay on their defaults
           const st = p.settings || {};
+          if (Array.isArray(st.organizations) && st.organizations.length > 0) {
+            setOrganizations(st.organizations);
+          } else if (user.auth_provider === 'oneid') {
+            fetchOrganizations();
+          }
+
           if (typeof st.notify_job_alerts === 'boolean') setNotifyJobAlerts(st.notify_job_alerts);
           if (typeof st.notify_app_status === 'boolean') setNotifyAppStatus(st.notify_app_status);
           if (typeof st.notify_chat_messages === 'boolean') setNotifyChatMessages(st.notify_chat_messages);
@@ -545,9 +639,17 @@ export default function ProfileView({
                 <button
                   type="button"
                   onClick={() => {
-                    setSwitchAccountType(user.account_type === 'company' ? 'company' : 'individual');
-                    setSwitchCompanyName(user.company_name || '');
-                    setSwitchInn(user.inn || '');
+                    if (user.account_type === 'company') {
+                      const idx = organizations.findIndex((o) => o.inn === user.inn);
+                      if (idx >= 0) setSelectedOrgTarget(idx);
+                      else {
+                        setSelectedOrgTarget('custom');
+                        setCustomOrgName(user.company_name || '');
+                        setCustomOrgInn(user.inn || '');
+                      }
+                    } else {
+                      setSelectedOrgTarget('individual');
+                    }
                     setSwitchError(null);
                     setShowRoleSwitchModal(true);
                   }}
@@ -601,34 +703,35 @@ export default function ProfileView({
 
         {/* Primary Sub-Nav */}
         <div className="mt-8 pt-5 border-t border-slate-100 dark:border-slate-800/80">
-          {/* 3 ta asosiy bo'lim tugmalari — to'liq 100% yonma-yon (3 ustunli grid) */}
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl w-full">
-            {/* 1. Rezyumelar & Skillar */}
-            <button
-              type="button"
-              onClick={() => setActiveSection('resumes-skills')}
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
-                activeSection === 'resumes-skills'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <FileText size={16} className="shrink-0" />
-              <span className="truncate">{t.profileSubResumesSkills}</span>
-              {userResumes.length > 0 && (
-                <span
-                  className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
-                    activeSection === 'resumes-skills'
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                  }`}
-                >
-                  {userResumes.length}
-                </span>
-              )}
-            </button>
+          <div className={`grid ${isCompany ? 'grid-cols-2' : 'grid-cols-3'} gap-1.5 sm:gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl w-full`}>
+            {/* 1. Rezyumelar & Skillar (Only for candidates, hidden for companies) */}
+            {!isCompany && (
+              <button
+                type="button"
+                onClick={() => setActiveSection('resumes-skills')}
+                className={`flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+                  activeSection === 'resumes-skills'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <FileText size={16} className="shrink-0" />
+                <span className="truncate">{t.profileSubResumesSkills}</span>
+                {userResumes.length > 0 && (
+                  <span
+                    className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                      activeSection === 'resumes-skills'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                    }`}
+                  >
+                    {userResumes.length}
+                  </span>
+                )}
+              </button>
+            )}
 
-            {/* 2. Shaxsiy ma'lumotlar */}
+            {/* 2. Shaxsiy ma'lumotlar / Tashkilot rekvizitlari */}
             <button
               type="button"
               onClick={() => setActiveSection('personal')}
@@ -638,8 +741,8 @@ export default function ProfileView({
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <User size={16} className="shrink-0" />
-              <span className="truncate">{t.profileSubPersonal}</span>
+              {isCompany ? <Building2 size={16} className="shrink-0" /> : <User size={16} className="shrink-0" />}
+              <span className="truncate">{isCompany ? 'Tashkilot ma’lumotlari' : t.profileSubPersonal}</span>
             </button>
 
             {/* 3. Sozlamalar */}
@@ -774,21 +877,36 @@ export default function ProfileView({
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between text-xs">
-                      {resume.file_url ? (
-                        <a
-                          href={resume.file_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1"
+                      <div className="flex items-center gap-3">
+                        {resume.file_url && (
+                          <a
+                            href={resume.file_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1"
+                          >
+                            <ExternalLink size={13} />
+                            <span>Fayl</span>
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            downloadResumeAsPDF({
+                              title: resume.title,
+                              fullName: user.name,
+                              phone: user.phone,
+                              email: user.email,
+                              location: user.location,
+                              summary: resume.summary,
+                            })
+                          }
+                          className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                         >
-                          <ExternalLink size={13} />
-                          <span>{t.profileDownloadFile}</span>
-                        </a>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 font-medium">
-                          {t.onlineProfile}
-                        </span>
-                      )}
+                          <Download size={13} />
+                          <span>PDF yuklab olish</span>
+                        </button>
+                      </div>
 
                       <span className="text-[11px] font-bold text-slate-500">
                         {user.account_type === 'company' && user.company_name ? user.company_name : user.name}
@@ -999,9 +1117,17 @@ export default function ProfileView({
                     <button
                       type="button"
                       onClick={() => {
-                        setSwitchAccountType(user.account_type === 'company' ? 'company' : 'individual');
-                        setSwitchCompanyName(user.company_name || '');
-                        setSwitchInn(user.inn || '');
+                        if (user.account_type === 'company') {
+                          const idx = organizations.findIndex((o) => o.inn === user.inn);
+                          if (idx >= 0) setSelectedOrgTarget(idx);
+                          else {
+                            setSelectedOrgTarget('custom');
+                            setCustomOrgName(user.company_name || '');
+                            setCustomOrgInn(user.inn || '');
+                          }
+                        } else {
+                          setSelectedOrgTarget('individual');
+                        }
                         setSwitchError(null);
                         setShowRoleSwitchModal(true);
                       }}
@@ -1040,6 +1166,174 @@ export default function ProfileView({
               </div>
             );
           })()}
+
+          {/* OneID Connected Organizations Card */}
+          {user.auth_provider === 'oneid' && (
+            <div className="bg-gradient-to-br from-indigo-50/90 via-sky-50/50 to-white dark:from-slate-900 dark:via-indigo-950/30 dark:to-slate-900 rounded-3xl border border-indigo-200/80 dark:border-indigo-900/60 p-5 sm:p-6 shadow-sm space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
+                    <Building2 size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>OneID orqali biriktirilgan tashkilotlar</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-black">
+                        {organizations.length} ta
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      OneID orqali aniqlangan yuridik shaxslaringiz. Istalgan tashkilot nomidan ish beruvchi sifatida kirishingiz mumkin.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={fetchOrganizations}
+                    disabled={loadingOrgs}
+                    className="px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    title="OneID tashkilotlarini qayta yangilash"
+                  >
+                    <RefreshCw size={13} className={loadingOrgs ? 'animate-spin' : ''} />
+                    <span>{loadingOrgs ? 'Yuklanmoqda...' : 'Yangilash'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRoleSwitchModal(true)}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                  >
+                    <Plus size={13} />
+                    <span>Tashkilot boshqaruvi</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Individual (Candidate) Mode Card */}
+              <div
+                className={`p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
+                  user.account_type !== 'company'
+                    ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 ring-2 ring-emerald-500/20'
+                    : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      user.account_type !== 'company'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <User size={16} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                        Jismoniy shaxs (Fuqaro / Nomzod)
+                      </span>
+                      {user.account_type !== 'company' && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shrink-0">
+                          Hozirda faol
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate">
+                      Rezyume joylash, vakansiyalarga ariza topshirish
+                    </span>
+                  </div>
+                </div>
+                {user.account_type === 'company' && (
+                  <button
+                    type="button"
+                    disabled={switchLoading}
+                    onClick={() => handleSelectIdentity('individual')}
+                    className="px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-xs font-bold transition shrink-0 cursor-pointer active:scale-95"
+                  >
+                    O‘tish
+                  </button>
+                )}
+              </div>
+
+              {/* Organization Cards List */}
+              {organizations.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  {organizations.map((org, idx) => {
+                    const isActive = user.account_type === 'company' && user.inn === org.inn;
+                    return (
+                      <div
+                        key={`${org.inn}-${idx}`}
+                        className={`p-3.5 rounded-2xl border transition flex flex-col justify-between gap-2.5 ${
+                          isActive
+                            ? 'bg-blue-50/90 dark:bg-blue-950/50 border-blue-400 dark:border-blue-700 ring-2 ring-blue-500/20'
+                            : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-blue-200'
+                        }`}
+                      >
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-black text-xs sm:text-sm text-slate-900 dark:text-white leading-snug line-clamp-2">
+                              {org.name}
+                            </span>
+                            {isActive ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white shrink-0">
+                                Faol tashkilot
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 shrink-0">
+                                {org.role || 'Rahbar'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+                            <span className="font-mono font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+                              STIR: {org.inn}
+                            </span>
+                            {org.status && (
+                              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                ● {org.status}
+                              </span>
+                            )}
+                          </div>
+                          {org.address && (
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate pt-0.5">
+                              {org.address}
+                            </p>
+                          )}
+                        </div>
+                        <div className="pt-1 flex items-center justify-end">
+                          {isActive ? (
+                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                              <CheckCircle2 size={14} />
+                              <span>Tanlangan rejim</span>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={switchLoading}
+                              onClick={() => handleSelectIdentity(org)}
+                              className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                            >
+                              <span>Tashkilot sifatida kirish</span>
+                              <ArrowRight size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-1">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    OneID tizimidan biriktirilgan tashkilotlar topilmadi
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Agar siz korxona rahbari yoki ta’sischisi bo‘lsangiz, «Tashkilot boshqaruvi» orqali STIR kiritib qo‘shishingiz mumkin.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Sub-Section 2.1: Personal Form */}
           <div className="bg-white dark:bg-slate-900/90 backdrop-blur rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-4">
@@ -1451,7 +1745,7 @@ export default function ProfileView({
         </form>
       )}
 
-      {/* Modal: Hisob turini almashtirish (Oddiy shaxs <-> Yuridik shaxs) */}
+      {/* Modal: Hisob turini tanlash / almashtirish (OneID Tashkilotlari & Fuqaro) */}
       {showRoleSwitchModal && (
         <div
           onClick={() => setShowRoleSwitchModal(false)}
@@ -1459,20 +1753,20 @@ export default function ProfileView({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
+            className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg max-h-[90vh] shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
           >
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#003B95] via-[#0047BA] to-[#0A58CA] text-white p-4 sm:p-5 flex items-center justify-between shadow-md">
+            <div className="bg-gradient-to-r from-[#003B95] via-[#0047BA] to-[#0A58CA] text-white p-4 sm:p-5 flex items-center justify-between shadow-md shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-white/20 shrink-0 shadow-inner">
                   <RefreshCw size={20} className="text-white" />
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
-                    Hisob turini almashtirish
+                    Hisob turini tanlash
                   </h3>
                   <p className="text-[11px] text-blue-100 font-medium">
-                    Oddiy shaxs (Nomzod) yoki Yuridik shaxs (Ish beruvchi)
+                    Oddiy shaxs (Nomzod) yoki Tashkilot (Ish beruvchi) sifatida kiring
                   </p>
                 </div>
               </div>
@@ -1484,7 +1778,7 @@ export default function ProfileView({
               </button>
             </div>
 
-            <form onSubmit={handleSwitchAccountType} className="p-5 sm:p-6 space-y-4">
+            <form onSubmit={handleSwitchAccountType} className="p-5 sm:p-6 overflow-y-auto space-y-4">
               {switchError && (
                 <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl flex items-center gap-2 text-xs text-red-700 dark:text-red-300">
                   <AlertCircle size={16} className="shrink-0" />
@@ -1500,92 +1794,158 @@ export default function ProfileView({
               )}
 
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Quyidagi hisob turlaridan birini tanlang. Tanlangan yo‘nalish bo‘yicha platformadagi imkoniyatlaringiz darhol yangilanadi:
+                Platformadan qaysi maqomda foydalanmoqchisiz? Tanlagan profilingiz bo‘yicha imkoniyatlaringiz yangilanadi:
               </p>
 
-              {/* Two Options */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Oddiy shaxs */}
-                <div
-                  onClick={() => setSwitchAccountType('individual')}
-                  className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left flex flex-col justify-between ${
-                    switchAccountType === 'individual'
-                      ? 'border-[#0047BA] bg-blue-50/70 dark:bg-blue-950/50 shadow-md ring-2 ring-blue-500/20'
-                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                        switchAccountType === 'individual'
-                          ? 'bg-[#0047BA] text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                      }`}>
-                        <User size={18} />
-                      </div>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        switchAccountType === 'individual'
-                          ? 'border-[#0047BA] bg-[#0047BA] text-white'
-                          : 'border-slate-300 dark:border-slate-600'
-                      }`}>
-                        {switchAccountType === 'individual' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">
-                        Oddiy shaxs
-                      </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Fuqaro / Nomzod. Ish qidirish, rezyume yaratish va arizalar topshirish.
-                      </p>
-                    </div>
+              {/* Option 1: Jismoniy shaxs */}
+              <div
+                onClick={() => setSelectedOrgTarget('individual')}
+                className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between gap-3 ${
+                  selectedOrgTarget === 'individual'
+                    ? 'border-[#0047BA] bg-blue-50/70 dark:bg-blue-950/50 shadow-md ring-2 ring-blue-500/20'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      selectedOrgTarget === 'individual'
+                        ? 'bg-[#0047BA] text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <User size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">
+                      Jismoniy shaxs (Fuqaro / Nomzod)
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Ish qidirish, rezyume yaratish va e’lonlarga ariza topshirish
+                    </p>
                   </div>
                 </div>
-
-                {/* Yuridik shaxs */}
                 <div
-                  onClick={() => setSwitchAccountType('company')}
-                  className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left flex flex-col justify-between ${
-                    switchAccountType === 'company'
-                      ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 shadow-md ring-2 ring-indigo-500/20'
-                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    selectedOrgTarget === 'individual'
+                      ? 'border-[#0047BA] bg-[#0047BA] text-white'
+                      : 'border-slate-300 dark:border-slate-600'
                   }`}
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                        switchAccountType === 'company'
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                      }`}>
-                        <Building2 size={18} />
-                      </div>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        switchAccountType === 'company'
-                          ? 'border-indigo-600 bg-indigo-600 text-white'
-                          : 'border-slate-300 dark:border-slate-600'
-                      }`}>
-                        {switchAccountType === 'company' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">
-                        Yuridik shaxs
-                      </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Kompaniya / Ish beruvchi. Vakansiya va e’lonlar berish.
-                      </p>
-                    </div>
-                  </div>
+                  {selectedOrgTarget === 'individual' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                 </div>
               </div>
 
-              {/* Company Inputs */}
-              {switchAccountType === 'company' && (
+              {/* Option 2: OneID Detected Organizations */}
+              {organizations.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <Building2 size={14} className="text-indigo-600" />
+                      <span>OneID bo‘yicha tashkilotlar ({organizations.length})</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium">Bitta tashkilotni tanlang</span>
+                  </div>
+
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {organizations.map((org, idx) => {
+                      const isSelected = selectedOrgTarget === idx;
+                      return (
+                        <div
+                          key={`${org.inn}-${idx}`}
+                          onClick={() => setSelectedOrgTarget(idx)}
+                          className={`p-3 rounded-2xl border-2 cursor-pointer transition flex items-center justify-between gap-3 ${
+                            isSelected
+                              ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 shadow-md ring-2 ring-indigo-500/20'
+                              : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                                isSelected
+                                  ? 'bg-indigo-600 text-white shadow-xs'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                              }`}
+                            >
+                              <Building2 size={16} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                                  {org.name}
+                                </span>
+                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 shrink-0">
+                                  {org.role || 'Rahbar'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                                <span>STIR: {org.inn}</span>
+                                {org.status && <span>• {org.status}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                              isSelected
+                                ? 'border-indigo-600 bg-indigo-600 text-white'
+                                : 'border-slate-300 dark:border-slate-600'
+                            }`}
+                          >
+                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Option 3: Custom Organization (Add new) */}
+              <div
+                onClick={() => setSelectedOrgTarget('custom')}
+                className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between gap-3 ${
+                  selectedOrgTarget === 'custom'
+                    ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 shadow-md ring-2 ring-indigo-500/20'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      selectedOrgTarget === 'custom'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <Plus size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">
+                      Boshqa tashkilot kiritish
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Ro‘yxatda bo‘lmagan yangi tashkilot nomini va 9 xonali STIR (INN) raqamini kiritish
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    selectedOrgTarget === 'custom'
+                      ? 'border-indigo-600 bg-indigo-600 text-white'
+                      : 'border-slate-300 dark:border-slate-600'
+                  }`}
+                >
+                  {selectedOrgTarget === 'custom' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+              </div>
+
+              {/* Custom Organization Inputs */}
+              {selectedOrgTarget === 'custom' && (
                 <div className="p-3.5 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200 dark:border-indigo-900/60 space-y-3 animate-fadeIn">
                   <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 dark:text-indigo-200">
                     <Briefcase size={14} />
-                    <span>Tashkilot rekvizitlari</span>
+                    <span>Yangi tashkilot rekvizitlari</span>
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -1594,8 +1954,8 @@ export default function ProfileView({
                     <input
                       type="text"
                       required
-                      value={switchCompanyName}
-                      onChange={(e) => setSwitchCompanyName(e.target.value)}
+                      value={customOrgName}
+                      onChange={(e) => setCustomOrgName(e.target.value)}
                       placeholder="Korxona yoki tashkilot nomini kiriting"
                       className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                     />
@@ -1608,8 +1968,8 @@ export default function ProfileView({
                       type="text"
                       required
                       maxLength={9}
-                      value={switchInn}
-                      onChange={(e) => setSwitchInn(e.target.value.replace(/\D/g, ''))}
+                      value={customOrgInn}
+                      onChange={(e) => setCustomOrgInn(e.target.value.replace(/\D/g, ''))}
                       placeholder="9 xonali STIR (masalan: 301234567)"
                       className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                     />

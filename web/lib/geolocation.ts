@@ -1,7 +1,10 @@
 /**
  * WorkHub Geolocation Detection Utility
- * Detects the user's real city/district in Uzbekistan via browser Geolocation API
- * and reverse-geocodes with OpenStreetMap Nominatim or closest regional center fallback.
+ * Accurately detects user's real city/district/region in Uzbekistan via:
+ * 1. Browser Geolocation API -> BigDataCloud reverse geocoding (native Uzbek locale)
+ * 2. Nominatim OpenStreetMap fallback
+ * 3. Proximity-based regional calculation in Uzbekistan
+ * 4. High-accuracy IP-based fallback (ipwho.is)
  */
 
 interface GeoCity {
@@ -10,7 +13,7 @@ interface GeoCity {
   lon: number;
 }
 
-const UZBEK_REGIONS: GeoCity[] = [
+export const UZBEK_REGIONS: GeoCity[] = [
   { name: 'Toshkent shahri', lat: 41.2995, lon: 69.2401 },
   { name: 'Toshkent viloyati', lat: 41.1667, lon: 69.5 },
   { name: 'Samarqand viloyati', lat: 39.627, lon: 66.975 },
@@ -25,6 +28,24 @@ const UZBEK_REGIONS: GeoCity[] = [
   { name: 'Qoraqalpog‘iston Respublikasi', lat: 42.4619, lon: 59.6166 },
   { name: 'Jizzax viloyati', lat: 40.1158, lon: 67.8422 },
   { name: 'Sirdaryo viloyati', lat: 40.4897, lon: 68.7847 },
+];
+
+export const ALL_UZBEK_REGIONS = [
+  'Toshkent shahri',
+  'Toshkent viloyati',
+  'Samarqand viloyati',
+  'Farg‘ona viloyati',
+  'Andijon viloyati',
+  'Namangan viloyati',
+  'Buxoro viloyati',
+  'Xorazm viloyati',
+  'Qashqadaryo viloyati',
+  'Surxondaryo viloyati',
+  'Jizzax viloyati',
+  'Sirdaryo viloyati',
+  'Navoiy viloyati',
+  'Qoraqalpog‘iston Respublikasi',
+  'Masofaviy (Remote)',
 ];
 
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -55,58 +76,104 @@ export function getClosestUzbekRegion(lat: number, lon: number): string {
   return closest.name;
 }
 
+async function reverseGeocodeCoords(lat: number, lon: number): Promise<string> {
+  // 1. Try BigDataCloud (works in browser, no CORS issues, native Uzbek names)
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4500);
+    const res = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=uz`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      const subdivision = data.principalSubdivision || '';
+      const city = data.city || data.locality || '';
+      if (subdivision && city && !subdivision.toLowerCase().includes(city.toLowerCase())) {
+        return `${subdivision}, ${city}`;
+      }
+      if (subdivision) return subdivision;
+      if (city) return city;
+    }
+  } catch (_) {}
+
+  // 2. Try Nominatim OpenStreetMap
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`,
+      { signal: controller.signal, headers: { 'Accept-Language': 'uz,ru,en' } }
+    );
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      const addr = data.address || {};
+      const city = addr.city || addr.town || addr.village || addr.state || addr.county || '';
+      const district = addr.suburb || addr.city_district || addr.neighbourhood || '';
+      if (district && city && !district.toLowerCase().includes(city.toLowerCase())) {
+        return `${city}, ${district}`;
+      }
+      if (city) return city;
+    }
+  } catch (_) {}
+
+  // 3. Fallback to closest region center
+  return getClosestUzbekRegion(lat, lon);
+}
+
+async function fetchIPLocation(): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch('https://ipwho.is/', { signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+          return reverseGeocodeCoords(data.latitude, data.longitude);
+        }
+        if (data.region || data.city) {
+          return data.region ? `${data.region}${data.city && data.city !== data.region ? ', ' + data.city : ''}` : data.city;
+        }
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
 /**
  * detectCurrentLocation: attempts to fetch GPS coordinates and returns
  * formatted city/district name in Uzbekistan.
  */
-export async function detectCurrentLocation(): Promise<string> {
-  return new Promise((resolve) => {
-    if (typeof window === 'undefined' || !navigator.geolocation) {
-      resolve('Toshkent shahri');
-      return;
+export async function detectCurrentLocation(preferredFallback?: string): Promise<string> {
+  if (typeof window === 'undefined') {
+    return preferredFallback || 'Toshkent shahri';
+  }
+
+  // Check if browser supports geolocation
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 6000,
+          enableHighAccuracy: true,
+          maximumAge: 300000,
+        });
+      });
+      const locationName = await reverseGeocodeCoords(pos.coords.latitude, pos.coords.longitude);
+      if (locationName) return locationName;
+    } catch (e) {
+      // GPS permission denied or timed out
     }
+  }
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        try {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 4000);
+  // Fallback 1: IP Geolocation
+  const ipLoc = await fetchIPLocation();
+  if (ipLoc) return ipLoc;
 
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`,
-            {
-              signal: controller.signal,
-              headers: { 'Accept-Language': 'uz,ru,en' },
-            }
-          );
-          clearTimeout(timer);
-          const data = await res.json();
-          const addr = data.address || {};
-          const city =
-            addr.city ||
-            addr.town ||
-            addr.village ||
-            addr.state ||
-            addr.county ||
-            getClosestUzbekRegion(latitude, longitude);
-          const district = addr.suburb || addr.city_district || addr.neighbourhood || '';
-
-          if (district && city && !district.toLowerCase().includes(city.toLowerCase())) {
-            resolve(`${city}, ${district}`);
-          } else {
-            resolve(city || 'Toshkent shahri');
-          }
-        } catch {
-          // Fallback by coordinates proximity in Uzbekistan
-          resolve(getClosestUzbekRegion(latitude, longitude));
-        }
-      },
-      (err) => {
-        console.warn('Geolocation lookup notice:', err.message);
-        resolve('Toshkent shahri');
-      },
-      { timeout: 7000, enableHighAccuracy: true }
-    );
-  });
+  // Fallback 2: preferred fallback or default
+  return preferredFallback || 'Toshkent shahri';
 }

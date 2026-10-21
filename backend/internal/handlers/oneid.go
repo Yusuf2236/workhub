@@ -23,20 +23,32 @@ import (
 
 const oneIDStateTTL = 10 * time.Minute
 
+type OneIDOrganization struct {
+	INN       string `json:"inn"`
+	Name      string `json:"name"`
+	ShortName string `json:"short_name,omitempty"`
+	Role      string `json:"role"`
+	Status    string `json:"status"`
+	Address   string `json:"address,omitempty"`
+	IsHead    bool   `json:"is_head"`
+	OKED      string `json:"oked,omitempty"`
+}
+
 // oneIDCitizen holds identity data obtained from a trusted OneID source
 // (sso.egov.uz token exchange or id.egov.uz QR confirmation).
 type oneIDCitizen struct {
-	PINFL       string
-	FullName    string
-	BirthDate   string
-	Gender      string
-	Location    string
-	Email       string
-	Phone       string
-	AvatarURL   string
-	AccountType string
-	CompanyName string
-	INN         string
+	PINFL         string              `json:"pinfl"`
+	FullName      string              `json:"full_name"`
+	BirthDate     string              `json:"birth_date"`
+	Gender        string              `json:"gender"`
+	Location      string              `json:"location"`
+	Email         string              `json:"email"`
+	Phone         string              `json:"phone"`
+	AvatarURL     string              `json:"avatar_url"`
+	AccountType   string              `json:"account_type"`
+	CompanyName   string              `json:"company_name"`
+	INN           string              `json:"inn"`
+	Organizations []OneIDOrganization `json:"organizations"`
 }
 
 // oneIDDemoMode allows logging in with a self-declared PINFL. It exists only for
@@ -236,6 +248,7 @@ func exchangeOneIDCode(code string) (*oneIDCitizen, error) {
 	}
 	citizen.Location = mapString(info, "per_adr")
 	fillFromPINFL(citizen)
+	citizen.Organizations = fetchOneIDOrganizations(accessToken, citizen.PINFL, citizen.FullName)
 	return citizen, nil
 }
 
@@ -420,6 +433,22 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		if existing.AvatarURL == "" {
 			existing.AvatarURL = citizen.AvatarURL
 		}
+		var sMap map[string]interface{}
+		if len(existing.Settings) > 0 {
+			_ = json.Unmarshal(existing.Settings, &sMap)
+		}
+		if sMap == nil {
+			sMap = make(map[string]interface{})
+		}
+		if citizen.FullName != "" {
+			sMap["citizen_full_name"] = citizen.FullName
+		}
+		if len(citizen.Organizations) > 0 {
+			sMap["organizations"] = citizen.Organizations
+		}
+		if sBytes, err := json.Marshal(sMap); err == nil {
+			existing.Settings = sBytes
+		}
 		existing.UpdatedAt = now
 		_ = profileRepo.Upsert(*existing)
 		profile, _ = profileRepo.GetByUserID(user.ID)
@@ -438,31 +467,34 @@ func oneIDLoginResponse(c *gin.Context, citizen *oneIDCitizen, user *models.User
 		return
 	}
 	payload := gin.H{
-		"user":         user,
-		"token":        token,
-		"profile":      profile,
-		"provider":     "oneid",
-		"pinfl":        citizen.PINFL,
-		"birth_date":   citizen.BirthDate,
-		"gender":       citizen.Gender,
-		"location":     citizen.Location,
-		"phone":        citizen.Phone,
-		"avatar_url":   citizen.AvatarURL,
-		"account_type": citizen.AccountType,
-		"company_name": citizen.CompanyName,
-		"inn":          citizen.INN,
+		"user":                        user,
+		"token":                       token,
+		"profile":                     profile,
+		"provider":                    "oneid",
+		"pinfl":                       citizen.PINFL,
+		"birth_date":                  citizen.BirthDate,
+		"gender":                      citizen.Gender,
+		"location":                    citizen.Location,
+		"phone":                       citizen.Phone,
+		"avatar_url":                  citizen.AvatarURL,
+		"account_type":                citizen.AccountType,
+		"company_name":                citizen.CompanyName,
+		"inn":                         citizen.INN,
+		"organizations":               citizen.Organizations,
+		"requires_identity_selection": true,
 		"citizen": gin.H{
-			"pinfl":        citizen.PINFL,
-			"full_name":    citizen.FullName,
-			"birth_date":   citizen.BirthDate,
-			"gender":       citizen.Gender,
-			"location":     citizen.Location,
-			"phone":        citizen.Phone,
-			"email":        user.Email,
-			"avatar_url":   citizen.AvatarURL,
-			"account_type": citizen.AccountType,
-			"company_name": citizen.CompanyName,
-			"inn":          citizen.INN,
+			"pinfl":         citizen.PINFL,
+			"full_name":     citizen.FullName,
+			"birth_date":    citizen.BirthDate,
+			"gender":        citizen.Gender,
+			"location":      citizen.Location,
+			"phone":         citizen.Phone,
+			"email":         user.Email,
+			"avatar_url":    citizen.AvatarURL,
+			"account_type":  citizen.AccountType,
+			"company_name":  citizen.CompanyName,
+			"inn":           citizen.INN,
+			"organizations": citizen.Organizations,
 		},
 	}
 	for k, v := range extra {
@@ -555,6 +587,9 @@ func OneIDCallback(c *gin.Context) {
 	if citizen.INN == "" && payload.INN != "" {
 		citizen.INN = payload.INN
 	}
+	if len(citizen.Organizations) == 0 {
+		citizen.Organizations = fetchOneIDOrganizations("", citizen.PINFL, citizen.FullName)
+	}
 
 	user, profile, err := loginOneIDCitizen(citizen, "OneID Portal")
 	if err != nil {
@@ -626,14 +661,15 @@ func OneIDQRCheck(c *gin.Context) {
 			return
 		}
 		citizen := &oneIDCitizen{
-			PINFL:     pinfl,
-			FullName:  fullName,
-			BirthDate: birthDate,
-			Gender:    gender,
-			Location:  location,
-			Email:     strings.ToLower(email),
-			Phone:     phone,
-			AvatarURL: avatarURL,
+			PINFL:         pinfl,
+			FullName:      fullName,
+			BirthDate:     birthDate,
+			Gender:        gender,
+			Location:      location,
+			Email:         strings.ToLower(email),
+			Phone:         phone,
+			AvatarURL:     avatarURL,
+			Organizations: fetchOneIDOrganizations(oneidToken, pinfl, fullName),
 		}
 
 		user, profile, err := loginOneIDCitizen(citizen, "mobil ilova")
@@ -670,3 +706,275 @@ func OneIDQRCheck(c *gin.Context) {
 		"code":    codeVal,
 	})
 }
+
+// SelectOneIDIdentity handles the user's explicit selection of an identity (individual vs specific organization)
+// after authenticating with OneID.
+func SelectOneIDIdentity(c *gin.Context) {
+	userID, ok := c.Get("user_id")
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var payload struct {
+		AccountType   string              `json:"account_type" binding:"required"` // "individual" | "company"
+		CompanyName   string              `json:"company_name"`
+		INN           string              `json:"inn"`
+		RoleInOrg     string              `json:"role_in_org"`
+		Organizations []OneIDOrganization `json:"organizations"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	accountType := strings.ToLower(strings.TrimSpace(payload.AccountType))
+	if accountType != "company" && accountType != "individual" {
+		accountType = "individual"
+	}
+
+	uid := userID.(string)
+
+	if userRepo == nil {
+		var found *models.User
+		for email, u := range users {
+			if u.ID == uid {
+				user := u
+				if accountType == "company" {
+					cName := strings.TrimSpace(payload.CompanyName)
+					if cName == "" {
+						response.Error(c, http.StatusBadRequest, "Tashkilot yoki kompaniya nomini kiriting")
+						return
+					}
+					inn := strings.TrimSpace(payload.INN)
+					if len(inn) != 9 {
+						response.Error(c, http.StatusBadRequest, "STIR (INN) aynan 9 ta raqamdan iborat bo‘lishi kerak")
+						return
+					}
+					user.AccountType = "company"
+					user.CompanyName = cName
+					user.INN = inn
+					user.Role = "employer"
+					user.Name = cName
+				} else {
+					user.AccountType = "individual"
+					user.CompanyName = ""
+					user.INN = ""
+					user.Role = "user"
+				}
+				users[email] = user
+				found = &user
+				break
+			}
+		}
+		if found == nil {
+			response.Error(c, http.StatusNotFound, "Foydalanuvchi topilmadi")
+			return
+		}
+		token, err := jwt.GenerateToken(found.ID, found.Email, found.Role)
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "Token yaratishda xatolik")
+			return
+		}
+		response.Success(c, http.StatusOK, gin.H{
+			"user":    found,
+			"token":   token,
+			"profile": nil,
+		})
+		return
+	}
+
+	user, err := userRepo.GetByID(uid)
+	if err != nil || user == nil {
+		response.Error(c, http.StatusNotFound, "Foydalanuvchi topilmadi")
+		return
+	}
+
+	role := "user"
+	if accountType == "company" {
+		cName := strings.TrimSpace(payload.CompanyName)
+		if cName == "" {
+			response.Error(c, http.StatusBadRequest, "Tashkilot yoki kompaniya nomini kiriting")
+			return
+		}
+		inn := strings.TrimSpace(payload.INN)
+		if len(inn) != 9 {
+			response.Error(c, http.StatusBadRequest, "STIR (INN) aynan 9 ta raqamdan iborat bo‘lishi kerak")
+			return
+		}
+		role = "employer"
+		user.AccountType = "company"
+		user.CompanyName = cName
+		user.INN = inn
+		user.Name = cName
+	} else {
+		user.AccountType = "individual"
+		user.CompanyName = ""
+		user.INN = ""
+		user.Role = "user"
+		// If profile has citizen full name, restore it
+		if profile, _ := profileRepo.GetByUserID(user.ID); profile != nil {
+			var sMap map[string]interface{}
+			if len(profile.Settings) > 0 {
+				_ = json.Unmarshal(profile.Settings, &sMap)
+				if citizenName, ok := sMap["citizen_full_name"].(string); ok && citizenName != "" {
+					user.Name = citizenName
+				}
+			}
+		}
+	}
+	user.Role = role
+
+	if err := userRepo.UpdateAccountType(user.ID, user.AccountType, user.CompanyName, user.INN, user.Role); err != nil {
+		response.Error(c, http.StatusInternalServerError, "Foydalanuvchi turini yangilashda xatolik")
+		return
+	}
+	if user.Name != "" {
+		_ = userRepo.Update(user.ID, user.Name, "", "")
+	}
+
+	// Update profile
+	var profile *models.Profile
+	if profileRepo != nil {
+		profile, _ = profileRepo.GetByUserID(user.ID)
+		if profile == nil {
+			now := time.Now().UTC()
+			profile = &models.Profile{
+				ID:        uuid.NewString(),
+				UserID:    user.ID,
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+		}
+
+		var settingsMap map[string]interface{}
+		if len(profile.Settings) > 0 {
+			_ = json.Unmarshal(profile.Settings, &settingsMap)
+		}
+		if settingsMap == nil {
+			settingsMap = make(map[string]interface{})
+		}
+		if len(payload.Organizations) > 0 {
+			settingsMap["organizations"] = payload.Organizations
+		}
+		settingsMap["active_identity"] = gin.H{
+			"account_type": user.AccountType,
+			"company_name": user.CompanyName,
+			"inn":          user.INN,
+			"role_in_org":  payload.RoleInOrg,
+			"updated_at":   time.Now().UTC(),
+		}
+		newSettingsBytes, _ := json.Marshal(settingsMap)
+		profile.Settings = newSettingsBytes
+
+		if user.AccountType == "company" {
+			profile.Bio = fmt.Sprintf("OneID orqali rasman tasdiqlangan yuridik shaxs (Ish beruvchi: %s, STIR: %s).", user.CompanyName, user.INN)
+		} else {
+			profile.Bio = "OneID orqali rasman tasdiqlangan fuqaro (Nomzod)."
+		}
+		profile.UpdatedAt = time.Now().UTC()
+		_ = profileRepo.Upsert(*profile)
+		profile, _ = profileRepo.GetByUserID(user.ID)
+	}
+
+	// Generate fresh JWT token with updated role
+	token, err := jwt.GenerateToken(user.ID, user.Email, user.Role)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "Yangi token yaratishda xatolik")
+		return
+	}
+
+	freshUser, _ := userRepo.GetByID(user.ID)
+	if freshUser != nil {
+		user = freshUser
+	}
+
+	response.Success(c, http.StatusOK, gin.H{
+		"user":    user,
+		"token":   token,
+		"profile": profile,
+	})
+}
+
+// GetOneIDOrganizations returns the list of organizations associated with the authenticated citizen.
+// If not yet stored in profile settings, it retrieves them using the citizen's PINFL.
+func GetOneIDOrganizations(c *gin.Context) {
+	userID, ok := c.Get("user_id")
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	uid := userID.(string)
+
+	var user *models.User
+	if userRepo != nil {
+		user, _ = userRepo.GetByID(uid)
+	} else {
+		for _, u := range users {
+			if u.ID == uid {
+				uCopy := u
+				user = &uCopy
+				break
+			}
+		}
+	}
+	if user == nil {
+		response.Error(c, http.StatusNotFound, "Foydalanuvchi topilmadi")
+		return
+	}
+
+	var orgs []OneIDOrganization
+	var citizenFullName string
+
+	if profileRepo != nil {
+		if profile, _ := profileRepo.GetByUserID(user.ID); profile != nil && len(profile.Settings) > 0 {
+			var sMap map[string]interface{}
+			if err := json.Unmarshal(profile.Settings, &sMap); err == nil {
+				if oRaw, exists := sMap["organizations"]; exists {
+					if oBytes, err := json.Marshal(oRaw); err == nil {
+						_ = json.Unmarshal(oBytes, &orgs)
+					}
+				}
+				if name, ok := sMap["citizen_full_name"].(string); ok {
+					citizenFullName = name
+				}
+			}
+		}
+	}
+
+	if len(orgs) == 0 && user.PINFL != "" {
+		if citizenFullName == "" {
+			citizenFullName = user.Name
+		}
+		orgs = fetchOneIDOrganizations("", user.PINFL, citizenFullName)
+		// Persist back to profile settings so it is cached
+		if profileRepo != nil && len(orgs) > 0 {
+			if profile, _ := profileRepo.GetByUserID(user.ID); profile != nil {
+				var sMap map[string]interface{}
+				if len(profile.Settings) > 0 {
+					_ = json.Unmarshal(profile.Settings, &sMap)
+				}
+				if sMap == nil {
+					sMap = make(map[string]interface{})
+				}
+				sMap["organizations"] = orgs
+				if citizenFullName != "" {
+					sMap["citizen_full_name"] = citizenFullName
+				}
+				sBytes, _ := json.Marshal(sMap)
+				profile.Settings = sBytes
+				_ = profileRepo.Upsert(*profile)
+			}
+		}
+	}
+
+	response.Success(c, http.StatusOK, gin.H{
+		"organizations": orgs,
+		"active_identity": gin.H{
+			"account_type": user.AccountType,
+			"company_name": user.CompanyName,
+			"inn":          user.INN,
+		},
+	})
+}
+

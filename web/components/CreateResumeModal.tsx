@@ -14,6 +14,7 @@ import {
   Printer,
   Copy,
   Briefcase,
+  Building2,
   GraduationCap,
   Languages,
   Phone,
@@ -22,6 +23,7 @@ import {
   Send,
   Eye,
   SlidersHorizontal,
+  Download,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import {
@@ -31,7 +33,8 @@ import {
   AIResumeOutput,
   AIResumeAnalysis,
 } from '../lib/aiResumeGenerator';
-import { detectCurrentLocation } from '../lib/geolocation';
+import { detectCurrentLocation, ALL_UZBEK_REGIONS } from '../lib/geolocation';
+import { downloadResumeAsPDF } from '../lib/resumePdf';
 import { Language, translations } from '../lib/translations';
 
 interface CreateResumeModalProps {
@@ -76,6 +79,9 @@ export default function CreateResumeModal({
   const [fileUrl, setFileUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const isEditing = Boolean(initialResume?.id);
+  const isCompany = Boolean(
+    currentUser && (currentUser.account_type === 'company' || currentUser.role === 'employer')
+  );
 
   // AI states
   const [aiLoading, setAiLoading] = useState(false);
@@ -127,13 +133,24 @@ export default function CreateResumeModal({
   const handleDetectLocation = async () => {
     setLocating(true);
     try {
-      const detected = await detectCurrentLocation();
+      const detected = await detectCurrentLocation(currentUser?.location);
       if (detected) setLocation(detected);
     } catch {
-      setLocation('Toshkent shahri');
+      setLocation(currentUser?.location || 'Toshkent shahri');
     } finally {
       setLocating(false);
     }
+  };
+
+  const handleDownloadPDF = () => {
+    downloadResumeAsPDF({
+      title: title.trim() || 'Kasbiy rezyume',
+      fullName: fullName.trim() || currentUser?.name || 'Nomzod',
+      phone: phone.trim() || currentUser?.phone || '',
+      email: email.trim() || currentUser?.email || '',
+      location: location.trim() || '',
+      summary: summary.trim(),
+    });
   };
 
   if (!isOpen) return null;
@@ -272,8 +289,33 @@ export default function CreateResumeModal({
           </button>
         </div>
 
-        {/* View / Tab Selector */}
-        <div className="flex items-center justify-between px-6 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+        {isCompany ? (
+          <div className="p-8 sm:p-12 text-center space-y-4 animate-fadeIn">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto border border-amber-200 dark:border-amber-900 shadow-inner">
+              <Building2 size={32} />
+            </div>
+            <div className="space-y-1.5 max-w-md mx-auto">
+              <h4 className="font-extrabold text-base text-slate-900 dark:text-white">
+                Tashkilot hisoblari rezyume yarata olmaydi
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Siz tizimga &ldquo;{currentUser?.company_name || currentUser?.name || 'Tashkilot'}&rdquo; korxonasi nomidan (ish beruvchi sifatida) kirdingiz. Ish beruvchilar rezyume yaratmaydi, faqat vakansiyalar e’lon qiladi va nomzodlar bazasidan mutaxassislarni tanlaydi.
+              </p>
+            </div>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition shadow-md cursor-pointer"
+              >
+                Tushundim, yopish
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* View / Tab Selector */}
+            <div className="flex items-center justify-between px-6 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
             <button
               type="button"
@@ -432,22 +474,40 @@ export default function CreateResumeModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Shahar / Manzil
-                  </label>
-                  <div className="relative flex items-center">
-                    <input
-                      type="text"
-                      placeholder="masalan: Toshkent shahri"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      className="w-full pl-3 pr-9 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
-                    />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Shahar / Manzil
+                    </label>
                     <button
                       type="button"
                       onClick={handleDetectLocation}
                       disabled={locating}
-                      title="Haqiqiy joylashuvni aniqlash"
+                      className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                      title="GPS va geo-lokatsiya orqali aniq shahar/viloyatni aniqlash"
+                    >
+                      <MapPin size={12} className={locating ? 'animate-bounce text-blue-600' : ''} />
+                      <span>{locating ? 'GPS orqali aniqlanmoqda...' : 'GPS bilan aniqlash'}</span>
+                    </button>
+                  </div>
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      list="regions-list"
+                      placeholder="masalan: Samarqand viloyati, Samarqand shahri"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="w-full pl-3 pr-9 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+                    />
+                    <datalist id="regions-list">
+                      {ALL_UZBEK_REGIONS.map((r) => (
+                        <option key={r} value={r} />
+                      ))}
+                    </datalist>
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      disabled={locating}
+                      title="GPS orqali aniqlash"
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                     >
                       <MapPin size={15} className={locating ? 'animate-bounce text-blue-600' : ''} />
@@ -536,12 +596,24 @@ export default function CreateResumeModal({
               <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 shadow-xl rounded-xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 space-y-6 text-slate-800 dark:text-slate-200">
                 {/* CV Header */}
                 <div className="border-b border-slate-200 dark:border-slate-800 pb-5">
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
-                    {fullName || '[Ism Familiya]'}
-                  </h2>
-                  <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-0.5">
-                    {title || 'Malakali Mutaxassis'}
-                  </p>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                        {fullName || '[Ism Familiya]'}
+                      </h2>
+                      <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+                        {title || 'Malakali Mutaxassis'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDownloadPDF}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-sm cursor-pointer"
+                    >
+                      <Download size={14} />
+                      <span>PDF yuklab olish</span>
+                    </button>
+                  </div>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800/60">
                     <span className="flex items-center gap-1.5">
@@ -749,24 +821,39 @@ export default function CreateResumeModal({
           )}
 
           {/* Action Footer */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
-            >
-              Bekor qilish
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50"
-            >
-              <Plus size={16} />
-              <span>{loading ? 'Saqlanmoqda...' : isEditing ? t.saveChangesBtn : 'Rezyumeni saqlash va e‘lon qilish'}</span>
-            </button>
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            {summary.trim().length > 0 ? (
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                className="px-3.5 py-2 rounded-xl border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                title="Rezyumeni A4 PDF formatida yuklab olish"
+              >
+                <Download size={14} />
+                <span>PDF yuklab olish</span>
+              </button>
+            ) : <div />}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+              >
+                Bekor qilish
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50"
+              >
+                <Plus size={16} />
+                <span>{loading ? 'Saqlanmoqda...' : isEditing ? t.saveChangesBtn : 'Rezyumeni saqlash va e‘lon qilish'}</span>
+              </button>
+            </div>
           </div>
         </form>
+        </>
+        )}
       </div>
     </div>
   );

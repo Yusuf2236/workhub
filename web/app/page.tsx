@@ -20,6 +20,8 @@ import NotificationsModal from '../components/NotificationsModal';
 import AiResumeAuditView from '../components/AiResumeAuditView';
 import ChatIntroModal from '../components/ChatIntroModal';
 import ResetPasswordModal from '../components/ResetPasswordModal';
+import OneIDPortalModal, { OneIDOrganization } from '../components/OneIDPortalModal';
+import VideoAdGeneratorModal from '../components/VideoAdGeneratorModal';
 import { SurveyAnswers, EMPTY_SURVEY, loadSurvey, saveSurvey } from '../lib/survey';
 import { api, getAuthToken, setAuthToken, getCurrentUser, removeAuthToken, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
@@ -123,6 +125,7 @@ export default function WZonePortal() {
   const [selectedVacancyForApply, setSelectedVacancyForApply] = useState<any | null>(null);
   const [oneidNotice, setOneidNotice] = useState<string | null>(null);
   const [chatIntroOpen, setChatIntroOpen] = useState(false);
+  const [globalVideoAdModalOpen, setGlobalVideoAdModalOpen] = useState(false);
   const [survey, setSurvey] = useState<SurveyAnswers>(EMPTY_SURVEY);
   const [surveyLoaded, setSurveyLoaded] = useState(false);
 
@@ -229,6 +232,48 @@ export default function WZonePortal() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Companies cannot use individual AI resume auditor; redirect to my-vacancies
+  useEffect(() => {
+    if (user?.account_type === 'company' && currentTab === 'ai-audit') {
+      setCurrentTab('my-vacancies');
+    }
+  }, [user?.account_type, currentTab]);
+
+  // OneID Identity Selection Modal states
+  const [oneIDPortalOpen, setOneIDPortalOpen] = useState(false);
+  const [oneIDPortalStep, setOneIDPortalStep] = useState<'auth' | 'role_select'>('auth');
+  const [oneIDPortalUser, setOneIDPortalUser] = useState<any>(null);
+  const [oneIDPortalCitizen, setOneIDPortalCitizen] = useState<any>(null);
+  const [oneIDPortalOrganizations, setOneIDPortalOrganizations] = useState<OneIDOrganization[]>([]);
+
+  const handleOneIDSuccessResponse = useCallback((data: any) => {
+    if (!data) return;
+    if (data.token) {
+      setAuthToken(data.token);
+    }
+    if (data.user) {
+      setCurrentUser(data.user);
+      setUser(data.user);
+    }
+    setAuthModalOpen(false);
+
+    const orgs = (data.organizations || data.citizen?.organizations || []) as OneIDOrganization[];
+    // Always prompt OneID users to select their active identity (individual candidate vs enterprise/organization)
+    setOneIDPortalUser(data.user);
+    setOneIDPortalCitizen(
+      data.citizen || {
+        pinfl: data.user?.pinfl,
+        full_name: data.user?.name,
+        location: data.user?.location,
+        phone: data.user?.phone,
+        avatar_url: data.user?.avatar_url,
+      }
+    );
+    setOneIDPortalOrganizations(orgs);
+    setOneIDPortalStep('role_select');
+    setOneIDPortalOpen(true);
+  }, []);
+
   // Auto-login & Session restore from backend
   useEffect(() => {
     async function restoreSession() {
@@ -251,6 +296,19 @@ export default function WZonePortal() {
         setAuthModalOpen(false);
       }
 
+      // Validate session with server (detects if logged out from phone/computer)
+      if (getAuthToken()) {
+        api.getMe().then((me) => {
+          if (!me.success || !me.data?.user) {
+            removeAuthToken();
+            setUser(null);
+          } else {
+            setUser(me.data.user);
+            setCurrentUser(me.data.user);
+          }
+        }).catch(() => {});
+      }
+
       // Check if redirected from OneID OAuth or completed in popup via localStorage
       if (typeof window !== 'undefined') {
         const pendingOneID = localStorage.getItem('workhub_oneid_auth_callback');
@@ -264,13 +322,7 @@ export default function WZonePortal() {
                 state: data.state || '',
               });
               if (res.success && res.data) {
-                setAuthToken(res.data.token);
-                setCurrentUser(res.data.user);
-                setUser(res.data.user);
-                setAuthModalOpen(false);
-                setCurrentTab('profile');
-                setOneidNotice(`Xush kelibsiz, ${res.data.user.name || 'Fuqaro'}! OneID orqali avtomatik kirdingiz.`);
-                setTimeout(() => setOneidNotice(null), 5000);
+                handleOneIDSuccessResponse(res.data);
               }
             }
           } catch (e) {}
@@ -339,13 +391,7 @@ export default function WZonePortal() {
             const urlOneIDState = searchParams.get('oneid_state') || searchParams.get('state') || '';
             const res = await api.oneIDCallback({ code: urlOneIDCode, state: urlOneIDState });
             if (res.success && res.data) {
-              setAuthToken(res.data.token);
-              setCurrentUser(res.data.user);
-              setUser(res.data.user);
-              setAuthModalOpen(false);
-              setCurrentTab('profile');
-              setOneidNotice(`Xush kelibsiz, ${res.data.user.name || 'Fuqaro'}! OneID orqali avtomatik kirdingiz.`);
-              setTimeout(() => setOneidNotice(null), 5000);
+              handleOneIDSuccessResponse(res.data);
             }
           } catch (err) {
             console.warn('OneID URL authentication error', err);
@@ -410,13 +456,7 @@ export default function WZonePortal() {
             state: event.data.state || '',
           });
           if (res.success && res.data) {
-            setAuthToken(res.data.token);
-            setCurrentUser(res.data.user);
-            setUser(res.data.user);
-            setAuthModalOpen(false);
-            setCurrentTab('profile');
-            setOneidNotice(`Xush kelibsiz, ${res.data.user.name || 'Fuqaro'}! OneID orqali avtomatik kirdingiz.`);
-            setTimeout(() => setOneidNotice(null), 5000);
+            handleOneIDSuccessResponse(res.data);
           }
         } catch (e) {}
       }
@@ -457,6 +497,26 @@ export default function WZonePortal() {
       window.removeEventListener('message', handleOneIDMessage);
       window.removeEventListener('workhub_auth_changed', syncAuth);
       window.removeEventListener('storage', syncAuth);
+    };
+  }, []);
+
+  // Synchronize session revocation across all open devices / tabs
+  useEffect(() => {
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible' && getAuthToken()) {
+        api.getMe().then((me) => {
+          if (!me.success || !me.data?.user) {
+            removeAuthToken();
+            setUser(null);
+          }
+        }).catch(() => {});
+      }
+    };
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    return () => {
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
     };
   }, []);
 
@@ -745,6 +805,16 @@ export default function WZonePortal() {
       setAuthModalOpen(true);
       return;
     }
+
+    const myResumes = resumes.filter((r) => r.user_id === user.id);
+    if (myResumes.length === 0) {
+      setSelectedVacancyForApply(v);
+      setCreateResumeModalOpen(true);
+      setOneidNotice('Ishga ariza topshirish uchun avval rezyumengizni to‘ldiring va saqlang.');
+      setTimeout(() => setOneidNotice(null), 6000);
+      return;
+    }
+
     setSelectedVacancyForApply(v);
     setApplyModalOpen(true);
   };
@@ -940,6 +1010,7 @@ export default function WZonePortal() {
               }}
               onRefresh={fetchResumes}
               loading={resumesLoading}
+              currentUser={user}
               currentUserId={user?.id}
               onEditResume={(r) => {
                 setEditingResume(r);
@@ -947,6 +1018,10 @@ export default function WZonePortal() {
               }}
               onDeleteResume={handleDeleteResume}
               lang={lang}
+              onSwitchToCompany={() => {
+                setOneIDPortalOpen(true);
+                setOneIDPortalStep('role_select');
+              }}
             />
           ) : currentTab === 'ai-audit' ? (
             <AiResumeAuditView
@@ -1242,6 +1317,7 @@ export default function WZonePortal() {
             onNavigateToComments={() => {
               setCurrentTab('feed');
             }}
+            onOpenVideoAdModal={() => setGlobalVideoAdModalOpen(true)}
             lang={lang}
           />
         )}
@@ -1425,6 +1501,7 @@ export default function WZonePortal() {
         onSuccess={() => {
           fetchUserData();
         }}
+        onOpenCreateResume={() => setCreateResumeModalOpen(true)}
         resumes={resumes.filter((r) => user && r.user_id === user.id)}
         lang={lang}
       />
@@ -1467,7 +1544,14 @@ export default function WZonePortal() {
         }}
         onSuccess={() => {
           fetchResumes();
-          setCurrentTab('resumes');
+          if (selectedVacancyForApply && !editingResume) {
+            setCreateResumeModalOpen(false);
+            setApplyModalOpen(true);
+            setOneidNotice('Rezyume saqlandi! Endi arizangizni tasdiqlab jo‘natishingiz mumkin.');
+            setTimeout(() => setOneidNotice(null), 6000);
+          } else {
+            setCurrentTab('resumes');
+          }
         }}
         currentUser={user}
         lang={lang}
@@ -1513,6 +1597,36 @@ export default function WZonePortal() {
         onClose={() => setNotificationsModalOpen(false)}
         notifications={notifications}
         onRefresh={fetchUserData}
+        lang={lang}
+      />
+
+      <OneIDPortalModal
+        isOpen={oneIDPortalOpen}
+        onClose={() => setOneIDPortalOpen(false)}
+        onSuccess={(updatedUser) => {
+          setUser(updatedUser);
+          setCurrentUser(updatedUser);
+          setOneIDPortalOpen(false);
+          setCurrentTab('profile');
+          const isComp = updatedUser.account_type === 'company';
+          const msg = isComp
+            ? `"${updatedUser.company_name || updatedUser.name}" tashkiloti nomidan tizimga kirdingiz (Ish beruvchi).`
+            : `Jismoniy shaxs (${updatedUser.name}) sifatida tizimga kirdingiz (Nomzod).`;
+          setOneidNotice(msg);
+          setTimeout(() => setOneidNotice(null), 6000);
+        }}
+        lang={lang}
+        initialStep={oneIDPortalStep}
+        initialUser={oneIDPortalUser}
+        initialCitizen={oneIDPortalCitizen}
+        initialOrganizations={oneIDPortalOrganizations}
+      />
+
+      <VideoAdGeneratorModal
+        isOpen={globalVideoAdModalOpen}
+        onClose={() => setGlobalVideoAdModalOpen(false)}
+        vacancies={vacancies}
+        currentUser={user}
         lang={lang}
       />
     </div>

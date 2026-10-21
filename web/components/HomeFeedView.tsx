@@ -17,11 +17,13 @@ import {
   ChevronRight,
   MessageCircle,
   Send,
+  Video,
 } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
 import { api } from '../lib/api';
 import { NavTab } from './LeftSidebar';
 import InterestSurvey from './InterestSurvey';
+import VideoAdGeneratorModal from './VideoAdGeneratorModal';
 import { SurveyAnswers, EMPTY_SURVEY, surveyIsActive, surveyVacancyFilters } from '../lib/survey';
 
 // The feed only shows real data from the backend: vacancies and comments people left on them.
@@ -121,8 +123,29 @@ export default function HomeFeedView({
 
   // WZone Interactive Animated Advertisement Carousel
   const [promoSlide, setPromoSlide] = useState(0);
+  const [videoAdModalOpen, setVideoAdModalOpen] = useState(false);
 
   const PROMO_SLIDES = [
+    {
+      badge: lang === 'ru' ? 'Новинка • AI Видео Реклама' : lang === 'en' ? 'New • AI Video Ads' : 'Yangi • AI Video Reklama',
+      title:
+        lang === 'ru'
+          ? 'Создавайте анимированные видео-ролики для вакансий за 1 клик'
+          : lang === 'en'
+          ? 'Generate animated recruitment video ads for Instagram & Telegram'
+          : 'Vakansiyalar uchun Instagram va Telegramga animatsion Video Reklama yarating',
+      desc:
+        lang === 'ru'
+          ? 'Генерируйте профессиональные 9:16 Stories и Reels ролики с зарплатой, условиями и брендом компании.'
+          : lang === 'en'
+          ? 'Generate professional 9:16 vertical video reels with salary, benefits and custom branding in seconds.'
+          : 'Kompaniyangiz, kasb, maosh va afzalliklari aks etgan 14 soniyali 9:16 formatdagi video reklama oling va yuklab oling.',
+      cta: lang === 'ru' ? 'Создать Видео' : lang === 'en' ? 'Generate Video Ad' : 'AI Video Reklama Yaratish',
+      action: () => setVideoAdModalOpen(true),
+      accent: 'from-amber-500 via-rose-600 to-purple-600',
+      glow: 'bg-amber-500/20 text-amber-300',
+      icon: Video,
+    },
     {
       badge: lang === 'ru' ? 'AI Технологии' : lang === 'en' ? 'AI Powered' : 'AI Yordamchi',
       title:
@@ -1164,6 +1187,15 @@ export default function HomeFeedView({
           )}
         </div>
       </div>
+
+      {/* AI Video Ad Generator Modal */}
+      <VideoAdGeneratorModal
+        isOpen={videoAdModalOpen}
+        onClose={() => setVideoAdModalOpen(false)}
+        vacancies={vacancies}
+        currentUser={currentUser}
+        lang={lang}
+      />
     </div>
   );
 }

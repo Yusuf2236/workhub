@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Yusuf2236/workhub/backend/internal/models"
@@ -67,12 +68,29 @@ func sendVerificationEmail(user *models.User) {
 			"Agar siz ro‘yxatdan o‘tmagan bo‘lsangiz, bu xatni e’tiborsiz qoldiring.", isProduction)
 }
 
+var (
+	memRevocationsMu sync.RWMutex
+	memRevocations   = make(map[string]time.Time)
+)
+
+func recordRevocation(userID string) {
+	if userID == "" {
+		return
+	}
+	memRevocationsMu.Lock()
+	memRevocations[userID] = time.Now().UTC()
+	memRevocationsMu.Unlock()
+}
+
 // Logout invalidates every token issued to the user so far (all devices).
 func Logout(c *gin.Context) {
-	if userRepo != nil {
-		if err := userRepo.RevokeTokens(currentUserID(c)); err != nil {
-			response.Error(c, http.StatusInternalServerError, "database error")
-			return
+	uid := currentUserID(c)
+	if uid != "" {
+		recordRevocation(uid)
+		if userRepo != nil {
+			if err := userRepo.RevokeTokens(uid); err != nil {
+				log.Printf("[Logout] RevokeTokens error for %s: %v", uid, err)
+			}
 		}
 	}
 	response.Success(c, http.StatusOK, gin.H{"logged_out": true})
@@ -209,15 +227,31 @@ func ResendVerification(c *gin.Context) {
 // tokenStillValid rejects tokens issued before the user's last logout or password reset,
 // and tokens of deleted users.
 func tokenStillValid(userID string, issuedAt time.Time) bool {
-	if userRepo == nil {
-		return true
+	if userID == "" {
+		return false
 	}
-	validAfter, exists, err := userRepo.TokensValidAfter(userID)
-	if err != nil {
-		// Do not lock everyone out when the database hiccups
-		return true
+
+	memRevocationsMu.RLock()
+	revTime, hasMem := memRevocations[userID]
+	memRevocationsMu.RUnlock()
+	if hasMem && !issuedAt.After(revTime) {
+		return false
 	}
-	return exists && !issuedAt.Before(validAfter)
+
+	if userRepo != nil {
+		validAfter, exists, err := userRepo.TokensValidAfter(userID)
+		if err != nil {
+			// Do not lock everyone out when the database hiccups
+			return true
+		}
+		if !exists {
+			return false
+		}
+		if !validAfter.IsZero() && !issuedAt.After(validAfter) {
+			return false
+		}
+	}
+	return true
 }
 
 // TokenValidator is installed into the auth middleware by main.

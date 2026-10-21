@@ -8,6 +8,7 @@ type Resume struct {
     Title     string    `json:"title"`
     Summary   string    `json:"summary,omitempty"`
     FileURL   string    `json:"file_url,omitempty"`
+    IsLocked  bool      `json:"is_locked,omitempty"`
     CreatedAt time.Time `json:"created_at"`
     UpdatedAt time.Time `json:"updated_at,omitempty"`
 }

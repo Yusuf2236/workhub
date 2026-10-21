@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Send, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { Send, ExternalLink, CheckCircle2, Video, Sparkles } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
 import RecommendationsWidget from './RecommendationsWidget';
 import LiveCommentsWidget from './LiveCommentsWidget';
@@ -12,6 +12,7 @@ interface RightSidebarProps {
   onSelectVacancy?: (vacancy: any) => void;
   onOpenProfile?: () => void;
   onNavigateToComments?: () => void;
+  onOpenVideoAdModal?: () => void;
   lang?: Language;
 }
 
@@ -21,6 +22,7 @@ export default function RightSidebar({
   onSelectVacancy,
   onOpenProfile,
   onNavigateToComments,
+  onOpenVideoAdModal,
   lang = 'uz',
 }: RightSidebarProps) {
   const t = translations[lang] || translations.uz;
@@ -37,6 +39,33 @@ export default function RightSidebar({
       {user && onSelectVacancy && onOpenProfile && (
         <RecommendationsWidget user={user} onSelectVacancy={onSelectVacancy} onOpenProfile={onOpenProfile} lang={lang} />
       )}
+
+      {/* AI Video Ad Promotion Card */}
+      <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white rounded-2xl border border-indigo-500/30 p-4 shadow-lg shadow-indigo-500/10 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30 text-[10px] font-extrabold uppercase">
+            <Video size={12} className="animate-pulse text-amber-400" />
+            <span>AI Video Reklama</span>
+          </div>
+          <span className="text-[10px] font-bold text-amber-400 font-mono">9:16 HD Reel</span>
+        </div>
+        <div>
+          <h5 className="font-extrabold text-sm text-white">Vakansiya uchun Video Reklama</h5>
+          <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+            Kompaniyangiz vakansiyalarini Instagram Story va Telegram kanallar uchun 14 soniyali video formatga aylantiring.
+          </p>
+        </div>
+        {onOpenVideoAdModal && (
+          <button
+            type="button"
+            onClick={onOpenVideoAdModal}
+            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:brightness-110 active:scale-95 text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
+          >
+            <Sparkles size={14} className="text-amber-300" />
+            <span>Video Reklama Yaratish</span>
+          </button>
+        )}
+      </div>
 
       {/* Telegram Bot Card */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-4 shadow-xs">

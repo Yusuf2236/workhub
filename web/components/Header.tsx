@@ -56,6 +56,7 @@ export default function Header({
   const isCurrentDark = resolvedDark !== undefined ? resolvedDark : darkMode;
 
   const isOneIdUser = Boolean(user && user.auth_provider === 'oneid');
+  const isCompany = Boolean(user && (user.account_type === 'company' || user.role === 'employer'));
 
   const t = translations[lang] || translations.uz;
 
@@ -139,19 +140,21 @@ export default function Header({
                       <div className="text-xs text-slate-400">{t.createVacancySub}</div>
                     </div>
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowAddMenu(false);
-                      onOpenCreateResume();
-                    }}
-                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-700/60 flex items-center gap-2.5 transition"
-                  >
-                    <FileText size={17} className="text-emerald-600 shrink-0" />
-                    <div>
-                      <div className="font-bold text-slate-900 dark:text-white">{t.createResume}</div>
-                      <div className="text-xs text-slate-400">{t.createResumeSub}</div>
-                    </div>
-                  </button>
+                  {!isCompany && (
+                    <button
+                      onClick={() => {
+                        setShowAddMenu(false);
+                        onOpenCreateResume();
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-700/60 flex items-center gap-2.5 transition"
+                    >
+                      <FileText size={17} className="text-emerald-600 shrink-0" />
+                      <div>
+                        <div className="font-bold text-slate-900 dark:text-white">{t.createResume}</div>
+                        <div className="text-xs text-slate-400">{t.createResumeSub}</div>
+                      </div>
+                    </button>
+                  )}
                 </div>
               </>
             )}

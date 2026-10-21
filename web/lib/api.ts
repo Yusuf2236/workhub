@@ -63,6 +63,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       ...options,
       headers,
     });
+    if (res.status === 401 && token && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+      removeAuthToken();
+    }
     const result = await res.json();
     return result;
   } catch (err: any) {
@@ -217,6 +220,8 @@ export const api = {
       citizen?: any;
       provider: string;
       pinfl: string;
+      requires_identity_selection?: boolean;
+      organizations?: any[];
       birth_date?: string;
       gender?: string;
       location?: string;
@@ -244,6 +249,8 @@ export const api = {
       user?: any;
       token?: string;
       message?: string;
+      requires_identity_selection?: boolean;
+      organizations?: any[];
       citizen?: {
         pinfl: string;
         full_name: string;
@@ -252,11 +259,46 @@ export const api = {
         location: string;
         phone: string;
         email: string;
+        avatar_url?: string;
+        organizations?: any[];
       };
     }>('/auth/oneid/qr/check', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  },
+
+  async selectOneIDIdentity(payload: {
+    account_type: 'individual' | 'company';
+    company_name?: string;
+    inn?: string;
+    role_in_org?: string;
+    organizations?: any[];
+  }) {
+    return request<{ user: any; token: string; profile: any }>('/auth/oneid/select-identity', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getOneIDOrganizations() {
+    return request<{
+      organizations: Array<{
+        inn: string;
+        name: string;
+        short_name?: string;
+        role: string;
+        status: string;
+        address?: string;
+        is_head: boolean;
+        oked?: string;
+      }>;
+      active_identity: {
+        account_type: 'individual' | 'company';
+        company_name?: string;
+        inn?: string;
+      };
+    }>('/auth/oneid/organizations');
   },
 
   async getMe() {

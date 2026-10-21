@@ -83,9 +83,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
     const cur = getCurrentUser();
     setCurrentUserState(cur);
     const defaultCompany =
-      cur?.account_type === 'company' && cur?.company_name
-        ? cur.company_name
-        : cur?.company_name || '';
+      cur?.account_type === 'company'
+        ? (cur.company_name || cur.name || '')
+        : (cur?.company_name || cur?.name || '');
     const v = initialVacancy || {};
     setTitle(v.title || '');
     setCompany(v.company || defaultCompany);
@@ -189,9 +189,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
 
     const cur = getCurrentUser();
     const finalCompany =
-      cur?.account_type === 'company' && cur?.company_name
-        ? cur.company_name
-        : company.trim() || 'Maxfiy ish beruvchi';
+      cur?.account_type === 'company'
+        ? (cur.company_name || cur.name || 'Kompaniya')
+        : (company.trim() || cur?.company_name || cur?.name || 'Kompaniya');
 
     try {
       const payload = {
@@ -321,11 +321,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, initial
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Kompaniya / Korxona nomi
               </label>
-              {currentUser?.account_type === 'company' && currentUser?.company_name ? (
+              {currentUser?.account_type === 'company' ? (
                 <div className="w-full px-3 py-2 text-xs font-bold rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 flex items-center justify-between">
-                  <span>{currentUser.company_name}</span>
-                  <span className="text-[10px] px-2 py-0.5 bg-indigo-600 text-white rounded-md font-bold uppercase tracking-wider">
-                    OneID Yuridik Shaxs
+                  <span className="truncate">{currentUser.company_name || currentUser.name || company}</span>
+                  <span className="text-[10px] px-2 py-0.5 bg-indigo-600 text-white rounded-md font-bold uppercase tracking-wider shrink-0">
+                    {currentUser.inn ? `STIR: ${currentUser.inn}` : 'OneID Korxona'}
                   </span>
                 </div>
               ) : (

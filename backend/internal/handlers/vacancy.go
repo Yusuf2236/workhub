@@ -169,10 +169,15 @@ func CreateVacancy(c *gin.Context) {
 		}
 	}
 
-	if creator != nil && creator.AccountType == "company" && strings.TrimSpace(creator.CompanyName) != "" {
-		payload.Company = strings.TrimSpace(creator.CompanyName)
-	} else if strings.TrimSpace(payload.Company) == "" {
-		payload.Company = "Maxfiy ish beruvchi"
+	if creator != nil && creator.AccountType == "company" {
+		if strings.TrimSpace(creator.CompanyName) != "" {
+			payload.Company = strings.TrimSpace(creator.CompanyName)
+		} else if strings.TrimSpace(creator.Name) != "" {
+			payload.Company = strings.TrimSpace(creator.Name)
+		}
+	}
+	if strings.TrimSpace(payload.Company) == "" {
+		payload.Company = "Kompaniya"
 	}
 
 	// Employers confirm their email before posting, so fake accounts cannot spam the feed.

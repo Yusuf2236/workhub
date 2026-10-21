@@ -66,6 +66,14 @@ func CreateResume(c *gin.Context) {
 		return
 	}
 
+	if userRepo != nil && ok && userID.(string) != "" {
+		u, err := userRepo.GetByID(userID.(string))
+		if err == nil && u != nil && (u.AccountType == "company" || u.Role == "employer") {
+			response.Error(c, http.StatusForbidden, "Kompaniya va tashkilot nomidan rezyume yaratib bo'lmaydi. Kompaniyalar faqat bo'sh ish o'rinlari (vakansiya) e'lon qila oladi.")
+			return
+		}
+	}
+
 	if !isSafeResumeURL(payload.FileURL) {
 		response.Error(c, http.StatusBadRequest, "file_url must be an http(s) link or an uploaded file")
 		return
@@ -269,11 +277,25 @@ func redactResume(r models.Resume) models.Resume {
 	return r
 }
 
-// canSeeResumeContacts allows the owner, admins and employers who received an
-// application with this resume.
+func isCompanyOrEmployer(c *gin.Context) bool {
+	viewer := currentUserID(c)
+	if viewer == "" || userRepo == nil {
+		return false
+	}
+	u, err := userRepo.GetByID(viewer)
+	if err != nil || u == nil {
+		return false
+	}
+	return u.AccountType == "company" || u.Role == "employer"
+}
+
+// canSeeResumeContacts allows the owner, admins and employers/companies.
 func canSeeResumeContacts(c *gin.Context, r *models.Resume) bool {
 	viewer := currentUserID(c)
 	if isAdmin(c) || (viewer != "" && r.UserID == viewer) {
+		return true
+	}
+	if isCompanyOrEmployer(c) {
 		return true
 	}
 	if applicationRepo == nil || viewer == "" {
@@ -293,15 +315,18 @@ func canSeeResumeContacts(c *gin.Context, r *models.Resume) bool {
 
 func redactForViewer(c *gin.Context, items []models.Resume) []models.Resume {
 	viewer := currentUserID(c)
-	if isAdmin(c) {
-		return items
-	}
+	admin := isAdmin(c)
+	isEmployer := isCompanyOrEmployer(c)
+
 	out := make([]models.Resume, len(items))
 	for i, r := range items {
-		if r.UserID == viewer {
+		if admin || isEmployer || (viewer != "" && r.UserID == viewer) {
+			r.IsLocked = false
 			out[i] = r
 		} else {
-			out[i] = redactResume(r)
+			redacted := redactResume(r)
+			redacted.IsLocked = true
+			out[i] = redacted
 		}
 	}
 	return out
