@@ -22,10 +22,11 @@ import ChatIntroModal from '../components/ChatIntroModal';
 import ResetPasswordModal from '../components/ResetPasswordModal';
 import OneIDPortalModal, { OneIDOrganization } from '../components/OneIDPortalModal';
 import VideoAdGeneratorModal from '../components/VideoAdGeneratorModal';
+import ResumeProgressCard from '../components/ResumeProgressCard';
 import { SurveyAnswers, EMPTY_SURVEY, loadSurvey, saveSurvey } from '../lib/survey';
 import { api, getAuthToken, setAuthToken, getCurrentUser, removeAuthToken, setCurrentUser } from '../lib/api';
 import { Language, translations } from '../lib/translations';
-import { Search, Filter, RefreshCw, Briefcase, Sparkles, MapPin, Bookmark, ShieldCheck, Home, MessageSquare, FileCheck, User as UserIcon, Info, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, RefreshCw, Briefcase, Sparkles, MapPin, Bookmark, ShieldCheck, Home, MessageSquare, FileCheck, User as UserIcon, Info, CheckCircle2, Users, Layers, FileText, Plus } from 'lucide-react';
 
 const CATEGORIES = [
   'Barchasi',
@@ -79,6 +80,9 @@ export default function WZonePortal() {
   const [loading, setLoading] = useState(true);
   const [resumesLoading, setResumesLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState<NavTab>('feed');
+
+  const isCompany = Boolean(user && (user.account_type === 'company' || user.role === 'employer'));
+  const myResume = user ? resumes.find((r) => r.user_id === user.id) : null;
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('');
@@ -258,7 +262,18 @@ export default function WZonePortal() {
     setAuthModalOpen(false);
 
     const orgs = (data.organizations || data.citizen?.organizations || []) as OneIDOrganization[];
-    // Always prompt OneID users to select their active identity (individual candidate vs enterprise/organization)
+
+    // If citizen has no registered organizations, complete login directly!
+    if (orgs.length === 0) {
+      setOneIDPortalOpen(false);
+      setCurrentTab('profile');
+      const msg = `Jismoniy shaxs (${data.user?.name || 'Nomzod'}) sifatida tizimga kirdingiz.`;
+      setOneidNotice(msg);
+      setTimeout(() => setOneidNotice(null), 6000);
+      return;
+    }
+
+    // Citizen has organizations (legal entities) -> prompt to choose identity
     setOneIDPortalUser(data.user);
     setOneIDPortalCitizen(
       data.citizen || {
@@ -311,12 +326,15 @@ export default function WZonePortal() {
 
       // Check if redirected from OneID OAuth or completed in popup via localStorage
       if (typeof window !== 'undefined') {
+        let oneIDHandled = false;
         const pendingOneID = localStorage.getItem('workhub_oneid_auth_callback');
         if (pendingOneID) {
           localStorage.removeItem('workhub_oneid_auth_callback');
           try {
             const data = JSON.parse(pendingOneID);
             if (data.code) {
+              oneIDHandled = true;
+              window.history.replaceState(null, '', window.location.pathname);
               const res = await api.oneIDCallback({
                 code: data.code,
                 state: data.state || '',
@@ -374,6 +392,12 @@ export default function WZonePortal() {
           });
         }
 
+        // Tab deep-linking (/?tab=<feed|vacancies|resumes|applications|chat|profile>)
+        const tabParam = searchParams.get('tab');
+        if (tabParam && ['feed', 'vacancies', 'resumes', 'applications', 'chat', 'saved', 'my-vacancies', 'profile', 'ai-audit'].includes(tabParam)) {
+          setCurrentTab(tabParam as NavTab);
+        }
+
         // Shared vacancy link (/?vacancy=<id>)
         const sharedVacancyId = searchParams.get('vacancy');
         if (sharedVacancyId) {
@@ -382,10 +406,10 @@ export default function WZonePortal() {
           });
         }
         
-        // Handle OneID query callback (/ ?oneid_code=...)
+        // Handle OneID query callback (/ ?oneid_code=...) only if not already handled
         const urlOneIDCode = searchParams.get('oneid_code') || 
           (searchParams.get('code') && (searchParams.get('state')?.includes('oneid') || searchParams.get('scope')?.includes('workhub')) ? searchParams.get('code') : null);
-        if (urlOneIDCode) {
+        if (!oneIDHandled && urlOneIDCode) {
           window.history.replaceState(null, '', window.location.pathname);
           try {
             const urlOneIDState = searchParams.get('oneid_state') || searchParams.get('state') || '';
@@ -806,6 +830,12 @@ export default function WZonePortal() {
       return;
     }
 
+    if (user.account_type === 'company' || user.role === 'employer') {
+      setOneidNotice('Kompaniya yoki tashkilot hisobidan vakansiyaga nomzod sifatida ariza topshirib bo‘lmaydi.');
+      setTimeout(() => setOneidNotice(null), 5000);
+      return;
+    }
+
     const myResumes = resumes.filter((r) => r.user_id === user.id);
     if (myResumes.length === 0) {
       setSelectedVacancyForApply(v);
@@ -994,35 +1024,49 @@ export default function WZonePortal() {
               lang={lang}
             />
           ) : currentTab === 'resumes' ? (
-            <ResumesView
-              resumes={resumes}
-              onOpenCreateResume={() => setCreateResumeModalOpen(true)}
-              onOpenChat={(candidate) => {
-                if (candidate) {
-                  setChatTargetUser({
-                    id: candidate.user_id,
-                    name: candidate.title || candidate.full_name || 'Nomzod',
-                  });
-                  setChatModalOpen(true);
-                } else {
-                  goToChat();
-                }
-              }}
-              onRefresh={fetchResumes}
-              loading={resumesLoading}
-              currentUser={user}
-              currentUserId={user?.id}
-              onEditResume={(r) => {
-                setEditingResume(r);
-                setCreateResumeModalOpen(true);
-              }}
-              onDeleteResume={handleDeleteResume}
-              lang={lang}
-              onSwitchToCompany={() => {
-                setOneIDPortalOpen(true);
-                setOneIDPortalStep('role_select');
-              }}
-            />
+            <div className="space-y-4">
+              {!isCompany && (
+                <ResumeProgressCard
+                  user={user}
+                  resume={myResume}
+                  onOpenCreateResume={handleOpenCreateResume}
+                  onEditResume={(r) => {
+                    setEditingResume(r);
+                    setCreateResumeModalOpen(true);
+                  }}
+                  lang={lang}
+                />
+              )}
+              <ResumesView
+                resumes={resumes}
+                onOpenCreateResume={() => setCreateResumeModalOpen(true)}
+                onOpenChat={(candidate) => {
+                  if (candidate) {
+                    setChatTargetUser({
+                      id: candidate.user_id,
+                      name: candidate.title || candidate.full_name || 'Nomzod',
+                    });
+                    setChatModalOpen(true);
+                  } else {
+                    goToChat();
+                  }
+                }}
+                onRefresh={fetchResumes}
+                loading={resumesLoading}
+                currentUser={user}
+                currentUserId={user?.id}
+                onEditResume={(r) => {
+                  setEditingResume(r);
+                  setCreateResumeModalOpen(true);
+                }}
+                onDeleteResume={handleDeleteResume}
+                lang={lang}
+                onSwitchToCompany={() => {
+                  setOneIDPortalOpen(true);
+                  setOneIDPortalStep('role_select');
+                }}
+              />
+            </div>
           ) : currentTab === 'ai-audit' ? (
             <AiResumeAuditView
               currentUser={user}
@@ -1111,34 +1155,51 @@ export default function WZonePortal() {
               </button>
             </div>
           ) : currentTab === 'feed' ? (
-            <HomeFeedView
-              vacancies={vacancies}
-              totalVacancies={totalVacancies}
-              survey={surveyLoaded ? survey : null}
-              onSurveyChange={handleSurveyChange}
-              onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
-              onNavigateToVacancies={() => setCurrentTab('vacancies')}
-              onOpenCreateResume={handleOpenCreateResume}
-              onOpenCreateVacancy={handleOpenCreateVacancy}
-              onApplyVacancy={(v) => {
-                setSelectedVacancyForApply(v);
-                setApplyModalOpen(true);
-              }}
-              isSaved={(id) => savedIds.includes(id)}
-              onToggleSave={handleToggleSave}
-              currentUser={user}
-              onNavigateToTab={(tab) => {
-                if (tab === 'chat') goToChat();
-                else setCurrentTab(tab);
-              }}
-              regions={REGIONS}
-              onSearch={(q, region) => {
-                setSearchQuery(q);
-                setSelectedLocation(region || 'Barcha hududlar');
-                setCurrentTab('vacancies');
-              }}
-              lang={lang}
-            />
+            <div className="space-y-4">
+              {/* Mobile Candidate Resume Progress Card */}
+              {!isCompany && (
+                <div className="lg:hidden">
+                  <ResumeProgressCard
+                    user={user}
+                    resume={myResume}
+                    onOpenCreateResume={handleOpenCreateResume}
+                    onEditResume={(r) => {
+                      setEditingResume(r);
+                      setCreateResumeModalOpen(true);
+                    }}
+                    lang={lang}
+                  />
+                </div>
+              )}
+              <HomeFeedView
+                vacancies={vacancies}
+                totalVacancies={totalVacancies}
+                survey={surveyLoaded ? survey : null}
+                onSurveyChange={handleSurveyChange}
+                onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
+                onNavigateToVacancies={() => setCurrentTab('vacancies')}
+                onOpenCreateResume={handleOpenCreateResume}
+                onOpenCreateVacancy={handleOpenCreateVacancy}
+                onApplyVacancy={(v) => {
+                  setSelectedVacancyForApply(v);
+                  setApplyModalOpen(true);
+                }}
+                isSaved={(id) => savedIds.includes(id)}
+                onToggleSave={handleToggleSave}
+                currentUser={user}
+                onNavigateToTab={(tab) => {
+                  if (tab === 'chat') goToChat();
+                  else setCurrentTab(tab);
+                }}
+                regions={REGIONS}
+                onSearch={(q, region) => {
+                  setSearchQuery(q);
+                  setSelectedLocation(region || 'Barcha hududlar');
+                  setCurrentTab('vacancies');
+                }}
+                lang={lang}
+              />
+            </div>
           ) : (
             <>
               {/* Category & Region Filter Chips Bar */}
@@ -1323,8 +1384,29 @@ export default function WZonePortal() {
         )}
       </div>
 
-      {/* Mobile Responsive Bottom Navigation Bar (Elevated Ergonomic Bar with Safe Area Clearance) */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#0c1220]/95 backdrop-blur-2xl border-t border-slate-200/90 dark:border-slate-800/90 z-40 px-2 pt-2 pb-8 sm:pb-9 flex items-center justify-around shadow-[0_-8px_25px_rgba(0,0,0,0.15)] select-none transition-colors">
+      {/* Mobile Floating Action Button (FAB) */}
+      {isCompany ? (
+        <button
+          onClick={handleOpenCreateVacancy}
+          className="lg:hidden fixed right-4 bottom-24 z-30 px-4 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-90 text-white font-bold text-xs shadow-xl shadow-blue-500/35 flex items-center gap-2 transition-all cursor-pointer ring-2 ring-white/20"
+          title={t.postVacancyBtn}
+        >
+          <Plus size={17} className="stroke-[2.5]" />
+          <span>Vakansiya joylash</span>
+        </button>
+      ) : (
+        <button
+          onClick={handleOpenCreateResume}
+          className="lg:hidden fixed right-4 bottom-24 z-30 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 active:scale-90 text-white font-bold text-xs shadow-xl shadow-blue-500/35 flex items-center gap-1.5 transition-all cursor-pointer ring-2 ring-white/20"
+          title="AI bilan rezyume yaratish"
+        >
+          <Sparkles size={15} className="animate-pulse" />
+          <span>AI Rezyume</span>
+        </button>
+      )}
+
+      {/* Mobile Responsive Bottom Navigation Bar (Role-Aware Ergonomic Bar with Safe Area Clearance) */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#0c1220]/95 backdrop-blur-2xl border-t border-slate-200/90 dark:border-slate-800/90 z-40 px-1.5 pt-2 pb-[max(1.75rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-8px_25px_rgba(0,0,0,0.15)] select-none transition-colors">
         {/* Tab 1: Lenta / Asosiy */}
         <button
           onClick={() => {
@@ -1333,14 +1415,14 @@ export default function WZonePortal() {
           }}
           className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+          <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
             currentTab === 'feed'
               ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
               : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }`}>
             <Home size={20} className={currentTab === 'feed' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
           </div>
-          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
+          <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
             currentTab === 'feed'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
@@ -1349,52 +1431,59 @@ export default function WZonePortal() {
           </span>
         </button>
 
-        {/* Tab 2: Vakansiyalar */}
+        {/* Tab 2: Vakansiyalar (Candidate) or E'lonlarim (Company) */}
         <button
           onClick={() => {
-            setCurrentTab('vacancies');
+            setCurrentTab(isCompany ? 'my-vacancies' : 'vacancies');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
-            currentTab === 'vacancies'
+          <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            (isCompany ? currentTab === 'my-vacancies' : currentTab === 'vacancies')
               ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
               : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }`}>
-            <Briefcase size={20} className={currentTab === 'vacancies' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            {isCompany ? (
+              <Layers size={20} className={currentTab === 'my-vacancies' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            ) : (
+              <Briefcase size={20} className={currentTab === 'vacancies' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            )}
           </div>
-          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
-            currentTab === 'vacancies'
+          <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
+            (isCompany ? currentTab === 'my-vacancies' : currentTab === 'vacancies')
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
           }`}>
-            {t.navVacancies}
+            {isCompany ? t.navMyVacancies : t.navVacancies}
           </span>
         </button>
 
-        {/* Tab 3: Chat */}
+        {/* Tab 3: Rezyume (Candidate) or Nomzodlar (Company) */}
         <button
           onClick={() => {
-            if (currentTab !== 'chat') goToChat();
+            setCurrentTab('resumes');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
-            currentTab === 'chat'
+          <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'resumes'
               ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
               : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }`}>
-            <MessageSquare size={20} className={currentTab === 'chat' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
-            <span className="absolute top-1 right-2.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+            {isCompany ? (
+              <Users size={20} className={currentTab === 'resumes' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            ) : (
+              <FileText size={20} className={currentTab === 'resumes' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            )}
           </div>
-          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
-            currentTab === 'chat'
+          <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'resumes'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
           }`}>
-            {t.navChat}
+            {isCompany ? 'Nomzodlar' : 'Rezyume'}
           </span>
         </button>
 
@@ -1406,7 +1495,7 @@ export default function WZonePortal() {
           }}
           className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+          <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
             currentTab === 'applications'
               ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
               : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
@@ -1418,7 +1507,7 @@ export default function WZonePortal() {
               </span>
             )}
           </div>
-          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
+          <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
             currentTab === 'applications'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
@@ -1439,14 +1528,14 @@ export default function WZonePortal() {
           }}
           className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
-          <div className={`relative px-3.5 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+          <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
             currentTab === 'profile'
               ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
               : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }`}>
             <UserIcon size={20} className={currentTab === 'profile' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
           </div>
-          <span className={`text-xs tracking-tight mt-0.5 leading-none transition-colors ${
+          <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
             currentTab === 'profile'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'

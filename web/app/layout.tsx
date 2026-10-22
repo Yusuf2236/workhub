@@ -1,9 +1,31 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0b0f19' },
+  ],
+};
 
 export const metadata: Metadata = {
   title: "WZone — O'zbekistondagi zamonaviy ish va vakansiyalar platformasi",
   description: "WZone — ish qidiruvchilar va ish beruvchilar uchun zamonaviy, real-vaqt platformasi. OneID va Google orqali tezkor kirish.",
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'WorkHub',
+  },
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

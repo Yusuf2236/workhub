@@ -318,18 +318,19 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 			email = syntheticEmail
 		}
 		newUser := models.User{
-			ID:           uuid.NewString(),
-			Name:         displayName,
-			Email:        email,
-			Role:         role,
-			AuthProvider: "oneid",
-			PINFL:        citizen.PINFL,
-			AvatarURL:    citizen.AvatarURL,
-			AccountType:  accountType,
-			CompanyName:  citizen.CompanyName,
-			INN:          citizen.INN,
-			CreatedAt:    time.Now().UTC(),
-			UpdatedAt:    time.Now().UTC(),
+			ID:            uuid.NewString(),
+			Name:          displayName,
+			Email:         email,
+			Role:          role,
+			AuthProvider:  "oneid",
+			EmailVerified: true,
+			PINFL:         citizen.PINFL,
+			AvatarURL:     citizen.AvatarURL,
+			AccountType:   accountType,
+			CompanyName:   citizen.CompanyName,
+			INN:           citizen.INN,
+			CreatedAt:     time.Now().UTC(),
+			UpdatedAt:     time.Now().UTC(),
 		}
 		users[email] = newUser
 		return &newUser, nil, nil
@@ -368,6 +369,10 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 		if citizen.AccountType != "" || strings.TrimSpace(citizen.CompanyName) != "" || strings.TrimSpace(citizen.INN) != "" {
 			_ = userRepo.UpdateAccountType(user.ID, user.AccountType, user.CompanyName, user.INN, user.Role)
 		}
+		if !user.EmailVerified {
+			_ = userRepo.MarkEmailVerified(user.ID)
+			user.EmailVerified = true
+		}
 	} else {
 		if existing, err := userRepo.GetByEmail(email); err != nil {
 			return nil, nil, err
@@ -375,18 +380,19 @@ func loginOneIDCitizen(citizen *oneIDCitizen, verifiedVia string) (*models.User,
 			email = syntheticEmail
 		}
 		newUser := models.User{
-			ID:           uuid.NewString(),
-			Name:         displayName,
-			Email:        email,
-			Role:         role,
-			AuthProvider: "oneid",
-			PINFL:        citizen.PINFL,
-			AvatarURL:    citizen.AvatarURL,
-			AccountType:  accountType,
-			CompanyName:  citizen.CompanyName,
-			INN:          citizen.INN,
-			CreatedAt:    time.Now().UTC(),
-			UpdatedAt:    time.Now().UTC(),
+			ID:            uuid.NewString(),
+			Name:          displayName,
+			Email:         email,
+			Role:          role,
+			AuthProvider:  "oneid",
+			EmailVerified: true,
+			PINFL:         citizen.PINFL,
+			AvatarURL:     citizen.AvatarURL,
+			AccountType:   accountType,
+			CompanyName:   citizen.CompanyName,
+			INN:           citizen.INN,
+			CreatedAt:     time.Now().UTC(),
+			UpdatedAt:     time.Now().UTC(),
 		}
 		if err := userRepo.Create(newUser); err != nil {
 			return nil, nil, err
@@ -628,6 +634,11 @@ func OneIDQRCheck(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		response.Error(c, http.StatusBadGateway, fmt.Sprintf("OneID serveri xatolik qaytardi: HTTP %d", resp.StatusCode))
+		return
+	}
+
 	respBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "OneID javobini o'qib bo'lmadi")
@@ -813,14 +824,20 @@ func SelectOneIDIdentity(c *gin.Context) {
 		user.INN = ""
 		user.Role = "user"
 		// If profile has citizen full name, restore it
+		citizenName := ""
 		if profile, _ := profileRepo.GetByUserID(user.ID); profile != nil {
 			var sMap map[string]interface{}
 			if len(profile.Settings) > 0 {
 				_ = json.Unmarshal(profile.Settings, &sMap)
-				if citizenName, ok := sMap["citizen_full_name"].(string); ok && citizenName != "" {
-					user.Name = citizenName
+				if name, ok := sMap["citizen_full_name"].(string); ok && name != "" {
+					citizenName = name
 				}
 			}
+		}
+		if citizenName != "" {
+			user.Name = citizenName
+		} else if user.Name == user.CompanyName || strings.Contains(user.Name, "MCHJ") || strings.Contains(user.Name, "XK") {
+			user.Name = "OneID Fuqarosi"
 		}
 	}
 	user.Role = role

@@ -220,7 +220,13 @@ func extractOneIDCitizenInfo(token string) (pinfl, fullName, birthDate, gender, 
 				}
 				if v, ok := claims["pinfl"].(string); ok && v != "" {
 					pinfl = strings.TrimSpace(v)
+				} else if v, ok := claims["pinfl"].(float64); ok && v > 0 {
+					pinfl = fmt.Sprintf("%.0f", v)
 				} else if v, ok := claims["pin"].(string); ok && v != "" {
+					pinfl = strings.TrimSpace(v)
+				} else if v, ok := claims["pin"].(float64); ok && v > 0 {
+					pinfl = fmt.Sprintf("%.0f", v)
+				} else if v, ok := claims["preferred_username"].(string); ok && len(v) == 14 {
 					pinfl = strings.TrimSpace(v)
 				}
 				if v, ok := claims["full_name"].(string); ok && v != "" {
@@ -560,10 +566,9 @@ func fetchOneIDOrganizations(token, pinfl, fullName string) []OneIDOrganization 
 		}
 	}
 
-	// 3. Fallback: If no organizations were retrieved via API (e.g. mock token, staging,
-	// or citizen whose legal profile is tested or in development):
-	// Generate realistic registered organizations mapped to the citizen's PINFL.
-	if len(orgs) == 0 && pinfl != "" {
+	// 3. Fallback: ONLY in development / test mode, generate mock organizations for testing.
+	// Never invent or assign fake organizations to real citizens in production!
+	if !isProduction && len(orgs) == 0 && pinfl != "" {
 		for _, o := range defaultOrganizationsForPINFL(pinfl, fullName) {
 			addOrg(o.INN, o.Name, o.ShortName, o.Role, o.Status, o.Address, o.OKED, o.IsHead)
 		}

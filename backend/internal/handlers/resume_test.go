@@ -11,6 +11,8 @@ func TestRedactResumeHidesContacts(t *testing.T) {
 	r := redactResume(models.Resume{
 		Summary: "Email: ali.valiyev@gmail.com\nTel: +998 90 123-45-67\nTelegram: @ali_dev\nTajriba: 2019 - 2023",
 		FileURL: "/uploads/resumes/x.pdf",
+		Email:   "ali.valiyev@gmail.com",
+		Phone:   "+998901234567",
 	})
 	for _, leaked := range []string{"ali.valiyev@gmail.com", "123-45-67", "@ali_dev"} {
 		if strings.Contains(r.Summary, leaked) {
@@ -22,6 +24,12 @@ func TestRedactResumeHidesContacts(t *testing.T) {
 	}
 	if r.FileURL != "" {
 		t.Errorf("file url should be hidden, got %q", r.FileURL)
+	}
+	if r.Email != "" {
+		t.Errorf("email should be hidden, got %q", r.Email)
+	}
+	if r.Phone != "" {
+		t.Errorf("phone should be hidden, got %q", r.Phone)
 	}
 }
 

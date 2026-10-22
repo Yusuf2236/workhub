@@ -1,0 +1,22 @@
+{
+  "name": "WorkHub — Ish va Vakansiyalar",
+  "short_name": "WorkHub",
+  "description": "O‘zbekistondagi zamonaviy ish, vakansiya va rezyumelar platformasi",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0f19",
+  "theme_color": "#2563eb",
+  "categories": ["business", "productivity", "social"],
+  "lang": "uz",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

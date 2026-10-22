@@ -174,7 +174,7 @@ export default function ResumesView({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {resumes.map((resume) => {
             const isOwn = Boolean(currentUserId) && resume.user_id === currentUserId;
-            const isUnlocked = isCompany || isOwn || resume.is_locked === false;
+            const isUnlocked = isCompany || isOwn || resume.is_locked !== true;
 
             return (
               <div

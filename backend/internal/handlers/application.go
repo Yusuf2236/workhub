@@ -93,6 +93,14 @@ func ApplyToVacancy(c *gin.Context) {
 		return
 	}
 
+	if userRepo != nil && ok && userID.(string) != "" {
+		u, err := userRepo.GetByID(userID.(string))
+		if err == nil && u != nil && (u.AccountType == "company" || u.Role == "employer") {
+			response.Error(c, http.StatusForbidden, "Kompaniya va tashkilotlar vakansiyaga nomzod sifatida ariza topshira olmaydi")
+			return
+		}
+	}
+
 	// The body is optional: an empty request applies without a letter or resume
 	var payload struct {
 		ResumeID    string `json:"resume_id"`

@@ -162,14 +162,20 @@ export default function VacancyDetailModal({
       className={
         isPane
           ? 'sticky top-20'
-          : 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn'
+          : 'fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn'
       }
     >
       <div
         className={`bg-white dark:bg-slate-900 w-full border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden ${
-          isPane ? 'rounded-2xl max-h-[calc(100vh-6rem)] shadow-sm' : 'rounded-3xl max-w-2xl max-h-[90vh] shadow-2xl'
+          isPane
+            ? 'rounded-2xl max-h-[calc(100vh-6rem)] shadow-sm'
+            : 'rounded-t-[32px] sm:rounded-3xl max-w-2xl max-h-[92vh] sm:max-h-[90vh] shadow-2xl animate-sheetSlideUp sm:animate-scaleIn'
         }`}
       >
+        {/* Mobile Sheet Handle */}
+        {!isPane && (
+          <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto mt-2.5 -mb-1 sm:hidden" />
+        )}
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900">
           <div className="flex items-start gap-4">
@@ -410,8 +416,9 @@ export default function VacancyDetailModal({
               </span>
             </a>
           )}
-          {/* Owners cannot apply to their own vacancy; imported ones are applied to on the source site */}
+          {/* Owners cannot apply to their own vacancy; companies cannot apply as candidates; imported ones are applied to on the source site */}
           {!(currentUser && vacancy.created_by && vacancy.created_by === currentUser.id) &&
+            !(currentUser && (currentUser.account_type === 'company' || currentUser.role === 'employer')) &&
             !(!vacancy.created_by && typeof vacancy.source_url === 'string' && vacancy.source_url.startsWith('https://')) && (
           <button
             onClick={() => {

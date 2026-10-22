@@ -46,7 +46,10 @@ export default function VacancyCard({
   };
 
   return (
-    <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-xs hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-200 group relative overflow-hidden">
+    <div
+      onClick={() => onSelect(vacancy)}
+      className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-200 group relative overflow-hidden active:scale-[0.99] cursor-pointer"
+    >
       {/* Featured Banner Accent */}
       {vacancy.is_featured && (
         <div className="absolute top-0 right-0 bg-gradient-to-l from-blue-600 to-indigo-600 text-white text-[10px] font-black tracking-wider px-3 py-0.5 rounded-bl-xl shadow-sm">

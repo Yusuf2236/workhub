@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Plus, Bell, Sun, Moon, Laptop, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe, Lock, ShieldCheck, Check } from 'lucide-react';
+import { Search, Plus, Bell, Sun, Moon, Laptop, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe, Lock, ShieldCheck, Check, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { Language, translations } from '../lib/translations';
 import FlagIcon from './FlagIcon';
@@ -52,6 +52,7 @@ export default function Header({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   const isCurrentDark = resolvedDark !== undefined ? resolvedDark : darkMode;
 
@@ -102,6 +103,21 @@ export default function Header({
 
         {/* Right Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Mobile Search Toggle Button */}
+          {showSearch && (
+            <button
+              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+              className={`p-2 rounded-xl transition md:hidden ${
+                mobileSearchOpen
+                  ? 'bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
+                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+              title="Qidiruv"
+            >
+              <Search size={18} />
+            </button>
+          )}
+
           {/* Create Action Dropdown (Hidden on mobile) */}
           <div className="relative hidden sm:block">
             <button
@@ -403,6 +419,31 @@ export default function Header({
           </div>
         </div>
       </div>
+
+      {/* Mobile Expandable Search Bar */}
+      {showSearch && mobileSearchOpen && (
+        <div className="md:hidden px-4 pb-3 pt-1 border-t border-slate-100 dark:border-slate-800/80 animate-fadeIn">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              autoFocus
+              placeholder={t.searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full pl-9 pr-9 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => onSearchChange('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

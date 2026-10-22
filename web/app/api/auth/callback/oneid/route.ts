@@ -96,30 +96,29 @@ export async function GET(request: Request) {
           timestamp: Date.now()
         };
 
-        if (code) {
-          localStorage.setItem('workhub_oneid_auth_callback', JSON.stringify(authData));
-        }
-
         if (window.opener && !window.opener.closed) {
+          if (code) {
+            localStorage.setItem('workhub_oneid_auth_callback', JSON.stringify(authData));
+          }
           try {
             window.opener.postMessage(authData, window.location.origin);
           } catch (e) {
             console.warn('postMessage error', e);
           }
-        }
-
-        document.getElementById('title').innerText = 'Muvaffaqiyatli!';
-        document.getElementById('status').innerText = 'OneID hisobingiz tasdiqlandi. Profil ma’lumotlari yuklanmoqda...';
-        document.getElementById('spinner').style.display = 'none';
-
-        if (window.opener && !window.opener.closed) {
+          document.getElementById('title').innerText = 'Muvaffaqiyatli!';
+          document.getElementById('status').innerText = 'OneID hisobingiz tasdiqlandi. Profil ma’lumotlari yuklanmoqda...';
+          document.getElementById('spinner').style.display = 'none';
           setTimeout(function() {
             window.close();
           }, 600);
         } else {
+          localStorage.removeItem('workhub_oneid_auth_callback');
+          document.getElementById('title').innerText = 'Muvaffaqiyatli!';
+          document.getElementById('status').innerText = 'OneID hisobingiz tasdiqlandi. Yo‘naltirilmoqda...';
+          document.getElementById('spinner').style.display = 'none';
           setTimeout(function() {
             window.location.href = '/?oneid_code=' + encodeURIComponent(code) + '&oneid_state=' + encodeURIComponent(state);
-          }, 800);
+          }, 600);
         }
       } catch (err) {
         console.error('Callback error', err);

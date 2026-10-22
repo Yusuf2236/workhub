@@ -386,10 +386,15 @@ func UpdateVacancy(c *gin.Context) {
 			}
 		}
 	}
-	if callerUser != nil && callerUser.AccountType == "company" && strings.TrimSpace(callerUser.CompanyName) != "" {
-		v.Company = strings.TrimSpace(callerUser.CompanyName)
-	} else if v.Company == "" {
-		v.Company = "Maxfiy ish beruvchi"
+	if callerUser != nil && callerUser.AccountType == "company" {
+		if strings.TrimSpace(callerUser.CompanyName) != "" {
+			v.Company = strings.TrimSpace(callerUser.CompanyName)
+		} else if strings.TrimSpace(callerUser.Name) != "" {
+			v.Company = strings.TrimSpace(callerUser.Name)
+		}
+	}
+	if strings.TrimSpace(v.Company) == "" {
+		v.Company = "Kompaniya"
 	}
 	// Badges are granted by moderators only
 	if isAdmin(c) {

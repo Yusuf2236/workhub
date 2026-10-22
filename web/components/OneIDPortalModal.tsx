@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Lock,
@@ -78,9 +78,12 @@ export default function OneIDPortalModal({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ssoConfigured, setSsoConfigured] = useState<boolean | null>(null);
+
+  const prevIsOpenRef = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       if (initialStep === 'role_select' && (initialUser || initialCitizen)) {
         setStep('role_select');
         setLoggedInUser(initialUser || null);
@@ -100,8 +103,17 @@ export default function OneIDPortalModal({
         setOrganizations([]);
         setSelectedTarget('individual');
         setTab('qr');
+        setQrStatus('idle');
       }
+
+      // Check if official SSO secret is configured
+      api.getOneIDLoginUrl().then((res) => {
+        if (res.success && res.data) {
+          setSsoConfigured(Boolean(res.data.is_live_configured));
+        }
+      }).catch(() => {});
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, initialStep, initialUser, initialCitizen, initialOrganizations]);
 
   // Generate dynamic QR code directly from official OneID API
@@ -190,14 +202,21 @@ export default function OneIDPortalModal({
 
             const orgs = (res.data.organizations || (cit as any)?.organizations || []) as OneIDOrganization[];
             setOrganizations(orgs);
-            if (orgs.length > 0) {
-              setSelectedTarget(0); // Choose first organization by default
-            } else {
-              setSelectedTarget('individual');
-            }
 
-            // Instantly transition to role_select so user is never stuck
-            setStep('role_select');
+            // If user has NO organizations (candidate/individual):
+            // Auto-redirect directly to the site after showing "Tasdiqlandi!" briefly!
+            if (orgs.length === 0) {
+              setCurrentUser(res.data.user);
+              setTimeout(() => {
+                onSuccess(res.data.user);
+                onClose();
+              }, 600);
+            } else {
+              setSelectedTarget(0); // Choose first organization by default
+              setTimeout(() => {
+                setStep('role_select');
+              }, 600);
+            }
           } else if (res.data.status === 'expired') {
             clearInterval(interval);
             setQrStatus('expired');
@@ -212,17 +231,23 @@ export default function OneIDPortalModal({
       isSubscribed = false;
       clearInterval(interval);
     };
-  }, [isOpen, tab, qrStatus, qrCodeData?.code, qrCodeData?.hash, step]);
+  }, [isOpen, tab, qrStatus, qrCodeData?.code, qrCodeData?.hash, step, onSuccess, onClose]);
 
-  // Fallback watchdog: whenever qrStatus becomes 'approved', ensure we move to 'role_select'
+  // Fallback watchdog: if approved and individual, auto-close; if organizations, move to role_select
   useEffect(() => {
     if (qrStatus === 'approved' && step === 'auth') {
       const timer = setTimeout(() => {
-        setStep('role_select');
-      }, 300);
+        if (organizations.length === 0 && loggedInUser) {
+          setCurrentUser(loggedInUser);
+          onSuccess(loggedInUser);
+          onClose();
+        } else if (organizations.length > 0) {
+          setStep('role_select');
+        }
+      }, 700);
       return () => clearTimeout(timer);
     }
-  }, [qrStatus, step]);
+  }, [qrStatus, step, organizations.length, loggedInUser, onSuccess, onClose]);
 
   // Launch official OneID SSO authorization redirect (sso.egov.uz)
   const handleLaunchSSO = async () => {
@@ -734,17 +759,29 @@ export default function OneIDPortalModal({
                     </div>
                   ) : qrStatus === 'approved' ? (
                     <div className="py-10 space-y-3 text-center animate-fadeIn">
-                      <CheckCircle2 size={44} className="mx-auto text-emerald-600 animate-bounce" />
+                      <CheckCircle2 size={48} className="mx-auto text-emerald-500 animate-bounce" />
                       <div className="space-y-1">
-                        <h4 className="text-base font-bold text-slate-900 dark:text-white">Tasdiqlandi!</h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Hisob ma‘lumotlari yuklanmoqda...</p>
+                        <h4 className="text-lg font-black text-slate-900 dark:text-white">Tasdiqlandi!</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {organizations.length > 0
+                            ? 'Tashkilot ma‘lumotlari tayyorlanmoqda...'
+                            : 'Muvaffaqiyatli kirdingiz! Saytga yo‘naltirilmoqda...'}
+                        </p>
                       </div>
                       <button
                         type="button"
-                        onClick={() => setStep('role_select')}
-                        className="px-5 py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs font-bold rounded-xl shadow transition inline-flex items-center gap-1.5 cursor-pointer mt-2"
+                        onClick={() => {
+                          if (organizations.length === 0 && loggedInUser) {
+                            setCurrentUser(loggedInUser);
+                            onSuccess(loggedInUser);
+                            onClose();
+                          } else {
+                            setStep('role_select');
+                          }
+                        }}
+                        className="px-6 py-2.5 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs font-bold rounded-xl shadow transition inline-flex items-center gap-1.5 cursor-pointer mt-2"
                       >
-                        <span>Davom etish</span>
+                        <span>Saytga o‘tish</span>
                         <ArrowRight size={14} />
                       </button>
                     </div>
@@ -763,14 +800,30 @@ export default function OneIDPortalModal({
                       Rasmiy davlat portali orqali login/parol yoki E-IMZO (ERI) kalitingiz bilan kiring.
                     </p>
                   </div>
+                  {ssoConfigured === false && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-300 text-left space-y-1">
+                      <div className="font-bold flex items-center gap-1.5">
+                        <AlertCircle size={14} className="shrink-0" />
+                        <span>OneID SSO Davlat Shlyuzi</span>
+                      </div>
+                      <p>
+                        Rasmiy SSO mijoz kaliti serverda sozlanmagan. Iltimos, darhol kirish uchun <strong>&quot;OneID Mobile QR&quot;</strong> bo‘limidan foydalaning.
+                      </p>
+                    </div>
+                  )}
                   <button
                     type="button"
-                    disabled={loading}
-                    onClick={handleLaunchSSO}
-                    className="w-full py-3 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-50"
+                    disabled={loading || ssoConfigured === false}
+                    onClick={ssoConfigured === false ? () => setTab('qr') : handleLaunchSSO}
+                    className="w-full py-3 bg-[#0047BA] hover:bg-[#003B95] text-white text-xs sm:text-sm font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
                   >
                     {loading ? (
                       <span>Ulanmoqda...</span>
+                    ) : ssoConfigured === false ? (
+                      <>
+                        <QrCode size={16} />
+                        <span>OneID Mobile QR orqali kirish</span>
+                      </>
                     ) : (
                       <>
                         <span>id.egov.uz orqali kirish</span>

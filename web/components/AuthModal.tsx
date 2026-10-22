@@ -60,36 +60,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz', aut
   const [forgotMode, setForgotMode] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
 
-  useEffect(() => {
-    const handleOneIDMessage = async (event: MessageEvent) => {
-      // Only accept auth callbacks posted by our own callback page
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === 'WORKHUB_ONEID_AUTH_CALLBACK' && event.data?.code) {
-        setLoading(true);
-        try {
-          const res = await api.oneIDCallback({
-            code: event.data.code,
-            state: event.data.state || '',
-          });
-          if (res.success && res.data) {
-            setAuthToken(res.data.token);
-            setCurrentUser(res.data.user);
-            onSuccess(res.data.user);
-            onClose();
-          } else {
-            setError(res.error || 'OneID orqali kirishda xatolik');
-          }
-        } catch (err: any) {
-          setError(err.message || 'OneID xatoligi');
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-    window.addEventListener('message', handleOneIDMessage);
-    return () => window.removeEventListener('message', handleOneIDMessage);
-  }, []);
-
   const processGoogleAccessToken = async (accessToken: string) => {
     setLoading(true);
     setGoogleLoading(true);
@@ -396,12 +366,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz', aut
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+        className="bg-white dark:bg-slate-900 rounded-t-[28px] sm:rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-sheetSlideUp sm:animate-scaleIn max-h-[92vh] overflow-y-auto"
       >
+        {/* Mobile Sheet Handle */}
+        <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto mt-2.5 -mb-1 sm:hidden" />
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
@@ -679,6 +651,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, lang = 'uz', aut
         isOpen={showOneIDPortal}
         onClose={() => setShowOneIDPortal(false)}
         onSuccess={(u) => {
+          setShowOneIDPortal(false);
           onSuccess(u);
           onClose();
         }}

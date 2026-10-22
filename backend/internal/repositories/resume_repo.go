@@ -28,8 +28,11 @@ func NewPostgresResumeRepo(db *sql.DB) ResumeRepo {
 
 func (r *postgresResumeRepo) ListAll() ([]models.Resume, error) {
 	query := `
-		SELECT r.id, r.user_id, r.title, COALESCE(r.summary, ''), COALESCE(r.file_url, ''), r.created_at, r.updated_at
+		SELECT r.id, r.user_id, r.title, COALESCE(r.summary, ''), COALESCE(r.file_url, ''),
+		       COALESCE(u.name, ''), COALESCE(u.email, ''), COALESCE(p.phone, ''), COALESCE(p.location, ''),
+		       r.created_at, r.updated_at
 		FROM resumes r
+		LEFT JOIN users u ON u.id = r.user_id
 		LEFT JOIN profiles p ON p.user_id = r.user_id
 		-- Users who switched "profile public" off are hidden from the candidate pool
 		WHERE COALESCE(p.settings->>'profile_public', 'true') <> 'false'
@@ -44,7 +47,11 @@ func (r *postgresResumeRepo) ListAll() ([]models.Resume, error) {
 	resumes := []models.Resume{}
 	for rows.Next() {
 		var res models.Resume
-		if err := rows.Scan(&res.ID, &res.UserID, &res.Title, &res.Summary, &res.FileURL, &res.CreatedAt, &res.UpdatedAt); err != nil {
+		if err := rows.Scan(
+			&res.ID, &res.UserID, &res.Title, &res.Summary, &res.FileURL,
+			&res.FullName, &res.Email, &res.Phone, &res.Location,
+			&res.CreatedAt, &res.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		resumes = append(resumes, res)
@@ -57,10 +64,14 @@ func (r *postgresResumeRepo) ListByUser(userID string) ([]models.Resume, error) 
 		return []models.Resume{}, nil
 	}
 	query := `
-		SELECT id, user_id, title, COALESCE(summary, ''), COALESCE(file_url, ''), created_at, updated_at
-		FROM resumes
-		WHERE user_id = $1
-		ORDER BY created_at DESC`
+		SELECT r.id, r.user_id, r.title, COALESCE(r.summary, ''), COALESCE(r.file_url, ''),
+		       COALESCE(u.name, ''), COALESCE(u.email, ''), COALESCE(p.phone, ''), COALESCE(p.location, ''),
+		       r.created_at, r.updated_at
+		FROM resumes r
+		LEFT JOIN users u ON u.id = r.user_id
+		LEFT JOIN profiles p ON p.user_id = r.user_id
+		WHERE r.user_id = $1
+		ORDER BY r.created_at DESC`
 	rows, err := r.db.Query(query, userID)
 	if err != nil {
 		return nil, err
@@ -70,7 +81,11 @@ func (r *postgresResumeRepo) ListByUser(userID string) ([]models.Resume, error) 
 	resumes := []models.Resume{}
 	for rows.Next() {
 		var res models.Resume
-		if err := rows.Scan(&res.ID, &res.UserID, &res.Title, &res.Summary, &res.FileURL, &res.CreatedAt, &res.UpdatedAt); err != nil {
+		if err := rows.Scan(
+			&res.ID, &res.UserID, &res.Title, &res.Summary, &res.FileURL,
+			&res.FullName, &res.Email, &res.Phone, &res.Location,
+			&res.CreatedAt, &res.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		resumes = append(resumes, res)
@@ -83,11 +98,19 @@ func (r *postgresResumeRepo) Get(id string) (*models.Resume, error) {
 		return nil, nil
 	}
 	query := `
-		SELECT id, user_id, title, COALESCE(summary, ''), COALESCE(file_url, ''), created_at, updated_at
-		FROM resumes
-		WHERE id = $1`
+		SELECT r.id, r.user_id, r.title, COALESCE(r.summary, ''), COALESCE(r.file_url, ''),
+		       COALESCE(u.name, ''), COALESCE(u.email, ''), COALESCE(p.phone, ''), COALESCE(p.location, ''),
+		       r.created_at, r.updated_at
+		FROM resumes r
+		LEFT JOIN users u ON u.id = r.user_id
+		LEFT JOIN profiles p ON p.user_id = r.user_id
+		WHERE r.id = $1`
 	var res models.Resume
-	err := r.db.QueryRow(query, id).Scan(&res.ID, &res.UserID, &res.Title, &res.Summary, &res.FileURL, &res.CreatedAt, &res.UpdatedAt)
+	err := r.db.QueryRow(query, id).Scan(
+		&res.ID, &res.UserID, &res.Title, &res.Summary, &res.FileURL,
+		&res.FullName, &res.Email, &res.Phone, &res.Location,
+		&res.CreatedAt, &res.UpdatedAt,
+	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

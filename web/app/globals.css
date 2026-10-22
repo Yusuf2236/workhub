@@ -13,6 +13,10 @@
 }
 
 /* ─── Base ─────────────────────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 html {
   font-size: 16px;
   color-scheme: light;
@@ -27,6 +31,29 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: contain;
+  touch-action: pan-x pan-y;
+}
+
+button, nav, header, [role="button"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Native-like Sheet Slide Up animation */
+@keyframes sheetSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-sheetSlideUp {
+  animation: sheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ─── Typography readability boost (prevents squintingly small micro-fonts) ───── */

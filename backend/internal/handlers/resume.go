@@ -109,6 +109,14 @@ func UploadResumeFile(c *gin.Context) {
 		return
 	}
 
+	if userRepo != nil && ok && userID.(string) != "" {
+		u, err := userRepo.GetByID(userID.(string))
+		if err == nil && u != nil && (u.AccountType == "company" || u.Role == "employer") {
+			response.Error(c, http.StatusForbidden, "Kompaniya va tashkilot nomidan rezyume yaratib bo'lmaydi. Kompaniyalar faqat bo'sh ish o'rinlari (vakansiya) e'lon qila oladi.")
+			return
+		}
+	}
+
 	ext, err := validateResumeFile(file)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
@@ -274,6 +282,8 @@ func redactResume(r models.Resume) models.Resume {
 	summary = resumeTelegramPattern.ReplaceAllString(summary, "[telegram yashirilgan]")
 	r.Summary = summary
 	r.FileURL = ""
+	r.Email = ""
+	r.Phone = ""
 	return r
 }
 
