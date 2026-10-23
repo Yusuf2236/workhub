@@ -130,6 +130,7 @@ export default function WZonePortal() {
   const [oneidNotice, setOneidNotice] = useState<string | null>(null);
   const [chatIntroOpen, setChatIntroOpen] = useState(false);
   const [globalVideoAdModalOpen, setGlobalVideoAdModalOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
   const [survey, setSurvey] = useState<SurveyAnswers>(EMPTY_SURVEY);
   const [surveyLoaded, setSurveyLoaded] = useState(false);
 
@@ -806,6 +807,68 @@ export default function WZonePortal() {
     fetchUserData();
   }, [fetchUserData]);
 
+  // Online / Offline State for Mobile App Experience
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    if (typeof window !== 'undefined') {
+      setIsOffline(!navigator.onLine);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
+
+  // Native Mobile Back Button (Closes active modal on Android/iOS back navigation)
+  useEffect(() => {
+    const isAnyModalOpen = Boolean(
+      selectedVacancyForDetail ||
+      authModalOpen ||
+      createVacancyModalOpen ||
+      createResumeModalOpen ||
+      oneIDPortalOpen ||
+      applyModalOpen ||
+      chatModalOpen ||
+      notificationsModalOpen ||
+      globalVideoAdModalOpen ||
+      chatIntroOpen
+    );
+
+    if (isAnyModalOpen) {
+      window.history.pushState({ modalOpen: true }, '');
+      const handlePopState = () => {
+        setSelectedVacancyForDetail(null);
+        setAuthModalOpen(false);
+        setCreateVacancyModalOpen(false);
+        setCreateResumeModalOpen(false);
+        setOneIDPortalOpen(false);
+        setApplyModalOpen(false);
+        setChatModalOpen(false);
+        setNotificationsModalOpen(false);
+        setGlobalVideoAdModalOpen(false);
+        setChatIntroOpen(false);
+      };
+      window.addEventListener('popstate', handlePopState);
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [
+    Boolean(selectedVacancyForDetail),
+    authModalOpen,
+    createVacancyModalOpen,
+    createResumeModalOpen,
+    oneIDPortalOpen,
+    applyModalOpen,
+    chatModalOpen,
+    notificationsModalOpen,
+    globalVideoAdModalOpen,
+    chatIntroOpen,
+  ]);
+
   // Toggle Save Job
   const handleToggleSave = (v: any) => {
     let updated: string[];
@@ -956,6 +1019,14 @@ export default function WZonePortal() {
         lang={lang}
         onSelectLang={handleLanguageChange}
       />
+
+      {/* Offline Status Banner for Mobile / PWA */}
+      {isOffline && (
+        <div className="bg-amber-500 text-slate-950 px-4 py-2 text-center text-xs font-bold flex items-center justify-center gap-2 z-50 sticky top-16 shadow-md animate-fadeIn select-none">
+          <span className="w-2 h-2 rounded-full bg-slate-950 animate-ping" />
+          <span>Internet bilan aloqa yo‘q. Ma’lumotlar qurilma keshidan ko‘rsatilmoqda.</span>
+        </div>
+      )}
 
       {/* OneID Verification Alert / Toast Banner */}
       {/* Email not verified yet (only for accounts that report the flag) */}
@@ -1410,6 +1481,7 @@ export default function WZonePortal() {
         {/* Tab 1: Lenta / Asosiy */}
         <button
           onClick={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
             setCurrentTab('feed');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
@@ -1434,6 +1506,7 @@ export default function WZonePortal() {
         {/* Tab 2: Vakansiyalar (Candidate) or E'lonlarim (Company) */}
         <button
           onClick={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
             setCurrentTab(isCompany ? 'my-vacancies' : 'vacancies');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
@@ -1462,6 +1535,7 @@ export default function WZonePortal() {
         {/* Tab 3: Rezyume (Candidate) or Nomzodlar (Company) */}
         <button
           onClick={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
             setCurrentTab('resumes');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
@@ -1490,6 +1564,7 @@ export default function WZonePortal() {
         {/* Tab 4: Arizalar */}
         <button
           onClick={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
             setCurrentTab('applications');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
@@ -1519,6 +1594,7 @@ export default function WZonePortal() {
         {/* Tab 5: Profil */}
         <button
           onClick={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
             if (!user) {
               setAuthModalOpen(true);
             } else {

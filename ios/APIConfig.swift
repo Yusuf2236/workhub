@@ -3,8 +3,8 @@ import Foundation
 // Server addresses come from Info.plist keys WZoneAPIBaseURL and WZoneWebURL so release builds
 // can point at production without code changes. The defaults are for the simulator.
 struct APIConfig {
-    static let baseURL = configuredURL("WZoneAPIBaseURL", fallback: "http://localhost:8080")
-    static let webURL = configuredURL("WZoneWebURL", fallback: "http://localhost:3000")
+    static let baseURL = configuredURL("WZoneAPIBaseURL", fallback: "https://wzone.uz")
+    static let webURL = configuredURL("WZoneWebURL", fallback: "https://wzone.uz")
     static let authPath = "/api/v1/auth"
     static let vacancyPath = "/api/v1/vacancies"
 

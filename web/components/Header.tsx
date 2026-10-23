@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Plus, Bell, Sun, Moon, Laptop, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe, Lock, ShieldCheck, Check, X } from 'lucide-react';
+import { Search, Plus, Bell, Sun, Moon, Laptop, User as UserIcon, LogOut, Briefcase, FileText, ChevronDown, Globe, Lock, ShieldCheck, Check, X, MessageSquare } from 'lucide-react';
 import { api } from '../lib/api';
 import { Language, translations } from '../lib/translations';
 import FlagIcon from './FlagIcon';
@@ -34,6 +34,7 @@ export default function Header({
   onOpenAuth,
   onOpenCreateVacancy,
   onOpenCreateResume,
+  onOpenChat,
   onOpenNotifications,
   unreadNotificationsCount = 0,
   searchQuery,
@@ -74,15 +75,15 @@ export default function Header({
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 transition-colors shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 transition-colors shadow-xs pt-[env(safe-area-inset-top,0px)]">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Animated WZone Logo */}
-        <div className="flex items-center gap-3 shrink-0 group cursor-pointer">
-          <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-blue-500/50 group-hover:rotate-3 overflow-hidden">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 group cursor-pointer">
+          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-blue-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-blue-500/50 group-hover:rotate-3 overflow-hidden">
             <span className="relative z-10 tracking-tighter">W</span>
             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
           </div>
-          <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white flex items-center">
+          <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white flex items-center">
             W<span className="text-blue-600 dark:text-blue-400">Zone</span>
           </span>
         </div>
@@ -102,11 +103,14 @@ export default function Header({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* Mobile Search Toggle Button */}
           {showSearch && (
             <button
-              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
+                setMobileSearchOpen(!mobileSearchOpen);
+              }}
               className={`p-2 rounded-xl transition md:hidden ${
                 mobileSearchOpen
                   ? 'bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
@@ -118,11 +122,26 @@ export default function Header({
             </button>
           )}
 
-          {/* Create Action Dropdown (Hidden on mobile) */}
-          <div className="relative hidden sm:block">
+          {/* Quick Chat Button (Direct access on mobile & desktop) */}
+          <button
+            onClick={() => {
+              if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
+              onOpenChat();
+            }}
+            className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-90 relative"
+            title="Jonli Chat"
+          >
+            <MessageSquare size={18} />
+          </button>
+
+          {/* Create Action Dropdown (Responsive: compact icon on mobile, full on desktop) */}
+          <div className="relative">
             <button
-              onClick={() => setShowAddMenu(!showAddMenu)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl shadow-md transition active:scale-95 ${
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
+                setShowAddMenu(!showAddMenu);
+              }}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 text-sm font-semibold rounded-xl shadow-md transition active:scale-95 ${
                 isOneIdUser
                   ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
                   : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-sm'
@@ -130,12 +149,12 @@ export default function Header({
               title={isOneIdUser ? t.addListing : t.listingLockedDesc}
             >
               {isOneIdUser ? (
-                <Plus size={17} />
+                <Plus size={17} className="stroke-[2.5]" />
               ) : (
                 <Lock size={15} className="text-amber-500 shrink-0" />
               )}
               <span className="hidden sm:inline">{t.addListing}</span>
-              <ChevronDown size={14} className="opacity-80" />
+              <ChevronDown size={14} className="opacity-80 hidden sm:inline" />
             </button>
 
             {/* When user is verified OneID citizen/employer: Show listing creation options */}
