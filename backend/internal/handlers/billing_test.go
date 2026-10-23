@@ -126,6 +126,74 @@ func TestPaymentWebhookRequiresSecret(t *testing.T) {
 	}
 }
 
+func TestPaymeWebhook(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.POST("/api/v1/billing/payme", PaymeWebhook)
+	t.Setenv("PAYME_KEY", "test_payme_key_123")
+	users["payme_user@test.uz"] = models.User{ID: "payme_u1", Email: "payme_user@test.uz"}
+	defer delete(users, "payme_user@test.uz")
+
+	basicAuth := "Basic " + strings.TrimSpace("UGF5Y29tOnRlc3RfcGF5bWVfa2V5XzEyMw==") // Paycom:test_payme_key_123
+
+	t.Run("Rejects unauthorized request", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/billing/payme", strings.NewReader(`{"method":"CheckPerformTransaction","params":{},"id":1}`))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		var res map[string]interface{}
+		_ = json.Unmarshal(w.Body.Bytes(), &res)
+		if res["error"] == nil {
+			t.Fatal("expected error for missing auth")
+		}
+	})
+
+	t.Run("CheckPerformTransaction succeeds for existing user and plan amount", func(t *testing.T) {
+		body := `{"method":"CheckPerformTransaction","params":{"amount":25000000,"account":{"user_id":"payme_u1"}},"id":2}`
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/billing/payme", strings.NewReader(body))
+		req.Header.Set("Authorization", basicAuth)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		var res map[string]interface{}
+		_ = json.Unmarshal(w.Body.Bytes(), &res)
+		result, ok := res["result"].(map[string]interface{})
+		if !ok || result["allow"] != true {
+			t.Fatalf("expected allow: true, got %v", res)
+		}
+	})
+
+	t.Run("Full flow: CreateTransaction -> PerformTransaction activates subscription", func(t *testing.T) {
+		createBody := `{"method":"CreateTransaction","params":{"id":"ptx_999","time":1700000000000,"amount":25000000,"account":{"user_id":"payme_u1"}},"id":3}`
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/billing/payme", strings.NewReader(createBody))
+		req.Header.Set("Authorization", basicAuth)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		var resCreate map[string]interface{}
+		_ = json.Unmarshal(w.Body.Bytes(), &resCreate)
+		resMap, ok := resCreate["result"].(map[string]interface{})
+		if !ok || resMap["state"].(float64) != 1 {
+			t.Fatalf("expected create state 1, got %v", resCreate)
+		}
+
+		performBody := `{"method":"PerformTransaction","params":{"id":"ptx_999"},"id":4}`
+		req2, _ := http.NewRequest(http.MethodPost, "/api/v1/billing/payme", strings.NewReader(performBody))
+		req2.Header.Set("Authorization", basicAuth)
+		req2.Header.Set("Content-Type", "application/json")
+		w2 := httptest.NewRecorder()
+		router.ServeHTTP(w2, req2)
+
+		var resPerform map[string]interface{}
+		_ = json.Unmarshal(w2.Body.Bytes(), &resPerform)
+		perfMap, ok := resPerform["result"].(map[string]interface{})
+		if !ok || perfMap["state"].(float64) != 2 {
+			t.Fatalf("expected perform state 2, got %v", resPerform)
+		}
+	})
+}
+
 func TestCanAccessRoom(t *testing.T) {
 	if !canAccessRoom("general", "guest") {
 		t.Fatal("public room must be open")

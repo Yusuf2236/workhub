@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Yusuf2236/workhub/backend/internal/models"
@@ -77,6 +78,28 @@ func maskPINFL(pinfl string) string {
 	return strings.Repeat("*", len(pinfl)-4) + pinfl[len(pinfl)-4:]
 }
 
+var (
+	memOneIDStatesMu sync.Mutex
+	memOneIDStates   = make(map[string]time.Time)
+)
+
+func storeOneIDState(ctx context.Context, state string) {
+	if redisClient != nil {
+		_ = redisClient.Set(ctx, "oneid:state:"+state, "1", oneIDStateTTL).Err()
+	}
+	memOneIDStatesMu.Lock()
+	now := time.Now()
+	if len(memOneIDStates) > 500 {
+		for s, exp := range memOneIDStates {
+			if now.After(exp) {
+				delete(memOneIDStates, s)
+			}
+		}
+	}
+	memOneIDStates[state] = now.Add(oneIDStateTTL)
+	memOneIDStatesMu.Unlock()
+}
+
 func OneIDLogin(c *gin.Context) {
 	clientID := os.Getenv("ONEID_CLIENT_ID")
 	if clientID == "" {
@@ -95,9 +118,7 @@ func OneIDLogin(c *gin.Context) {
 		ssoURL = "https://sso.egov.uz/sso/oauth/Authorization.do"
 	}
 	state := "oneid_" + uuid.NewString()
-	if redisClient != nil {
-		_ = redisClient.Set(c.Request.Context(), "oneid:state:"+state, "1", oneIDStateTTL).Err()
-	}
+	storeOneIDState(c.Request.Context(), state)
 
 	q := url.Values{}
 	q.Set("response_type", "one_code")
@@ -127,16 +148,30 @@ func oneIDQREnabled() bool {
 }
 
 // consumeOneIDState validates and invalidates the OAuth state issued by OneIDLogin.
-// Without Redis the state cannot be tracked, so it is only required to be present.
+// It checks Redis first and falls back to an in-memory thread-safe state store,
+// preventing CSRF attacks even when Redis is unavailable.
 func consumeOneIDState(ctx context.Context, state string) bool {
-	if strings.TrimSpace(state) == "" {
+	state = strings.TrimSpace(state)
+	if state == "" {
 		return false
 	}
-	if redisClient == nil {
-		return true
+	if redisClient != nil {
+		n, err := redisClient.Del(ctx, "oneid:state:"+state).Result()
+		if err == nil && n == 1 {
+			memOneIDStatesMu.Lock()
+			delete(memOneIDStates, state)
+			memOneIDStatesMu.Unlock()
+			return true
+		}
 	}
-	n, err := redisClient.Del(ctx, "oneid:state:"+state).Result()
-	return err == nil && n == 1
+	memOneIDStatesMu.Lock()
+	defer memOneIDStatesMu.Unlock()
+	exp, ok := memOneIDStates[state]
+	if !ok {
+		return false
+	}
+	delete(memOneIDStates, state)
+	return time.Now().Before(exp)
 }
 
 func oneIDTokenEndpoint() string {

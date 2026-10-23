@@ -210,6 +210,9 @@ func UpdateProfile(c *gin.Context) {
 			if accType == "company" {
 				role = "employer"
 			}
+			if r, ok := c.Get("role"); ok && r == "admin" {
+				role = "admin"
+			}
 			_ = userRepo.UpdateAccountType(userID.(string), accType, compName, innNum, role)
 		}
 	} else {

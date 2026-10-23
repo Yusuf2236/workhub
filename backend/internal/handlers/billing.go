@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Yusuf2236/workhub/backend/internal/models"
@@ -369,6 +370,43 @@ func ClickWebhook(c *gin.Context) {
 	clickReply(0, "Success", gin.H{"merchant_confirm_id": 1})
 }
 
+type paymeTx struct {
+	ID          string
+	PaymeID     string
+	UserID      string
+	Amount      float64
+	Plan        string
+	State       int // 1: created, 2: performed, -1/-2: cancelled
+	CreateTime  int64
+	PerformTime int64
+	CancelTime  int64
+	Reason      int
+}
+
+var (
+	paymeTxMu sync.RWMutex
+	paymeTxs  = make(map[string]*paymeTx)
+)
+
+func getPaymeAccountUserID(params map[string]interface{}) string {
+	if acc, ok := params["account"].(map[string]interface{}); ok {
+		for _, key := range []string{"user_id", "merchant_trans_id", "id", "userId"} {
+			if v, ok := acc[key].(string); ok && strings.TrimSpace(v) != "" {
+				return strings.TrimSpace(v)
+			}
+		}
+	}
+	return ""
+}
+
+func getPaymeAmount(params map[string]interface{}) float64 {
+	if a, ok := params["amount"].(float64); ok {
+		// Payme sends amount in tiyin (1 UZS = 100 tiyin)
+		return a / 100.0
+	}
+	return 0
+}
+
 // PaymeWebhook handles official Payme JSON-RPC merchant transactions
 func PaymeWebhook(c *gin.Context) {
 	var rpcReq struct {
@@ -397,45 +435,214 @@ func PaymeWebhook(c *gin.Context) {
 	}
 
 	log.Printf("[Payme Webhook]: method=%s", rpcReq.Method)
-
 	nowMs := time.Now().UnixNano() / int64(time.Millisecond)
 
 	switch rpcReq.Method {
 	case "CheckPerformTransaction":
+		userID := getPaymeAccountUserID(rpcReq.Params)
+		if userID == "" || !userExists(userID) {
+			c.JSON(http.StatusOK, gin.H{
+				"error": gin.H{"code": -31050, "message": gin.H{"uz": "Foydalanuvchi topilmadi", "ru": "Пользователь не найден", "en": "User not found"}},
+				"id":    rpcReq.ID,
+			})
+			return
+		}
+		amount := getPaymeAmount(rpcReq.Params)
+		if _, ok := planForAmount(amount); !ok {
+			c.JSON(http.StatusOK, gin.H{
+				"error": gin.H{"code": -31001, "message": gin.H{"uz": "Noto‘g‘ri to‘lov summasi", "ru": "Неверная сумма", "en": "Incorrect amount"}},
+				"id":    rpcReq.ID,
+			})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"result": gin.H{"allow": true},
 			"id":     rpcReq.ID,
 		})
+
 	case "CreateTransaction":
+		paymeID, _ := rpcReq.Params["id"].(string)
+		if paymeID == "" {
+			c.JSON(http.StatusOK, gin.H{
+				"error": gin.H{"code": -31008, "message": "Transaction id required"},
+				"id":    rpcReq.ID,
+			})
+			return
+		}
+
+		paymeTxMu.Lock()
+		existing, exists := paymeTxs[paymeID]
+		if exists {
+			paymeTxMu.Unlock()
+			if existing.State == 1 {
+				c.JSON(http.StatusOK, gin.H{
+					"result": gin.H{
+						"create_time": existing.CreateTime,
+						"transaction": existing.ID,
+						"state":       existing.State,
+					},
+					"id": rpcReq.ID,
+				})
+			} else {
+				c.JSON(http.StatusOK, gin.H{
+					"error": gin.H{"code": -31008, "message": "Transaction already finished"},
+					"id":    rpcReq.ID,
+				})
+			}
+			return
+		}
+
+		userID := getPaymeAccountUserID(rpcReq.Params)
+		if userID == "" || !userExists(userID) {
+			paymeTxMu.Unlock()
+			c.JSON(http.StatusOK, gin.H{
+				"error": gin.H{"code": -31050, "message": gin.H{"uz": "Foydalanuvchi topilmadi"}},
+				"id":    rpcReq.ID,
+			})
+			return
+		}
+
+		amount := getPaymeAmount(rpcReq.Params)
+		plan, ok := planForAmount(amount)
+		if !ok {
+			paymeTxMu.Unlock()
+			c.JSON(http.StatusOK, gin.H{
+				"error": gin.H{"code": -31001, "message": gin.H{"uz": "Noto‘g‘ri to‘lov summasi"}},
+				"id":    rpcReq.ID,
+			})
+			return
+		}
+
+		tx := &paymeTx{
+			ID:         "tx_" + uuid.NewString()[:8],
+			PaymeID:    paymeID,
+			UserID:     userID,
+			Amount:     amount,
+			Plan:       plan,
+			State:      1,
+			CreateTime: nowMs,
+		}
+		paymeTxs[paymeID] = tx
+		paymeTxMu.Unlock()
+
 		c.JSON(http.StatusOK, gin.H{
 			"result": gin.H{
-				"create_time": nowMs,
-				"transaction": "payme_" + uuid.NewString()[:8],
-				"state":       1,
+				"create_time": tx.CreateTime,
+				"transaction": tx.ID,
+				"state":       tx.State,
 			},
 			"id": rpcReq.ID,
 		})
+
 	case "PerformTransaction":
+		paymeID, _ := rpcReq.Params["id"].(string)
+		paymeTxMu.Lock()
+		tx, exists := paymeTxs[paymeID]
+		if !exists {
+			paymeTxMu.Unlock()
+			c.JSON(http.StatusOK, gin.H{
+				"error": gin.H{"code": -31003, "message": "Transaction not found"},
+				"id":    rpcReq.ID,
+			})
+			return
+		}
+
+		if tx.State == 1 {
+			if err := activateSubscription(tx.UserID, tx.Plan, tx.Amount, "Payme"); err != nil {
+				paymeTxMu.Unlock()
+				log.Printf("[Payme Webhook]: failed to activate subscription for user %s: %v", tx.UserID, err)
+				c.JSON(http.StatusOK, gin.H{
+					"error": gin.H{"code": -31008, "message": "Failed to activate subscription"},
+					"id":    rpcReq.ID,
+				})
+				return
+			}
+			tx.State = 2
+			tx.PerformTime = nowMs
+		} else if tx.State != 2 {
+			paymeTxMu.Unlock()
+			c.JSON(http.StatusOK, gin.H{
+				"error": gin.H{"code": -31008, "message": "Transaction is cancelled"},
+				"id":    rpcReq.ID,
+			})
+			return
+		}
+
+		respResult := gin.H{
+			"transaction":  tx.ID,
+			"perform_time": tx.PerformTime,
+			"state":        tx.State,
+		}
+		paymeTxMu.Unlock()
+
 		c.JSON(http.StatusOK, gin.H{
-			"result": gin.H{
-				"transaction":  "payme_" + uuid.NewString()[:8],
-				"perform_time": nowMs,
-				"state":        2,
-			},
-			"id": rpcReq.ID,
+			"result": respResult,
+			"id":     rpcReq.ID,
 		})
+
 	case "CheckTransaction":
+		paymeID, _ := rpcReq.Params["id"].(string)
+		paymeTxMu.RLock()
+		tx, exists := paymeTxs[paymeID]
+		if !exists {
+			paymeTxMu.RUnlock()
+			c.JSON(http.StatusOK, gin.H{
+				"error": gin.H{"code": -31003, "message": "Transaction not found"},
+				"id":    rpcReq.ID,
+			})
+			return
+		}
+
+		respResult := gin.H{
+			"create_time":  tx.CreateTime,
+			"perform_time": tx.PerformTime,
+			"cancel_time":  tx.CancelTime,
+			"transaction":  tx.ID,
+			"state":        tx.State,
+			"reason":       tx.Reason,
+		}
+		paymeTxMu.RUnlock()
+
 		c.JSON(http.StatusOK, gin.H{
-			"result": gin.H{
-				"create_time":  nowMs - 60000,
-				"perform_time": nowMs,
-				"cancel_time":  0,
-				"transaction":  "payme_" + uuid.NewString()[:8],
-				"state":        2,
-				"reason":       nil,
-			},
-			"id": rpcReq.ID,
+			"result": respResult,
+			"id":     rpcReq.ID,
 		})
+
+	case "CancelTransaction":
+		paymeID, _ := rpcReq.Params["id"].(string)
+		reason := 0
+		if rFloat, ok := rpcReq.Params["reason"].(float64); ok {
+			reason = int(rFloat)
+		}
+		paymeTxMu.Lock()
+		tx, exists := paymeTxs[paymeID]
+		if !exists {
+			paymeTxMu.Unlock()
+			c.JSON(http.StatusOK, gin.H{
+				"error": gin.H{"code": -31003, "message": "Transaction not found"},
+				"id":    rpcReq.ID,
+			})
+			return
+		}
+		if tx.State == 1 {
+			tx.State = -1
+		} else if tx.State == 2 {
+			tx.State = -2
+		}
+		tx.CancelTime = nowMs
+		tx.Reason = reason
+		respResult := gin.H{
+			"transaction": tx.ID,
+			"cancel_time": tx.CancelTime,
+			"state":       tx.State,
+		}
+		paymeTxMu.Unlock()
+
+		c.JSON(http.StatusOK, gin.H{
+			"result": respResult,
+			"id":     rpcReq.ID,
+		})
+
 	default:
 		c.JSON(http.StatusOK, gin.H{
 			"result": gin.H{"success": true},

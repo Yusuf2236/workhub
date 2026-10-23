@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/Yusuf2236/workhub/backend/pkg/jwt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func TestGoogleAuthSecurity(t *testing.T) {
@@ -320,4 +322,32 @@ func TestSelectOneIDIdentity(t *testing.T) {
 		}
 	})
 }
+
+func TestOneIDStateCSRFProtection(t *testing.T) {
+	ctx := context.Background()
+
+	// 1. Empty state must be rejected
+	if consumeOneIDState(ctx, "") {
+		t.Fatal("empty state must be rejected")
+	}
+
+	// 2. Random / forged state must be rejected
+	if consumeOneIDState(ctx, "forged_state_12345") {
+		t.Fatal("forged state must be rejected")
+	}
+
+	// 3. Stored state must be valid
+	validState := "oneid_test_" + uuid.NewString()
+	storeOneIDState(ctx, validState)
+
+	if !consumeOneIDState(ctx, validState) {
+		t.Fatal("stored state must be accepted")
+	}
+
+	// 4. Replay of consumed state must be rejected
+	if consumeOneIDState(ctx, validState) {
+		t.Fatal("replayed state must be rejected on second use")
+	}
+}
+
 

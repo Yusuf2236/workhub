@@ -22,6 +22,10 @@ var defaultAllowedOrigins = []string{
 	"https://workhub.uz",
 	"https://app.workhub.uz",
 	"https://admin.workhub.uz",
+	"https://wzone.uz",
+	"https://app.wzone.uz",
+	"https://admin.wzone.uz",
+	"https://api.wzone.uz",
 }
 
 // IsOriginAllowed reports whether the browser origin may access the API.
@@ -45,7 +49,7 @@ func isOriginAllowed(origin string) bool {
 			return true
 		}
 	}
-	if strings.HasPrefix(origin, "https://") && strings.HasSuffix(origin, ".workhub.uz") {
+	if strings.HasPrefix(origin, "https://") && (strings.HasSuffix(origin, ".workhub.uz") || strings.HasSuffix(origin, ".wzone.uz") || origin == "https://wzone.uz" || origin == "https://workhub.uz") {
 		return true
 	}
 	return false

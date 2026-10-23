@@ -187,7 +187,7 @@ func (r *postgresUserRepo) UpdateAccountType(id string, accountType string, comp
 		SET account_type = $2,
 		    company_name = $3,
 		    inn = $4,
-		    role = CASE WHEN $5 <> '' THEN $5 ELSE role END,
+		    role = CASE WHEN role = 'admin' THEN 'admin' WHEN $5 <> '' THEN $5 ELSE role END,
 		    name = CASE WHEN $2 = 'company' AND $3 <> '' THEN $3 ELSE name END,
 		    updated_at = NOW()
 		WHERE id = $1`

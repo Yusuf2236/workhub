@@ -24,15 +24,26 @@ const (
 )
 
 var (
-	once      sync.Once
-	aesKey    []byte
-	hmacKey   []byte
-	keyErr    error
+	once                sync.Once
+	configuredMasterKey string
+	aesKey              []byte
+	hmacKey             []byte
+	keyErr              error
 )
+
+// SetMasterKey configures the master encryption key from config/.env
+func SetMasterKey(key string) {
+	if strings.TrimSpace(key) != "" {
+		configuredMasterKey = strings.TrimSpace(key)
+	}
+}
 
 // initKeys initializes the 256-bit AES encryption key and HMAC blind index key
 func initKeys() {
-	masterKey := os.Getenv("ONEID_ENCRYPTION_KEY")
+	masterKey := configuredMasterKey
+	if masterKey == "" {
+		masterKey = os.Getenv("ONEID_ENCRYPTION_KEY")
+	}
 	if masterKey == "" {
 		masterKey = os.Getenv("DATA_ENCRYPTION_KEY")
 	}

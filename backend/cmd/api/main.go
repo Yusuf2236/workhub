@@ -16,6 +16,7 @@ import (
 	"github.com/Yusuf2236/workhub/backend/internal/handlers"
 	"github.com/Yusuf2236/workhub/backend/internal/middleware"
 	"github.com/Yusuf2236/workhub/backend/internal/services"
+	"github.com/Yusuf2236/workhub/backend/pkg/crypto"
 	"github.com/Yusuf2236/workhub/backend/pkg/jwt"
 	"github.com/gin-gonic/gin"
 )
@@ -27,6 +28,14 @@ func main() {
 	}
 	jwt.SetSecret(cfg.JWT.Secret)
 	jwt.SetTTL(cfg.JWT.TTL)
+	encKey := os.Getenv("ONEID_ENCRYPTION_KEY")
+	if encKey == "" {
+		encKey = os.Getenv("DATA_ENCRYPTION_KEY")
+	}
+	if encKey == "" {
+		encKey = cfg.JWT.Secret
+	}
+	crypto.SetMasterKey(encKey)
 	if cfg.IsProduction() && os.Getenv("ONEID_ENCRYPTION_KEY") == "" && os.Getenv("DATA_ENCRYPTION_KEY") == "" {
 		log.Println("[Security] warning: ONEID_ENCRYPTION_KEY is not set; PINFL encryption key is derived from JWT_SECRET")
 	}
@@ -158,6 +167,10 @@ func setupRoutes(r *gin.Engine) {
 	uploads.Use(func(c *gin.Context) {
 		// Prevent uploaded files from being rendered as HTML/script by the browser
 		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+		if strings.HasPrefix(c.Request.URL.Path, "/uploads/resumes") {
+			c.Header("Content-Disposition", "attachment")
+		}
 		c.Next()
 	})
 	uploads.Static("/", "./uploads")
