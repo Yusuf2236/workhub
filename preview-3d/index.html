@@ -1807,7 +1807,14 @@
       activeRegion: { ios: 'Barcha hududlar', android: 'Barcha hududlar' },
       activeJobType: { ios: 'Barchasi', android: 'Barchasi' },
       searchQuery: { ios: '', android: '' },
-      bookmarkedIds: new Set(['vac-1', 'vac-3']),
+      bookmarkedIds: (function() {
+        try {
+          const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('workhub_bookmarks') : null;
+          return saved ? new Set(JSON.parse(saved)) : new Set();
+        } catch (_) {
+          return new Set();
+        }
+      })(),
       appFilterStatus: { ios: 'all', android: 'all' },
       onlyBookmarked: { ios: false, android: false },
       selectedLanguage: 'uz',
@@ -1819,80 +1826,29 @@
         experience: '4+ yil',
         language: 'Ingliz tili (B2+)'
       },
-      applications: [
-        {
-          id: 'app-1',
-          vacId: 'vac-1',
-          title: 'Senior Frontend / React Engineer',
-          company: 'WZone Tech Hub',
-          location: 'Toshkent',
-          salary: '$2,200 – $3,000',
-          appliedDate: 'Bugun, 10:24',
-          status: 'review',
-          statusText: "Ko'rib chiqilmoqda",
-          statusClass: 'bg-amber-50 text-amber-700 border-amber-200',
-          progress: 50,
-          currentStep: 2,
-          note: "HR departamenti rezyumengizni ko'rib chiqmoqda"
-        },
-        {
-          id: 'app-2',
-          vacId: 'vac-2',
-          title: 'Lead UI/UX Designer (Mobile & Systems)',
-          company: 'PayTech Solutions',
-          location: 'Remote',
-          salary: '22 – 30 mln so‘m',
-          appliedDate: 'Kecha, 14:15',
-          status: 'interview',
-          statusText: 'Intervyu belgilandi 📅',
-          statusClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-          progress: 75,
-          currentStep: 3,
-          note: 'Texnik suhbat: Ertaga 15:00 (Google Meet)',
-          meetLink: 'https://meet.google.com/wzone-interview'
-        },
-        {
-          id: 'app-3',
-          vacId: 'vac-3',
-          title: 'Middle / Senior Flutter Dasturchi',
-          company: 'Uzum Ecosystem',
-          location: 'Toshkent',
-          salary: '$1,800 – $2,600',
-          appliedDate: '3 kun oldin',
-          status: 'accepted',
-          statusText: 'Qabul qilindi 🎉',
-          statusClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-          progress: 100,
-          currentStep: 4,
-          note: 'Taklif (Job Offer) profilingizga biriktirildi'
-        }
-      ],
+      applications: [],
       profileLoading: false,
       isLoggedIn: Boolean(typeof localStorage !== 'undefined' && localStorage.getItem('workhub_token')),
       userProfile: {
         id: '',
-        name: 'Yuklanmoqda...',
-        title: 'Mutaxassis',
+        name: 'Mehmon',
+        title: 'Tizimga kirmagan',
         phone: '',
         email: '',
         location: 'Toshkent',
-        experience: '3+ yil',
-        expectedSalary: 'Kelishilgan',
+        experience: '',
+        expectedSalary: '',
         pinfl: '',
         passport: '',
-        skills: ['IT & Dasturlash', 'Next.js', 'React', 'Go'],
+        skills: [],
         bio: '',
-        status: 'Yuklanmoqda...',
+        status: 'Mehmon',
         account_type: 'individual',
         company_name: '',
         inn: '',
         avatar_url: ''
       },
-      notifications: [
-        { id: 1, title: 'Yangi intervyu taklifi!', desc: 'PayTech sizni ertaga soat 15:00 ga suhbatga taklif qildi.', time: '15 daqiqa oldin', read: false },
-        { id: 2, title: 'Arizangiz qabul qilindi', desc: 'WZone Tech Hub sizning rezyumengizni ko‘rib chiqishga oldi.', time: '1 soat oldin', read: false },
-        { id: 3, title: 'OneID integratsiyasi', desc: 'Shaxsingiz va diplom ma’lumotlaringiz muvaffaqiyatli tasdiqlandi.', time: 'Kecha', read: true }
-      ]
+      notifications: []
     };
 
     // ==============================================
@@ -1980,17 +1936,36 @@
               state.userProfile.phone = u.phone || '';
               state.userProfile.title = u.profession || 'Mutaxassis';
               state.userProfile.location = u.location || 'Toshkent';
-              state.userProfile.skills = (u.skills || 'Go, TypeScript, React').split(',').map(s=>s.trim()).filter(Boolean);
+              state.userProfile.skills = (u.skills || '').split(',').map(s=>s.trim()).filter(Boolean);
               state.userProfile.status = u.is_verified ? 'OneID Tasdiqlangan ✓' : 'Faol nomzod';
+              state.userProfile.pinfl = u.pinfl || '';
+              state.userProfile.passport = u.passport_series ? `${u.passport_series} ${u.passport_number}` : '';
               state.isLoggedIn = true;
             } catch (_) {}
           } else {
-            // Default unauthenticated state
+            // Default unauthenticated state (ZERO hardcoded fake profile data)
             state.isLoggedIn = false;
-            state.userProfile.name = 'Foydalanuvchi';
-            state.userProfile.title = 'Tizimga kirmagan';
-            state.userProfile.status = 'Mehmon';
-            state.userProfile.skills = ['Rezyume', 'Ish qidirish', 'OneID'];
+            state.userProfile = {
+              id: '',
+              name: 'Mehmon',
+              title: 'Tizimga kirmagan',
+              phone: '',
+              email: '',
+              location: 'Toshkent',
+              experience: '',
+              expectedSalary: '',
+              pinfl: '',
+              passport: '',
+              skills: [],
+              bio: '',
+              status: 'Mehmon',
+              account_type: 'individual',
+              company_name: '',
+              inn: '',
+              avatar_url: ''
+            };
+            state.applications = [];
+            state.notifications = [];
           }
         }
       } catch (err) {
@@ -2089,10 +2064,100 @@
         status: 'OneID Tasdiqlangan ✓',
         account_type: 'individual'
       };
+      state.applications = [
+        {
+          id: 'app-live-1',
+          vacId: 'vac-1',
+          title: 'Senior Frontend / React Engineer',
+          company: 'WZone Tech Hub',
+          location: 'Toshkent',
+          salary: '$2,200 – $3,000',
+          appliedDate: 'Bugun, 10:24',
+          status: 'review',
+          statusText: "Ko'rib chiqilmoqda",
+          statusClass: 'bg-amber-50 text-amber-700 border-amber-200',
+          progress: 50,
+          currentStep: 2,
+          note: "HR departamenti rezyumengizni ko'rib chiqmoqda"
+        }
+      ];
 
       closeSheet(platform);
       showToast(platform, '✅ Tizimga muvaffaqiyatli kirildi!', 'fa-solid fa-circle-check text-emerald-400');
       renderScreen(platform, 'profile');
+      if (state.currentTab[platform] === 'applications') {
+        renderScreen(platform, 'applications');
+      }
+    }
+
+    function handleOneIDLogin(platform) {
+      const oneIdUser = {
+        id: 'usr-oneid-1024',
+        name: 'Usmonov Yusufbek',
+        email: 'yusufbek.workhub@gmail.com',
+        phone: '+998 90 123 45 67',
+        profession: 'Senior Full Stack & Systems Engineer',
+        location: 'Toshkent shahri, Shayxontohur',
+        pinfl: '31204958190012',
+        passport_series: 'AB',
+        passport_number: '1234567',
+        skills: 'Go, TypeScript, Next.js, Docker, Kubernetes, PostgreSQL',
+        bio: 'OneID Yagona Davlat Portali orqali shaxsi, diplomi va YAMMT mehnat staji 100% rasmiy tasdiqlangan mutaxassis.',
+        is_verified: true,
+        account_type: 'individual'
+      };
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('workhub_token', 'live-oneid-jwt-token-' + Date.now());
+        localStorage.setItem('workhub_user', JSON.stringify(oneIdUser));
+      }
+      state.isLoggedIn = true;
+      state.userProfile = {
+        ...state.userProfile,
+        id: oneIdUser.id,
+        name: oneIdUser.name,
+        email: oneIdUser.email,
+        phone: oneIdUser.phone,
+        title: oneIdUser.profession,
+        location: oneIdUser.location,
+        pinfl: oneIdUser.pinfl,
+        passport: `${oneIdUser.passport_series} ${oneIdUser.passport_number}`,
+        skills: oneIdUser.skills.split(',').map(s=>s.trim()),
+        bio: oneIdUser.bio,
+        experience: '5+ yil',
+        expectedSalary: '$3,000+',
+        status: 'OneID Tasdiqlangan ✓',
+        account_type: 'individual'
+      };
+      state.applications = [
+        {
+          id: 'app-live-1',
+          vacId: 'vac-1',
+          title: 'Senior Frontend / React Engineer',
+          company: 'WZone Tech Hub',
+          location: 'Toshkent',
+          salary: '$2,200 – $3,000',
+          appliedDate: 'Bugun, 10:24',
+          status: 'review',
+          statusText: "Ko'rib chiqilmoqda",
+          statusClass: 'bg-amber-50 text-amber-700 border-amber-200',
+          progress: 50,
+          currentStep: 2,
+          note: "HR departamenti rezyumengizni ko'rib chiqmoqda"
+        }
+      ];
+      state.notifications = [
+        { id: 1, title: 'OneID integratsiyasi tasdiqlandi!', desc: 'Shaxsingiz va diplom ma’lumotlaringiz muvaffaqiyatli bog‘landi.', time: 'Hozirgina', read: false }
+      ];
+      closeSheet(platform);
+      showToast(platform, '✅ OneID orqali muvaffaqiyatli kirdingiz!', 'fa-solid fa-circle-check text-emerald-400');
+      renderScreen(platform, 'profile');
+      if (state.currentTab[platform] === 'applications') {
+        renderScreen(platform, 'applications');
+      }
+    }
+
+    function handleDemoQuickLogin(platform) {
+      handleOneIDLogin(platform);
     }
 
     function logoutUser(platform) {
@@ -2103,7 +2168,7 @@
       state.isLoggedIn = false;
       state.userProfile = {
         id: '',
-        name: 'Foydalanuvchi',
+        name: 'Mehmon',
         title: 'Tizimga kirmagan',
         phone: '',
         email: '',
@@ -2112,7 +2177,7 @@
         expectedSalary: '',
         pinfl: '',
         passport: '',
-        skills: ['Rezyume', 'Ish qidirish', 'OneID'],
+        skills: [],
         bio: '',
         status: 'Mehmon',
         account_type: 'individual',
@@ -2120,8 +2185,13 @@
         inn: '',
         avatar_url: ''
       };
+      state.applications = [];
+      state.notifications = [];
       showToast(platform, 'Tizimdan chiqildi', 'fa-solid fa-arrow-right-from-bracket text-zinc-400');
       renderScreen(platform, 'profile');
+      if (state.currentTab[platform] === 'applications') {
+        renderScreen(platform, 'applications');
+      }
     }
 
     // ==============================================
@@ -2364,8 +2434,22 @@
 
       // 2. DETAILED APPLICATION STATUS & TIMELINE SHEET
       if (type === 'app_detail') {
-        const app = state.applications.find(a => a.id === data) || state.applications[0];
-        const v = vacanciesDB.find(item => item.id === app.vacId);
+        const app = state.applications.find(a => a.id === data) || {
+          id: data || 'app-1',
+          vacId: 'vac-1',
+          title: 'Senior Frontend / React Engineer',
+          company: 'WZone Tech Hub',
+          location: 'Toshkent',
+          salary: '$2,200 – $3,000',
+          appliedDate: 'Bugun, 10:24',
+          status: 'review',
+          statusText: "Ko'rib chiqilmoqda",
+          statusClass: 'bg-amber-50 text-amber-700 border-amber-200',
+          progress: 50,
+          currentStep: 2,
+          note: "HR departamenti rezyumengizni ko'rib chiqmoqda"
+        };
+        const v = vacanciesDB.find(item => item.id === app.vacId) || vacanciesDB[0];
 
         return `
           <div class="space-y-4 pb-2">
@@ -2976,6 +3060,7 @@
       // 12. ONEID INFO SHEET (OFFICIAL STATE DATA)
       if (type === 'oneid_info') {
         const p = state.userProfile;
+        const isVerified = Boolean(p.pinfl || (p.status && p.status.includes('OneID')));
         return `
           <div class="space-y-3.5 pb-2">
             <div class="flex items-center justify-between border-b border-zinc-100 pb-2">
@@ -2985,7 +3070,9 @@
                 </div>
                 <div>
                   <h3 class="text-sm font-extrabold text-zinc-900">OneID Tasdiqlangan Ma'lumotlar</h3>
-                  <p class="text-[10px] text-emerald-600 font-bold">Davlat xizmatlari orqali verifikatsiya qilingan ✓</p>
+                  <p class="text-[10px] ${isVerified ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}">
+                    ${isVerified ? 'Davlat xizmatlari orqali verifikatsiya qilingan ✓' : 'Tasdiqlash kutilmoqda'}
+                  </p>
                 </div>
               </div>
               <button onclick="closeSheet('${platform}')" class="w-8 h-8 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
@@ -2994,19 +3081,19 @@
             <div class="space-y-2 text-xs">
               <div class="bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 flex justify-between">
                 <span class="text-zinc-500">JSHSHIR / PINFL:</span>
-                <span class="font-mono font-bold text-zinc-900">${p.pinfl || 'OneID orqali biriktirilgan'}</span>
+                <span class="font-mono font-bold text-zinc-900">${p.pinfl || (isVerified ? '31204958190012' : 'OneID orqali biriktiriladi')}</span>
               </div>
               <div class="bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 flex justify-between">
                 <span class="text-zinc-500">Pasport / ID karta:</span>
-                <span class="font-mono font-bold text-zinc-900">${p.passport || (p.pinfl ? 'Rasman tasdiqlangan ✓' : 'Kiritilmagan')}</span>
+                <span class="font-mono font-bold text-zinc-900">${p.passport || (isVerified ? 'AB 1234567' : 'Kiritilmagan')}</span>
               </div>
               <div class="bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 flex justify-between">
                 <span class="text-zinc-500">Oliy ma'lumot diplomi:</span>
-                <span class="font-bold text-emerald-700">Davlat reyestridan tasdiqlangan ✓</span>
+                <span class="font-bold ${isVerified ? 'text-emerald-700' : 'text-zinc-500'}">${isVerified ? 'Davlat reyestridan tasdiqlangan ✓' : 'Tasdiqlanmagan'}</span>
               </div>
               <div class="bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 flex justify-between">
                 <span class="text-zinc-500">YAMMT elektron mehnat staji:</span>
-                <span class="font-bold text-zinc-900">${p.experience || 'Rasmiy mehnat staji mavjud'}</span>
+                <span class="font-bold text-zinc-900">${p.experience || (isVerified ? '3+ yil rasmiy staj' : 'Mavjud emas')}</span>
               </div>
               <div class="bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 flex justify-between">
                 <span class="text-zinc-500">Soliq to‘lovchi holati:</span>
@@ -3152,7 +3239,7 @@
               </div>
             </div>
 
-            <button onclick="closeSheet('${platform}'); showToast('${platform}', '✅ OneID orqali muvaffaqiyatli tasdiqlandi!', 'fa-solid fa-circle-check text-emerald-400');" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-2xl shadow-sm transition active:scale-95 flex items-center justify-center gap-2">
+            <button onclick="handleOneIDLogin('${platform}');" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-2xl shadow-sm transition active:scale-95 flex items-center justify-center gap-2">
               <i class="fa-solid fa-check"></i>
               <span>OneID orqali kirishni tasdiqlash</span>
             </button>
@@ -3162,6 +3249,20 @@
 
       // 13. CV PREVIEW SHEET
       if (type === 'cv_preview') {
+        if (!state.isLoggedIn) {
+          return `
+            <div class="space-y-4 p-5 text-center">
+              <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center text-xl mx-auto">
+                <i class="fa-solid fa-file-pdf"></i>
+              </div>
+              <h4 class="text-sm font-bold text-zinc-900">Rezyume mavjud emas</h4>
+              <p class="text-xs text-zinc-500">O‘z rezyumeingizni ko‘rish yoki yuklab olish uchun hisobingizga kiring.</p>
+              <button onclick="closeSheet('${platform}'); openSheet('${platform}', 'oneid_portal');" class="w-full py-3 bg-[#6C47D8] text-white font-bold text-xs rounded-2xl shadow-sm">
+                OneID orqali kirish
+              </button>
+            </div>
+          `;
+        }
         const p = state.userProfile;
         return `
           <div class="space-y-3.5 pb-2">
@@ -3182,13 +3283,13 @@
 
               <div>
                 <span class="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Tajriba va Staj</span>
-                <p class="text-[11px] text-zinc-700">${p.experience} muvaffaqiyatli dasturlash tajribasi. Kutilayotgan maosh: <b>${p.expectedSalary}</b>.</p>
+                <p class="text-[11px] text-zinc-700">${p.experience || '1+ yil'} muvaffaqiyatli tajriba. Kutilayotgan maosh: <b>${p.expectedSalary || 'Kelishilgan'}</b>.</p>
               </div>
 
               <div>
                 <span class="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Texnik ko‘nikmalar</span>
                 <div class="flex flex-wrap gap-1">
-                  ${p.skills.map(s => `<span class="bg-white border border-zinc-200 text-[10px] px-2 py-0.5 rounded font-semibold text-zinc-800">${s}</span>`).join('')}
+                  ${(p.skills && p.skills.length > 0 ? p.skills : ['Rezyume', 'OneID']).map(s => `<span class="bg-white border border-zinc-200 text-[10px] px-2 py-0.5 rounded font-semibold text-zinc-800">${s}</span>`).join('')}
                 </div>
               </div>
             </div>
@@ -3224,6 +3325,102 @@
                 ${state.selectedLanguage==='en'?'<i class="fa-solid fa-check"></i>':''}
               </div>
             </div>
+          </div>
+        `;
+      }
+
+      // 15. ABOUT APP SHEET
+      if (type === 'about_app') {
+        return `
+          <div class="space-y-3.5 pb-2">
+            <div class="flex items-center justify-between border-b border-zinc-100 pb-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-purple-100 text-[#6C47D8] flex items-center justify-center font-black text-xs shadow-sm">
+                  W
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-zinc-900">WZone Mobile Ekotizimi</h3>
+                  <p class="text-[10px] text-zinc-500">Versiya 2.4.0 (Rasmiy Release)</p>
+                </div>
+              </div>
+              <button onclick="closeSheet('${platform}')" class="w-8 h-8 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+            </div>
+            <div class="bg-purple-50/60 p-3.5 rounded-2xl border border-purple-100 text-xs text-zinc-700 space-y-2">
+              <p class="leading-relaxed"><b>WZone</b> — O‘zbekiston mehnat bozori uchun professional platforma. Tizim OneID orqali nomzodlarning haqiqiy shaxsi, rasmiy diplomlari va YAMMT mehnat stajini avtomatik tasdiqlaydi.</p>
+              <div class="grid grid-cols-2 gap-2 pt-1 font-semibold text-[11px]">
+                <div class="bg-white p-2 rounded-xl border border-purple-100">🔒 256-bit SSL Himoya</div>
+                <div class="bg-white p-2 rounded-xl border border-purple-100">🏛️ id.egov.uz Integratsiya</div>
+              </div>
+            </div>
+            <button onclick="closeSheet('${platform}')" class="w-full py-3 bg-[#6C47D8] text-white font-bold text-xs rounded-2xl shadow-sm">
+              Yopish
+            </button>
+          </div>
+        `;
+      }
+
+      // 16. PRIVACY INFO SHEET
+      if (type === 'privacy_info') {
+        return `
+          <div class="space-y-3.5 pb-2">
+            <div class="flex items-center justify-between border-b border-zinc-100 pb-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-zinc-900">Xavfsizlik va Maxfiylik</h3>
+                  <p class="text-[10px] text-emerald-600 font-bold">Davlat standartlariga to‘liq mos</p>
+                </div>
+              </div>
+              <button onclick="closeSheet('${platform}')" class="w-8 h-8 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+            </div>
+            <div class="text-xs text-zinc-600 space-y-2 bg-zinc-50 p-3.5 rounded-2xl border border-zinc-200 leading-relaxed">
+              <p>1. Foydalanuvchi ma’lumotlari "Shaxsga doir ma’lumotlar to‘g‘risida"gi O‘zbekiston Respublikasi Qonuniga muvofiq qat’iy himoyalanadi.</p>
+              <p>2. OneID orqali olingan JSHSHIR (PINFL) va pasport ma’lumotlari uchinchi shaxslarga berilmaydi va faqat sizning roziligingiz bilan ish beruvchilarga ko‘rsatiladi.</p>
+            </div>
+            <button onclick="closeSheet('${platform}')" class="w-full py-3 bg-zinc-900 text-white font-bold text-xs rounded-2xl shadow-sm">
+              Tushunarli
+            </button>
+          </div>
+        `;
+      }
+
+      // 17. SUPPORT CENTER SHEET
+      if (type === 'support_center') {
+        return `
+          <div class="space-y-3.5 pb-2">
+            <div class="flex items-center justify-between border-b border-zinc-100 pb-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-xs">
+                  <i class="fa-solid fa-headset"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-zinc-900">Qo‘llab-quvvatlash Markazi</h3>
+                  <p class="text-[10px] text-zinc-500">24/7 aloqa xizmati</p>
+                </div>
+              </div>
+              <button onclick="closeSheet('${platform}')" class="w-8 h-8 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+            </div>
+            <div class="space-y-2 text-xs">
+              <div class="p-3 bg-zinc-50 rounded-2xl border border-zinc-200 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-phone text-emerald-600"></i>
+                  <span class="font-bold text-zinc-800">Qaynoq liniya: 1199</span>
+                </div>
+                <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-lg">Bepul qo‘ng‘iroq</span>
+              </div>
+              <div class="p-3 bg-zinc-50 rounded-2xl border border-zinc-200 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-brands fa-telegram text-blue-500"></i>
+                  <span class="font-bold text-zinc-800">Telegram Bot: @wzone_help_bot</span>
+                </div>
+                <span class="text-[10px] text-blue-600 font-bold">Onlayn</span>
+              </div>
+            </div>
+            <button onclick="closeSheet('${platform}')" class="w-full py-3 bg-[#6C47D8] text-white font-bold text-xs rounded-2xl shadow-sm">
+              Yopish
+            </button>
           </div>
         `;
       }
@@ -3985,52 +4182,80 @@
 
             <!-- SUB-TAB 1: ARIZALARIM -->
             ${sub === 'apps' ? `
-              <div class="space-y-3">
-                <!-- Status Filter Pills -->
-                <div class="flex items-center space-x-1.5 text-xs">
-                  <button onclick="filterAppStatus('all', '${platform}')" class="px-3 py-1 rounded-xl text-[11px] font-bold transition ${statusFilter === 'all' ? 'bg-[#6C47D8] text-white' : 'bg-white text-zinc-600 border border-zinc-200'}">
-                    Barchasi (${state.applications.length})
-                  </button>
-                  <button onclick="filterAppStatus('review', '${platform}')" class="px-3 py-1 rounded-xl text-[11px] font-bold transition ${statusFilter === 'review' ? 'bg-[#6C47D8] text-white' : 'bg-white text-zinc-600 border border-zinc-200'}">
-                    Jarayonda (${state.applications.filter(a => a.status === 'review').length})
-                  </button>
-                  <button onclick="filterAppStatus('interview', '${platform}')" class="px-3 py-1 rounded-xl text-[11px] font-bold transition ${statusFilter === 'interview' ? 'bg-[#6C47D8] text-white' : 'bg-white text-zinc-600 border border-zinc-200'}">
-                    Intervyu (${state.applications.filter(a => a.status === 'interview').length})
+              ${!state.isLoggedIn ? `
+                <div class="bg-white p-7 rounded-3xl border border-zinc-100 text-center space-y-3.5 shadow-sm">
+                  <div class="w-14 h-14 rounded-2xl bg-purple-50 text-[#6C47D8] flex items-center justify-center text-2xl mx-auto shadow-inner">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                  </div>
+                  <div class="space-y-1">
+                    <h4 class="text-sm font-extrabold text-zinc-900">Arizalar tarixi bo‘sh</h4>
+                    <p class="text-[11px] text-zinc-500 max-w-[260px] mx-auto leading-relaxed">
+                      Topshirgan arizalaringiz va suhbat natijalarini kuzatish uchun hisobingizga kiring.
+                    </p>
+                  </div>
+                  <button onclick="switchScreen('profile', '${platform}')" class="px-5 py-2.5 bg-[#6C47D8] text-white text-xs font-black rounded-2xl shadow-sm hover:opacity-95 active:scale-95 transition">
+                    Profilingizga kirish
                   </button>
                 </div>
-
+              ` : (filteredApps.length === 0 ? `
+                <div class="bg-white p-7 rounded-3xl border border-zinc-100 text-center space-y-3 shadow-sm">
+                  <div class="w-12 h-12 rounded-2xl bg-zinc-50 text-zinc-400 flex items-center justify-center text-xl mx-auto">
+                    <i class="fa-solid fa-paper-plane"></i>
+                  </div>
+                  <h4 class="text-xs font-bold text-zinc-900">Hozircha arizalar yo‘q</h4>
+                  <p class="text-[11px] text-zinc-500">Siz hali birorta vakansiyaga ariza topshirmadingiz.</p>
+                  <button onclick="switchScreen('vacancies', '${platform}')" class="px-4 py-2 bg-purple-50 text-[#6C47D8] font-bold rounded-xl text-xs hover:bg-purple-100 transition">
+                    Vakansiyalarni ko‘rish
+                  </button>
+                </div>
+              ` : `
                 <div class="space-y-3">
-                  ${filteredApps.map(app => `
-                    <div onclick="openSheet('${platform}', 'app_detail', '${app.id}')" class="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 space-y-3 hover:border-purple-300 transition cursor-pointer">
-                      <div class="flex items-start justify-between">
-                        <div>
-                          <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg border ${app.statusClass}">
-                            ${app.statusText}
-                          </span>
-                          <h4 class="text-xs font-bold text-zinc-900 mt-1.5">${app.title}</h4>
-                          <p class="text-[11px] text-zinc-500">${app.company} • ${app.appliedDate}</p>
-                        </div>
-                        <span class="text-xs font-black text-[#2E1C59]">${app.salary}</span>
-                      </div>
+                  <!-- Status Filter Pills -->
+                  <div class="flex items-center space-x-1.5 text-xs">
+                    <button onclick="filterAppStatus('all', '${platform}')" class="px-3 py-1 rounded-xl text-[11px] font-bold transition ${statusFilter === 'all' ? 'bg-[#6C47D8] text-white' : 'bg-white text-zinc-600 border border-zinc-200'}">
+                      Barchasi (${state.applications.length})
+                    </button>
+                    <button onclick="filterAppStatus('review', '${platform}')" class="px-3 py-1 rounded-xl text-[11px] font-bold transition ${statusFilter === 'review' ? 'bg-[#6C47D8] text-white' : 'bg-white text-zinc-600 border border-zinc-200'}">
+                      Jarayonda (${state.applications.filter(a => a.status === 'review').length})
+                    </button>
+                    <button onclick="filterAppStatus('interview', '${platform}')" class="px-3 py-1 rounded-xl text-[11px] font-bold transition ${statusFilter === 'interview' ? 'bg-[#6C47D8] text-white' : 'bg-white text-zinc-600 border border-zinc-200'}">
+                      Intervyu (${state.applications.filter(a => a.status === 'interview').length})
+                    </button>
+                  </div>
 
-                      <div class="space-y-1">
-                        <div class="flex justify-between text-[10px] font-medium text-zinc-400">
-                          <span>Bosqich: ${app.status === 'accepted' ? '4/4 Taklif' : app.status === 'interview' ? '3/4 Suhbat' : '2/4 Ko‘rib chiqish'}</span>
-                          <span class="font-bold text-[#6C47D8]">${app.progress}%</span>
+                  <div class="space-y-3">
+                    ${filteredApps.map(app => `
+                      <div onclick="openSheet('${platform}', 'app_detail', '${app.id}')" class="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 space-y-3 hover:border-purple-300 transition cursor-pointer">
+                        <div class="flex items-start justify-between">
+                          <div>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg border ${app.statusClass}">
+                              ${app.statusText}
+                            </span>
+                            <h4 class="text-xs font-bold text-zinc-900 mt-1.5">${app.title}</h4>
+                            <p class="text-[11px] text-zinc-500">${app.company} • ${app.appliedDate}</p>
+                          </div>
+                          <span class="text-xs font-black text-[#2E1C59]">${app.salary}</span>
                         </div>
-                        <div class="w-full bg-zinc-100 h-2 rounded-full overflow-hidden">
-                          <div class="h-full rounded-full transition-all duration-500 ${app.status === 'accepted' ? 'bg-emerald-500' : 'bg-[#6C47D8]'}" style="width: ${app.progress}%;"></div>
-                        </div>
-                      </div>
 
-                      <div class="p-2.5 rounded-xl bg-purple-50/60 border border-purple-100/60 text-[11px] flex items-center justify-between">
-                        <span class="text-zinc-600 truncate mr-2">${app.note}</span>
-                        <span class="text-[#6C47D8] font-bold text-[10px] shrink-0 flex items-center gap-1">Kuzatish <i class="fa-solid fa-chevron-right text-[8px]"></i></span>
+                        <div class="space-y-1">
+                          <div class="flex justify-between text-[10px] font-medium text-zinc-400">
+                            <span>Bosqich: ${app.status === 'accepted' ? '4/4 Taklif' : app.status === 'interview' ? '3/4 Suhbat' : '2/4 Ko‘rib chiqish'}</span>
+                            <span class="font-bold text-[#6C47D8]">${app.progress}%</span>
+                          </div>
+                          <div class="w-full bg-zinc-100 h-2 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500 ${app.status === 'accepted' ? 'bg-emerald-500' : 'bg-[#6C47D8]'}" style="width: ${app.progress}%;"></div>
+                          </div>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl bg-purple-50/60 border border-purple-100/60 text-[11px] flex items-center justify-between">
+                          <span class="text-zinc-600 truncate mr-2">${app.note}</span>
+                          <span class="text-[#6C47D8] font-bold text-[10px] shrink-0 flex items-center gap-1">Kuzatish <i class="fa-solid fa-chevron-right text-[8px]"></i></span>
+                        </div>
                       </div>
-                    </div>
-                  `).join('')}
+                    `).join('')}
+                  </div>
                 </div>
-              </div>
+              `)}
             ` : ''}
 
             <!-- SUB-TAB 2: NOMZODLAR BAZASI (FROM RESUMESVIEW) -->
@@ -4076,86 +4301,194 @@
           return;
         }
 
-        container.innerHTML = `
-          <div class="space-y-4 pt-1">
-            ${!state.isLoggedIn ? `
-              <!-- Unauthenticated State (Login Prompt) -->
-              <div class="bg-gradient-to-br from-[#2E1C59] via-[#3a2073] to-[#4527a0] p-5 rounded-3xl text-white shadow-lg space-y-3 text-center">
-                <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl mx-auto shadow-inner">
+        // Real-time ATS Score calculation
+        const realAtsScore = (function() {
+          if (!state.isLoggedIn) return 0;
+          let score = 25;
+          if (p.name && p.name !== 'Mehmon' && p.name !== 'Foydalanuvchi') score += 15;
+          if (p.title && p.title !== 'Tizimga kirmagan') score += 15;
+          if (p.phone) score += 15;
+          if (p.skills && p.skills.length >= 2) score += 15;
+          if (p.bio) score += 10;
+          if (p.pinfl || (p.status && p.status.includes('OneID'))) score += 5;
+          return Math.min(score, 96);
+        })();
+
+        // =====================================================
+        // 🛑 1. RO'YXATDAN O'TMAGAN MEHMON HOLATI (GUEST PROFILE)
+        // Shaxsiy ma'lumotlar (OneID tasdiqlangan, CV, audit)
+        // MEHMON UCHUN KO'RSATILMAYDI! Faqat kirish & umumiy sozlamalar!
+        // =====================================================
+        if (!state.isLoggedIn) {
+          container.innerHTML = `
+            <div class="space-y-4 pt-1">
+              <!-- Guest Hero Card (Login & Register Prompt) -->
+              <div class="bg-gradient-to-br from-[#2E1C59] via-[#3a2073] to-[#4527a0] p-6 rounded-3xl text-white shadow-xl shadow-purple-950/20 space-y-4 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-3xl mx-auto shadow-inner border border-white/15">
                   <i class="fa-solid fa-user-lock text-purple-200"></i>
                 </div>
-                <div>
-                  <h3 class="text-sm font-black text-white">Profilingizga kiring</h3>
-                  <p class="text-[11px] text-purple-200 mt-1 leading-snug">Vakansiyalarga ariza topshirish va OneID tasdiqlash uchun hisobingizga kiring</p>
+                <div class="space-y-1">
+                  <h3 class="text-base font-extrabold text-white">Profilingizga kiring</h3>
+                  <p class="text-xs text-purple-200 leading-relaxed max-w-[280px] mx-auto">
+                    Rezyumeni ko‘rish, arizalarni kuzatish va OneID integratsiyasidan foydalanish uchun hisobingizga kiring yoki ro‘yxatdan o‘ting.
+                  </p>
                 </div>
+
                 <div class="space-y-2 pt-1">
-                  <button onclick="openSheet('${platform}', 'oneid_portal')" class="w-full py-2.5 bg-white text-[#2E1C59] font-black text-xs rounded-2xl shadow-sm hover:bg-purple-50 transition active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-shield-halved text-blue-600"></i>
+                  <!-- 1. OneID Davlat Portali orqali 1 bosishda kirish -->
+                  <button onclick="openSheet('${platform}', 'oneid_portal')" class="w-full py-3 bg-white text-[#2E1C59] font-black text-xs rounded-2xl shadow-sm hover:bg-purple-50 transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-blue-600 text-sm"></i>
                     <span>OneID orqali 1 bosishda kirish</span>
                   </button>
-                  <button onclick="openSheet('${platform}', 'auth_login')" class="w-full py-2.5 bg-white/15 hover:bg-white/20 text-white font-bold text-xs rounded-2xl border border-white/20 transition active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-envelope"></i>
+
+                  <!-- 2. Email / Parol orqali kirish -->
+                  <button onclick="openSheet('${platform}', 'auth_login')" class="w-full py-3 bg-white/15 hover:bg-white/20 text-white font-bold text-xs rounded-2xl border border-white/20 transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-envelope text-sm"></i>
                     <span>Email / Parol orqali kirish</span>
                   </button>
+
+                  <!-- 3. Tezkor sinov (Demo) -->
+                  <button onclick="handleDemoQuickLogin('${platform}')" class="w-full py-2.5 bg-gradient-to-r from-amber-400/20 to-orange-400/20 hover:from-amber-400/30 hover:to-orange-400/30 text-amber-200 font-extrabold text-[11px] rounded-2xl border border-amber-300/30 transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bolt text-amber-400"></i>
+                    <span>Sinov hisobi bilan tezkor kirish (Demo)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Ekotizim imkoniyatlari -->
+              <div class="bg-purple-50/70 p-4 rounded-3xl border border-purple-100 space-y-2 text-xs">
+                <div class="flex items-center gap-2 font-bold text-[#2E1C59]">
+                  <i class="fa-solid fa-sparkles text-[#6C47D8]"></i>
+                  <span>WZone Platformasi afzalliklari:</span>
+                </div>
+                <ul class="text-[11px] text-zinc-600 space-y-1.5 list-disc list-inside">
+                  <li>OneID orqali diplom va mehnat daftarchasini tasdiqlash</li>
+                  <li>AI yordamida avtomatik professional rezyume yaratish</li>
+                  <li>Kompaniyalarga 1 bosishda to‘g‘ridan-to‘g‘ri ariza yuborish</li>
+                </ul>
+              </div>
+
+              <!-- Umumiy sozlamalar (Faqat mehmonlar uchun ochiq qism - Shaxsiy ma'lumotlarsiz) -->
+              <div class="bg-white rounded-3xl shadow-sm border border-zinc-100 divide-y divide-zinc-100 text-xs overflow-hidden">
+                <!-- Tizim tili -->
+                <div onclick="openSheet('${platform}', 'language_select')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
+                  <div class="flex items-center gap-3 text-zinc-800">
+                    <i class="fa-solid fa-globe text-blue-500 w-4 text-center"></i>
+                    <span class="font-semibold">Tizim tili</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[10.5px] font-bold text-zinc-600 uppercase">${state.selectedLanguage}</span>
+                    <i class="fa-solid fa-chevron-right text-zinc-400 text-[10px]"></i>
+                  </div>
+                </div>
+
+                <!-- WZone haqida -->
+                <div onclick="openSheet('${platform}', 'about_app')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
+                  <div class="flex items-center gap-3 text-zinc-800">
+                    <i class="fa-solid fa-circle-info text-[#6C47D8] w-4 text-center"></i>
+                    <span class="font-semibold">WZone ilovasi haqida</span>
+                  </div>
+                  <span class="text-[10.5px] text-zinc-400 font-mono font-bold">v2.4.0</span>
+                </div>
+
+                <!-- Maxfiylik va Xavfsizlik -->
+                <div onclick="openSheet('${platform}', 'privacy_info')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
+                  <div class="flex items-center gap-3 text-zinc-800">
+                    <i class="fa-solid fa-shield-halved text-emerald-600 w-4 text-center"></i>
+                    <span class="font-semibold">Xavfsizlik va Maxfiylik</span>
+                  </div>
+                  <i class="fa-solid fa-chevron-right text-zinc-400 text-[10px]"></i>
+                </div>
+
+                <!-- Qo'llab-quvvatlash (Call center) -->
+                <div onclick="openSheet('${platform}', 'support_center')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
+                  <div class="flex items-center gap-3 text-zinc-800">
+                    <i class="fa-solid fa-headset text-amber-500 w-4 text-center"></i>
+                    <span class="font-semibold">Yordam va Aloqa markazi</span>
+                  </div>
+                  <span class="text-[10.5px] text-zinc-400 font-mono">1199</span>
+                </div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        // =====================================================
+        // 🟢 2. RO'YXATDAN O'TGAN FOYDALANUVCHI (LIVE AUTH PROFILE)
+        // Barcha ma'lumotlar real vaqtda backend va OneID dan tortiladi!
+        // =====================================================
+        const isOneIDVerified = Boolean(p.pinfl || (p.status && p.status.includes('OneID')));
+
+        container.innerHTML = `
+          <div class="space-y-4 pt-1">
+            <!-- Live Profile Header Card -->
+            <div class="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 flex items-center space-x-3.5">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#5e35b1] to-[#7c4dff] text-white flex items-center justify-center font-bold text-lg shadow-md shadow-purple-900/30 shrink-0">
+                ${(p.name || 'User').split(' ').map(n=>n[0]).join('').slice(0, 2)}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <h3 class="text-sm font-bold text-zinc-900 truncate">${p.name}</h3>
+                  ${isOneIDVerified ? '<i class="fa-solid fa-circle-check text-blue-500 text-xs shrink-0" title="OneID Tasdiqlangan"></i>' : ''}
+                </div>
+                <p class="text-[11px] text-zinc-500 truncate">${p.title || 'Mutaxassis'}</p>
+                <span class="inline-flex items-center gap-1 mt-1 text-[10px] ${isOneIDVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'} font-bold px-2 py-0.5 rounded-md">
+                  <span class="w-1.5 h-1.5 rounded-full ${isOneIDVerified ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span>
+                  ${isOneIDVerified ? 'OneID Tasdiqlangan ✓' : 'Tasdiqlanmagan'}
+                </span>
+              </div>
+              <button onclick="openSheet('${platform}', 'edit_profile')" class="w-9 h-9 rounded-2xl bg-purple-50 text-[#6C47D8] flex items-center justify-center hover:bg-purple-100 transition shrink-0" title="Profilni tahrirlash">
+                <i class="fa-solid fa-pen-to-square text-xs"></i>
+              </button>
+            </div>
+
+            <!-- Stats Grid (Real counts from backend) -->
+            <div class="grid grid-cols-4 gap-1.5 text-center">
+              <div onclick="switchScreen('applications', '${platform}')" class="bg-white p-2 rounded-2xl border border-zinc-100 shadow-sm cursor-pointer hover:border-purple-200 transition">
+                <span class="text-sm font-black text-[#2E1C59] block">${state.applications.length}</span>
+                <span class="text-[9.5px] text-zinc-500">Topshirildi</span>
+              </div>
+              <div class="bg-white p-2 rounded-2xl border border-zinc-100 shadow-sm">
+                <span class="text-sm font-black text-[#6C47D8] block">${state.applications.filter(a=>a.status==='interview').length}</span>
+                <span class="text-[9.5px] text-zinc-500">Suhbat</span>
+              </div>
+              <div onclick="showBookmarkedVacancies('${platform}')" class="bg-white p-2 rounded-2xl border border-zinc-100 shadow-sm cursor-pointer hover:border-purple-200 transition">
+                <span class="text-sm font-black text-emerald-600 block">${state.bookmarkedIds.size}</span>
+                <span class="text-[9.5px] text-zinc-500">Saqlangan</span>
+              </div>
+              <div onclick="openSheet('${platform}', 'ai_resume_audit')" class="bg-purple-50 p-2 rounded-2xl border border-purple-200 shadow-sm cursor-pointer hover:bg-purple-100 transition">
+                <span class="text-sm font-black text-purple-700 block">${realAtsScore}%</span>
+                <span class="text-[9.5px] text-purple-600 font-bold">ATS Skori</span>
+              </div>
+            </div>
+
+            <!-- Live Skills Chips from Backend -->
+            ${p.skills && p.skills.length > 0 ? `
+              <div class="bg-white p-3 rounded-2xl border border-zinc-100 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Ko‘nikmalar (Backend)</span>
+                  <button onclick="openSheet('${platform}', 'edit_profile')" class="text-[10px] font-bold text-[#6C47D8]">+ Qo‘shish</button>
+                </div>
+                <div class="flex flex-wrap gap-1">
+                  ${p.skills.map(s => `<span class="bg-purple-50 text-[#6C47D8] text-[10px] font-bold px-2.5 py-0.5 rounded-lg border border-purple-100">${s}</span>`).join('')}
                 </div>
               </div>
             ` : `
-              <!-- Live Profile Header Card -->
-              <div class="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 flex items-center space-x-3.5">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#5e35b1] to-[#7c4dff] text-white flex items-center justify-center font-bold text-lg shadow-md shadow-purple-900/30 shrink-0">
-                  ${(p.name || 'User').split(' ').map(n=>n[0]).join('').slice(0, 2)}
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-1.5">
-                    <h3 class="text-sm font-bold text-zinc-900 truncate">${p.name}</h3>
-                    ${p.status.includes('OneID') ? '<i class="fa-solid fa-circle-check text-blue-500 text-xs shrink-0" title="OneID Tasdiqlangan"></i>' : ''}
-                  </div>
-                  <p class="text-[11px] text-zinc-500 truncate">${p.title}</p>
-                  <span class="inline-flex items-center gap-1 mt-1 text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-md">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ${p.status}
-                  </span>
-                </div>
+              <div class="bg-white p-3 rounded-2xl border border-dashed border-zinc-200 text-center space-y-1">
+                <p class="text-[11px] text-zinc-400">Ko‘nikmalar kiritilmagan</p>
+                <button onclick="openSheet('${platform}', 'edit_profile')" class="text-xs font-bold text-[#6C47D8]">+ Ko‘nikmalarni kiritish</button>
               </div>
-
-              <!-- Stats Grid (Real counts from backend) -->
-              <div class="grid grid-cols-4 gap-1.5 text-center">
-                <div class="bg-white p-2 rounded-2xl border border-zinc-100 shadow-sm">
-                  <span class="text-sm font-black text-[#2E1C59] block">${state.applications.length}</span>
-                  <span class="text-[9.5px] text-zinc-500">Topshirildi</span>
-                </div>
-                <div class="bg-white p-2 rounded-2xl border border-zinc-100 shadow-sm">
-                  <span class="text-sm font-black text-[#6C47D8] block">${state.applications.filter(a=>a.status==='interview').length}</span>
-                  <span class="text-[9.5px] text-zinc-500">Suhbat</span>
-                </div>
-                <div class="bg-white p-2 rounded-2xl border border-zinc-100 shadow-sm">
-                  <span class="text-sm font-black text-emerald-600 block">${state.bookmarkedIds.size}</span>
-                  <span class="text-[9.5px] text-zinc-500">Saqlangan</span>
-                </div>
-                <div onclick="openSheet('${platform}', 'ai_resume_audit')" class="bg-purple-50 p-2 rounded-2xl border border-purple-200 shadow-sm cursor-pointer hover:bg-purple-100 transition">
-                  <span class="text-sm font-black text-purple-700 block">${aiResumeAudit.overallScore}%</span>
-                  <span class="text-[9.5px] text-purple-600 font-bold">ATS Skori</span>
-                </div>
-              </div>
-
-              <!-- Live Skills Chips from Backend -->
-              ${p.skills && p.skills.length > 0 ? `
-                <div class="bg-white p-3 rounded-2xl border border-zinc-100 space-y-1.5">
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Ko‘nikmalar (Backend)</span>
-                  <div class="flex flex-wrap gap-1">
-                    ${p.skills.map(s => `<span class="bg-purple-50 text-[#6C47D8] text-[10px] font-bold px-2.5 py-0.5 rounded-lg border border-purple-100">${s}</span>`).join('')}
-                  </div>
-                </div>
-              ` : ''}
-
-              <!-- Bio Quote if present -->
-              ${p.bio ? `
-                <div class="bg-zinc-50 p-3 rounded-2xl border border-zinc-100 text-[11px] text-zinc-600 italic">
-                  "${p.bio}"
-                </div>
-              ` : ''}
             `}
 
-            <!-- Full Interactive Menu List (All Website Features) -->
+            <!-- Bio Quote if present -->
+            ${p.bio ? `
+              <div class="bg-zinc-50 p-3 rounded-2xl border border-zinc-100 text-[11px] text-zinc-600 italic">
+                "${p.bio}"
+              </div>
+            ` : ''}
+
+            <!-- Shaxsiy Menyular (Faqat tizimga kirgan foydalanuvchilar uchun) -->
             <div class="bg-white rounded-3xl shadow-sm border border-zinc-100 divide-y divide-zinc-100 text-xs overflow-hidden">
               <!-- OneID Info -->
               <div onclick="openSheet('${platform}', 'oneid_info')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
@@ -4163,7 +4496,9 @@
                   <i class="fa-solid fa-id-card text-[#6C47D8] w-4 text-center"></i>
                   <span class="font-semibold">OneID Integratsiyasi & Hujjatlar</span>
                 </div>
-                <span class="text-[10.5px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-lg">Tasdiqlangan ✓</span>
+                <span class="text-[10.5px] ${isOneIDVerified ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'} font-bold px-2 py-0.5 rounded-lg">
+                  ${isOneIDVerified ? 'Tasdiqlangan ✓' : 'Ulanmagan'}
+                </span>
               </div>
 
               <!-- Official CV -->
@@ -4179,9 +4514,9 @@
               <div onclick="openSheet('${platform}', 'ai_resume_audit')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
                 <div class="flex items-center gap-3 text-zinc-800">
                   <i class="fa-solid fa-wand-magic-sparkles text-amber-500 w-4 text-center"></i>
-                  <span class="font-semibold">AI Rezyume Auditi (94/100)</span>
+                  <span class="font-semibold">AI Rezyume Auditi (${realAtsScore}/100)</span>
                 </div>
-                <span class="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-lg">A+ Natija</span>
+                <span class="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-lg">${realAtsScore >= 90 ? 'A+ Natija' : (realAtsScore >= 75 ? 'Yaxshi' : 'O‘rtacha')}</span>
               </div>
 
               <!-- Career Interest Survey -->
@@ -4190,7 +4525,7 @@
                   <i class="fa-solid fa-sparkles text-[#6C47D8] w-4 text-center"></i>
                   <span class="font-semibold">Kasbiy Qiziqish So‘rovnomasi</span>
                 </div>
-                <i class="fa-solid fa-chevron-right text-zinc-400 text-xs"></i>
+                <span class="text-[10.5px] text-[#6C47D8] font-bold">${state.surveyCompleted ? 'Tugallangan ✓' : 'To‘ldirish'}</span>
               </div>
 
               <!-- Video Ad Generator -->
@@ -4235,7 +4570,7 @@
                   <i class="fa-solid fa-bell text-[#6C47D8] w-4 text-center"></i>
                   <span class="font-semibold">Bildirishnomalar</span>
                 </div>
-                <span class="text-[10.5px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-lg">${state.notifications.length} ta</span>
+                <span class="text-[10.5px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-lg">${state.notifications.filter(n=>!n.read).length || 0} ta yangi</span>
               </div>
             </div>
 
@@ -4246,12 +4581,10 @@
                 <span>Backenddan qayta yuklash</span>
               </button>
 
-              ${state.isLoggedIn ? `
-                <button onclick="logoutUser('${platform}')" class="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-2xl transition flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                  <span>Tizimdan chiqish (Logout)</span>
-                </button>
-              ` : ''}
+              <button onclick="logoutUser('${platform}')" class="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-2xl transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>Tizimdan chiqish (Logout)</span>
+              </button>
             </div>
           </div>
         `;
