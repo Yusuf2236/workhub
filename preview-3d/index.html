@@ -211,8 +211,8 @@
                 <!-- Markaziy tugma nuri (Glow effekti) -->
                 <div class="absolute left-1/2 -top-4 -translate-x-1/2 w-16 h-16 bg-[#6C47D8]/45 rounded-full blur-xl pointer-events-none"></div>
 
-                <!-- Asosiy oq panel (32px yuqori burchaklar) -->
-                <div class="relative bg-white rounded-t-[32px] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pt-2 pb-6 px-3 border-t border-purple-50/60">
+                <!-- Asosiy oq panel (32px yuqori burchaklar, Frosted Glass Blur) -->
+                <div class="relative bg-white/90 backdrop-blur-xl rounded-t-[32px] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pt-2 pb-6 px-3 border-t border-purple-100/50">
                   
                   <div class="flex items-center justify-around relative">
                     
@@ -233,7 +233,7 @@
                     </button>
 
                     <!-- 3. Markaziy Floating '+' Tugmasi (OQ RAMKASIZ, toza binafsha aura) -->
-                    <button onclick="openAddModal()" id="ios-nav-add" class="flex items-center justify-center -mt-8 transition-transform duration-200 hover:scale-105 active:scale-95 group focus:outline-none z-50">
+                    <button onclick="openAddModal('ios')" id="ios-nav-add" class="flex items-center justify-center -mt-8 transition-transform duration-200 hover:scale-105 active:scale-95 group focus:outline-none z-50">
                       <div class="w-[56px] h-[56px] rounded-full bg-[#6C47D8] text-white flex items-center justify-center aura-glow transition-all">
                         <i class="fa-solid fa-plus text-2xl font-bold transition-transform duration-300 group-hover:rotate-90"></i>
                       </div>
@@ -350,8 +350,8 @@
                 <!-- Markaziy tugma nuri -->
                 <div class="absolute left-1/2 -top-4 -translate-x-1/2 w-16 h-16 bg-[#6C47D8]/45 rounded-full blur-xl pointer-events-none"></div>
 
-                <!-- Asosiy oq panel (32dp rounded top) -->
-                <div class="relative bg-white rounded-t-[32px] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pt-2 pb-5 px-3 border-t border-purple-50/60">
+                <!-- Asosiy oq panel (32dp rounded top, Frosted Glass Blur) -->
+                <div class="relative bg-white/90 backdrop-blur-xl rounded-t-[32px] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pt-2 pb-5 px-3 border-t border-purple-100/50">
                   <div class="flex items-center justify-around relative">
                     
                     <!-- 1. Home -->
@@ -367,7 +367,7 @@
                     </button>
 
                     <!-- 3. Markaziy Floating '+' Tugmasi (OQ RAMKASIZ) -->
-                    <button onclick="openAddModal()" class="flex items-center justify-center -mt-8 transition-transform duration-200 hover:scale-105 active:scale-95 group focus:outline-none z-50">
+                    <button onclick="openAddModal('android')" class="flex items-center justify-center -mt-8 transition-transform duration-200 hover:scale-105 active:scale-95 group focus:outline-none z-50">
                       <div class="w-[56px] h-[56px] rounded-full bg-[#6C47D8] text-white flex items-center justify-center aura-glow transition-all">
                         <i class="fa-solid fa-plus text-2xl font-bold transition-transform duration-300 group-hover:rotate-90"></i>
                       </div>
@@ -2241,13 +2241,13 @@
       setTimeout(() => overlay.classList.add('pointer-events-none'), 300);
     }
 
-    function openAddModal() {
-      const activePlatform = !document.getElementById('wrapper-ios').classList.contains('hidden') ? 'ios' : 'android';
+    function openAddModal(platform) {
+      const activePlatform = platform || (!document.getElementById('wrapper-ios').classList.contains('hidden') ? 'ios' : 'android');
       openSheet(activePlatform, 'add_choice');
     }
 
-    function openVacancyDetail(indexOrId) {
-      const activePlatform = !document.getElementById('wrapper-ios').classList.contains('hidden') ? 'ios' : 'android';
+    function openVacancyDetail(indexOrId, platform) {
+      const activePlatform = platform || (!document.getElementById('wrapper-ios').classList.contains('hidden') ? 'ios' : 'android');
       const vac = typeof indexOrId === 'number' ? vacanciesDB[indexOrId] : vacanciesDB.find(v => v.id === indexOrId);
       openSheet(activePlatform, 'vacancy_detail', vac ? vac.id : 'vac-1');
     }
