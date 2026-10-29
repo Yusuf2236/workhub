@@ -155,18 +155,18 @@
         <!-- Live Target URL Selector -->
         <div class="bg-slate-900 border border-slate-700/80 p-1 rounded-2xl flex items-center shadow-inner">
           <select id="liveTargetSelector" onchange="setLiveTarget(this.value)" class="bg-transparent text-white text-xs font-bold px-2 py-1 outline-none cursor-pointer">
-            <option value="https://wzone.uz" class="bg-slate-900 text-white" selected>🌐 wzone.uz (Prod)</option>
-            <option value="http://localhost:3000" class="bg-slate-900 text-white">💻 localhost:3000 (Dev)</option>
+            <option value="http://localhost:3010" class="bg-slate-900 text-white" selected>🚀 Yangi Mobil Versiya (Port 3010)</option>
+            <option value="https://wzone.uz" class="bg-slate-900 text-white">🌐 wzone.uz (Hozirgi Server)</option>
           </select>
         </div>
 
         <!-- Operating Mode (Jonli Sayt vs Native App) -->
         <div class="bg-slate-900 border border-slate-700/80 p-1 rounded-2xl flex items-center shadow-inner">
-          <button id="btnModeLive" onclick="setAppEngine('live')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-blue-600 text-white shadow-md shadow-blue-500/25">
+          <button id="btnModeLive" onclick="setAppEngine('live')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 text-slate-400 hover:text-white">
             <i class="fa-solid fa-globe"></i>
             <span id="labelModeLive">Jonli Sayt (100% Sinxron)</span>
           </button>
-          <button id="btnModeNative" onclick="setAppEngine('native')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+          <button id="btnModeNative" onclick="setAppEngine('native')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-blue-600 text-white shadow-md shadow-blue-500/25">
             <i class="fa-solid fa-bolt"></i>
             <span id="labelModeNative">Native App UI</span>
           </button>
@@ -174,11 +174,11 @@
 
         <!-- Theme Mode Switcher (3 Rejim: Yorug‘, Qorong‘i, Tizim) -->
         <div class="bg-slate-900 border border-slate-700/80 p-1 rounded-2xl flex items-center shadow-inner">
-          <button id="themeBtnLight" onclick="setAppTheme('light')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 text-slate-400 hover:text-white" title="Yorug‘ rejim">
+          <button id="themeBtnLight" onclick="setAppTheme('light')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 bg-blue-600 text-white shadow-md shadow-blue-500/25" title="Yorug‘ rejim">
             <span>☀️</span>
             <span class="hidden sm:inline">Yorug‘</span>
           </button>
-          <button id="themeBtnDark" onclick="setAppTheme('dark')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 bg-blue-600 text-white shadow-md shadow-blue-500/25" title="Qorong‘i rejim">
+          <button id="themeBtnDark" onclick="setAppTheme('dark')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 text-slate-400 hover:text-white" title="Qorong‘i rejim">
             <span>🌙</span>
             <span class="hidden sm:inline">Qorong‘i</span>
           </button>
@@ -229,6 +229,12 @@
           <span id="labelRefresh">Yangilash</span>
         </button>
 
+        <!-- Figma iOS Prototype Link -->
+        <a href="/figma-ios.html" target="_blank" title="Figma iOS interaktiv prototipini ochish" class="bg-purple-950/60 hover:bg-purple-900/80 text-purple-200 hover:text-white px-3 py-2 rounded-xl border border-purple-700/60 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
+          <i class="fa-brands fa-figma text-purple-400"></i>
+          <span>Figma iOS Prototipe</span>
+        </a>
+
       </div>
 
       <!-- Health Badges -->
@@ -269,15 +275,22 @@
           <div class="punch-hole"></div>
 
           <!-- Screen Wrapper -->
-          <div class="w-full h-full flex flex-col bg-[#0b101d] text-slate-100 overflow-hidden relative">
+          <div class="w-full h-full flex flex-col bg-white dark:bg-[#0b101d] text-slate-800 dark:text-slate-100 overflow-hidden relative">
             
-            <!-- Android Status Bar -->
-            <div class="h-10 px-6 pt-2 flex items-center justify-between text-xs font-semibold text-slate-300 z-40 bg-slate-900/75 backdrop-blur-md">
-              <span id="androidClock" class="font-mono text-[11px] font-bold">15:20</span>
-              <div class="flex items-center gap-2 text-[11px]">
-                <span class="text-[10px] font-black text-blue-400">5G</span>
-                <i class="fa-solid fa-wifi"></i>
-                <i class="fa-solid fa-battery-three-quarters text-emerald-400"></i>
+            <!-- Android Status Bar (Samsung Galaxy Style matching screenshot) -->
+            <div id="androidStatusBar" class="h-10 px-6 pt-2 flex items-center justify-between text-xs font-semibold z-40 bg-white dark:bg-slate-900/90 text-slate-800 dark:text-slate-200 transition-colors">
+              <div class="flex items-center gap-1.5">
+                <span id="androidClock" class="font-mono text-[11px] font-bold">9:30</span>
+                <i class="fa-brands fa-snapchat text-[9px] opacity-70"></i>
+                <i class="fa-solid fa-comment-dots text-[8px] opacity-70"></i>
+                <i class="fa-solid fa-location-pin text-[8px] opacity-70"></i>
+              </div>
+              <div class="flex items-center gap-1.5 text-[11px]">
+                <i class="fa-solid fa-volume-xmark text-[9px] opacity-70"></i>
+                <span class="text-[10px] font-black">5G</span>
+                <i class="fa-solid fa-signal text-[9px]"></i>
+                <span class="text-[10px] font-bold">100%</span>
+                <i class="fa-solid fa-battery-full text-slate-800 dark:text-emerald-400"></i>
               </div>
             </div>
 
@@ -317,15 +330,16 @@
           </div>
 
           <!-- Screen Wrapper -->
-          <div class="w-full h-full flex flex-col bg-[#080d1a] text-slate-100 overflow-hidden relative">
+          <div class="w-full h-full flex flex-col bg-white dark:bg-[#080d1a] text-slate-800 dark:text-slate-100 overflow-hidden relative">
             
             <!-- iOS Status Bar -->
-            <div class="h-11 px-7 pt-2 flex items-center justify-between text-xs font-semibold text-slate-200 z-40 bg-slate-900/75 backdrop-blur-md">
-              <span id="iosClock" class="font-mono text-[11px] font-bold">15:20</span>
+            <div id="iosStatusBar" class="h-11 px-7 pt-2 flex items-center justify-between text-xs font-semibold z-40 bg-white dark:bg-slate-900/90 text-slate-800 dark:text-slate-200 transition-colors">
+              <span id="iosClock" class="font-mono text-[11px] font-bold">9:30</span>
               <div class="flex items-center gap-2 text-[11px]">
                 <i class="fa-solid fa-signal"></i>
+                <span class="text-[10px] font-black">5G</span>
                 <i class="fa-solid fa-wifi"></i>
-                <i class="fa-solid fa-battery-full text-emerald-400"></i>
+                <i class="fa-solid fa-battery-full text-slate-800 dark:text-emerald-400"></i>
               </div>
             </div>
 
@@ -372,12 +386,25 @@
         apiOnline: "API :8080 ✓ OK",
         apiOffline: "API :8080 (Demo)",
 
-        tabFeed: "Asosiy",
-        tabHome: "Asosiy",
+        tabFeed: "Bosh sahifa",
+        tabHome: "Bosh sahifa",
         tabVacancies: "Vakansiyalar",
+        tabSaved: "Saqlanganlar",
         tabChat: "Chat",
-        tabApplications: "Arizalar",
+        tabApplications: "Ariza holati",
         tabProfile: "Profil",
+
+        popularCategories: "Mashhur kategoriyalar",
+        popularVacancies: "Mashhur vakansiyalar",
+        viewAll: "Barchasini ko'rish >",
+        viewAllCategories: "Barchasi >",
+        searchPlaceholder: "Kasb, kompaniya yoki kalit so'z bo'yicha qidiruv",
+        applyBtn: "Ariza yuborish",
+        newVacancyAlert: "Yangi vakansiya: Frontend Developer - Uzum",
+        aiResumeBannerHeading1: "AI bilan",
+        aiResumeBannerHighlight: "10 soniyada",
+        aiResumeBannerHeading2: "professional rezyume<br/>yarating",
+        aiResumeBtn: "AI Rezyume Yaratish",
 
         heroTag: "✨ WZone 2026",
         heroHeading: "O‘zbekistondagi eng yirik ish platformasi",
@@ -458,9 +485,22 @@
         tabFeed: "Главная",
         tabHome: "Главная",
         tabVacancies: "Вакансии",
+        tabSaved: "Сохранённые",
         tabChat: "Чат",
-        tabApplications: "Заявки",
+        tabApplications: "Ariza holati",
         tabProfile: "Профиль",
+
+        popularCategories: "Популярные категории",
+        popularVacancies: "Популярные вакансии",
+        viewAll: "Все вакансии >",
+        viewAllCategories: "Все >",
+        searchPlaceholder: "Поиск по профессии, компании или ключевым словам",
+        applyBtn: "Отправить заявку",
+        newVacancyAlert: "Новая вакансия: Frontend Developer - Uzum",
+        aiResumeBannerHeading1: "Создайте",
+        aiResumeBannerHighlight: "за 10 секунд",
+        aiResumeBannerHeading2: "профессиональное резюме<br/>с AI",
+        aiResumeBtn: "AI Резюме Создать",
 
         heroTag: "✨ WZone 2026",
         heroHeading: "Крупнейшая платформа карьеры в Узбекистане",
@@ -538,12 +578,25 @@
         apiOnline: "API :8080 ✓ OK",
         apiOffline: "API :8080 (Demo)",
 
-        tabFeed: "Feed",
-        tabHome: "Feed",
-        tabVacancies: "Jobs",
+        tabFeed: "Home",
+        tabHome: "Home",
+        tabVacancies: "Vacancies",
+        tabSaved: "Saved",
         tabChat: "Chat",
-        tabApplications: "Applications",
+        tabApplications: "Ariza holati",
         tabProfile: "Profile",
+
+        popularCategories: "Popular Categories",
+        popularVacancies: "Popular Vacancies",
+        viewAll: "View all >",
+        viewAllCategories: "All >",
+        searchPlaceholder: "Search by job, company or keyword",
+        applyBtn: "Apply now",
+        newVacancyAlert: "New vacancy: Frontend Developer - Uzum",
+        aiResumeBannerHeading1: "Create a",
+        aiResumeBannerHighlight: "in 10 seconds",
+        aiResumeBannerHeading2: "professional resume<br/>with AI",
+        aiResumeBtn: "Create AI Resume",
 
         heroTag: "✨ WZone 2026",
         heroHeading: "Uzbekistan's Leading Career & Jobs Platform",
@@ -719,11 +772,133 @@
     };
 
     // State
-    let appEngine = 'live'; // 'live' (100% sayt bilan sinxron) or 'native' (API native interfeys)
+    let appEngine = 'native'; // Default to Native UI matching mobile mockups
     let currentTab = 'feed';
     let currentLang = 'uz';
-    let currentTheme = 'dark';
-    let liveWebUrl = 'https://wzone.uz';
+    let currentTheme = 'light'; // Default to light mode as depicted in screenshot
+    let liveWebUrl = 'http://localhost:3010';
+
+    let activeFeedCategory = 'IT & Dasturlash';
+    let homeSearchText = '';
+    let isNotificationDismissed = false;
+
+    const POPULAR_FEED_VACANCIES = [
+      {
+        id: 'uzum-fe',
+        title: 'Frontend Developer',
+        company: 'Uzum',
+        companyLogoType: 'uzum',
+        location: 'Toshkent · Full-time',
+        salary: '18 000 000 so\'m',
+        category: 'IT & Dasturlash'
+      },
+      {
+        id: 'epam-be',
+        title: 'Backend Developer (Node.js)',
+        company: 'Epam Uzbekistan',
+        companyLogoType: 'epam',
+        location: 'Toshkent · Full-time',
+        salary: '20 000 000 so\'m',
+        category: 'IT & Dasturlash'
+      },
+      {
+        id: 'akfa-ux',
+        title: 'UI/UX Designer',
+        company: 'AKFA Group',
+        companyLogoType: 'akfa',
+        location: 'Toshkent · Full-time',
+        salary: '12 000 000 so\'m',
+        category: 'Dizayn'
+      }
+    ];
+
+    function getCompanyLogoSvg(type) {
+      if (type === 'uzum') {
+        return `
+          <div class="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/60 flex items-center justify-center shrink-0 shadow-xs">
+            <svg class="w-8 h-8" viewBox="0 0 48 48" fill="none">
+              <g transform="translate(24, 24)">
+                <rect x="-3" y="-19" width="6" height="13" rx="3" fill="#7C3AED" />
+                <rect x="-3" y="-19" width="6" height="13" rx="3" fill="#7C3AED" transform="rotate(45)" />
+                <rect x="-3" y="-19" width="6" height="13" rx="3" fill="#7C3AED" transform="rotate(90)" />
+                <rect x="-3" y="-19" width="6" height="13" rx="3" fill="#7C3AED" transform="rotate(135)" />
+                <rect x="-3" y="-19" width="6" height="13" rx="3" fill="#7C3AED" transform="rotate(180)" />
+                <rect x="-3" y="-19" width="6" height="13" rx="3" fill="#7C3AED" transform="rotate(225)" />
+                <rect x="-3" y="-19" width="6" height="13" rx="3" fill="#7C3AED" transform="rotate(270)" />
+                <rect x="-3" y="-19" width="6" height="13" rx="3" fill="#7C3AED" transform="rotate(315)" />
+                <circle r="4" fill="#7C3AED" />
+              </g>
+            </svg>
+          </div>
+        `;
+      }
+      if (type === 'epam') {
+        return `
+          <div class="w-11 h-11 rounded-2xl bg-[#39B54A] flex items-center justify-center text-white font-black text-2xl shrink-0 shadow-sm">
+            <span class="font-sans lowercase transform -translate-y-0.5">e</span>
+          </div>
+        `;
+      }
+      if (type === 'akfa') {
+        return `
+          <div class="w-11 h-11 rounded-2xl bg-[#DC2626] flex flex-col items-center justify-center text-white shrink-0 shadow-sm p-1">
+            <svg class="w-6 h-4" viewBox="0 0 60 40" fill="white">
+              <polygon points="12,35 18,35 24,18 30,35 36,35 24,5" />
+              <polygon points="18,26 30,26 24,12" fill="#DC2626" />
+            </svg>
+            <span class="text-[7.5px] font-black tracking-widest leading-none mt-0.5">AKFA</span>
+          </div>
+        `;
+      }
+      return `
+        <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-base flex items-center justify-center shrink-0">
+          W
+        </div>
+      `;
+    }
+
+    function dismissNotificationAlert() {
+      isNotificationDismissed = true;
+      renderBothScreens();
+    }
+
+    function setCategoryFilter(cat) {
+      activeFeedCategory = cat;
+      renderBothScreens();
+    }
+
+    function handleFeedSearch(val) {
+      homeSearchText = val;
+      renderBothScreens();
+    }
+
+    function handleQuickApply(id, title, company) {
+      if (!applications.some(a => a.id === id)) {
+        applications.unshift({
+          id: id,
+          company: company,
+          title: title,
+          status: 'Yuborildi',
+          date: new Date().toLocaleDateString('uz-UZ'),
+          badge: 'bg-blue-500/20 text-blue-500'
+        });
+      }
+      showFloatingToast(`✓ "${title} - ${company}" uchun arizangiz muvaffaqiyatli qabul qilindi!`);
+      renderBothScreens();
+    }
+
+    function showFloatingToast(msg) {
+      const existing = document.getElementById('globalFloatingToast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.id = 'globalFloatingToast';
+      toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-black text-xs shadow-2xl flex items-center gap-2 animate-bounce';
+      toast.innerHTML = `<i class="fa-solid fa-circle-check text-sm"></i><span>${msg}</span>`;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        if (toast) toast.remove();
+      }, 3500);
+    }
 
     try {
       const savedLang = localStorage.getItem('workhub_lang');
@@ -1111,26 +1286,20 @@
       const th = getThemeStyles();
 
       container.innerHTML = `
-        <!-- Android Top App Bar: Material 3 -->
-        <div class="h-14 px-4 ${th.topBar} border-b flex items-center justify-between z-30 shrink-0 shadow-sm">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-500/30">
+        <!-- Top App Bar -->
+        <div class="h-14 px-4 ${th.topBar} border-b flex items-center justify-between z-30 shrink-0">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-base shadow-md shadow-blue-500/30">
               W
             </div>
-            <span class="font-extrabold text-base tracking-tight ${th.textPrimary} flex items-center">
-              W<span class="text-blue-500">Zone</span>
+            <span class="font-black text-lg tracking-tight text-blue-600 dark:text-blue-400 flex items-center">
+              W<span class="text-slate-900 dark:text-white">Zone</span>
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <!-- Language Switcher Pill -->
-            <div class="${th.surface} border ${th.border} rounded-xl p-0.5 flex items-center shadow-inner">
-              <button onclick="setLanguage('uz')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'uz' ? 'bg-blue-600 text-white shadow-sm' : th.muted + ' hover:text-blue-400'}">UZ</button>
-              <button onclick="setLanguage('ru')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'ru' ? 'bg-blue-600 text-white shadow-sm' : th.muted + ' hover:text-blue-400'}">RU</button>
-              <button onclick="setLanguage('en')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'en' ? 'bg-blue-600 text-white shadow-sm' : th.muted + ' hover:text-blue-400'}">EN</button>
-            </div>
-            <button onclick="setTab('applications')" class="w-8 h-8 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center ${th.muted} hover:text-blue-500 transition relative">
-              <i class="fa-regular fa-bell text-xs"></i>
-              <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            <button onclick="setTab('applications')" class="w-9 h-9 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center ${th.textPrimary} hover:text-blue-500 transition relative" title="Bildirishnomalar">
+              <i class="fa-regular fa-bell text-base text-slate-700 dark:text-slate-200"></i>
+              <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900"></span>
             </button>
           </div>
         </div>
@@ -1139,39 +1308,37 @@
           ${buildCurrentTabBody('android')}
         </div>
 
-        <!-- Android Material 3 Bottom Nav Bar (Labels strictly positioned above pill) -->
+        <!-- Android Bottom Navigation Bar (5 tabs matching screenshot) -->
         <div class="absolute bottom-0 inset-x-0 h-[74px] pt-2 pb-8 ${th.bottomBar} border-t flex items-center justify-around z-40 text-xs shadow-2xl">
           <button onclick="setTab('feed')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
-            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'feed' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-house text-sm"></i>
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'feed' ? 'text-blue-600 font-extrabold' : th.muted + ' hover:text-blue-500'}">
+              <i class="fa-solid fa-house text-lg ${currentTab === 'feed' ? 'text-blue-600' : ''}"></i>
             </div>
-            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'feed' ? 'text-blue-500 font-bold' : th.muted}">${t.tabFeed}</span>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'feed' ? 'text-blue-600 font-bold' : th.muted}">${t.tabFeed || 'Bosh sahifa'}</span>
           </button>
           <button onclick="setTab('vacancies')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
-            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'vacancies' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-briefcase text-sm"></i>
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'vacancies' ? 'text-blue-600 font-extrabold' : th.muted + ' hover:text-blue-500'}">
+              <i class="fa-solid fa-shapes text-lg ${currentTab === 'vacancies' ? 'text-blue-600' : ''}"></i>
             </div>
-            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'vacancies' ? 'text-blue-500 font-bold' : th.muted}">${t.tabVacancies}</span>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'vacancies' ? 'text-blue-600 font-bold' : th.muted}">${t.tabVacancies || 'Vakansiyalar'}</span>
           </button>
-          <button onclick="setTab('chat')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90 relative">
-            <div class="relative px-3.5 py-1 rounded-2xl transition ${currentTab === 'chat' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-comment-dots text-sm"></i>
-              <span class="absolute top-1 right-2.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-slate-900 animate-pulse"></span>
+          <button onclick="setTab('saved')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'saved' ? 'text-blue-600 font-extrabold' : th.muted + ' hover:text-blue-500'}">
+              <i class="fa-regular fa-bookmark text-lg ${currentTab === 'saved' ? 'text-blue-600' : ''}"></i>
             </div>
-            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'chat' ? 'text-blue-500 font-bold' : th.muted}">${t.tabChat}</span>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'saved' ? 'text-blue-600 font-bold' : th.muted}">${t.tabSaved || 'Saqlanganlar'}</span>
           </button>
           <button onclick="setTab('applications')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90 relative">
-            <div class="relative px-3.5 py-1 rounded-2xl transition ${currentTab === 'applications' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-file-circle-check text-sm"></i>
-              <span class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">8</span>
+            <div class="relative px-3 py-1 rounded-2xl transition ${currentTab === 'applications' ? 'text-blue-600 font-extrabold' : th.muted + ' hover:text-blue-500'}">
+              <i class="fa-solid fa-briefcase text-lg ${currentTab === 'applications' ? 'text-blue-600' : ''}"></i>
             </div>
-            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'applications' ? 'text-blue-500 font-bold' : th.muted}">${t.tabApplications}</span>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'applications' ? 'text-blue-600 font-bold' : th.muted}">${t.tabApplications || 'Ariza holati'}</span>
           </button>
           <button onclick="setTab('profile')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
-            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'profile' ? 'bg-blue-600/20 text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-user-gear text-sm"></i>
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'profile' ? 'text-blue-600 font-extrabold' : th.muted + ' hover:text-blue-500'}">
+              <i class="fa-regular fa-user text-lg ${currentTab === 'profile' ? 'text-blue-600' : ''}"></i>
             </div>
-            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'profile' ? 'text-blue-500 font-bold' : th.muted}">${t.tabProfile}</span>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'profile' ? 'text-blue-600 font-bold' : th.muted}">${t.tabProfile || 'Profil'}</span>
           </button>
         </div>
       `;
@@ -1183,26 +1350,20 @@
       const th = getThemeStyles();
 
       container.innerHTML = `
-        <!-- iOS Navigation Bar: Cupertino -->
-        <div class="h-14 px-4 ${th.topBar} border-b flex items-center justify-between z-30 shrink-0 shadow-sm">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-500/30">
+        <!-- iOS Navigation Bar -->
+        <div class="h-14 px-4 ${th.topBar} border-b flex items-center justify-between z-30 shrink-0">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-base shadow-md shadow-blue-500/30">
               W
             </div>
-            <span class="font-extrabold text-base tracking-tight ${th.textPrimary} flex items-center">
-              W<span class="text-blue-400">Zone</span>
+            <span class="font-black text-lg tracking-tight text-blue-600 dark:text-blue-400 flex items-center">
+              W<span class="text-slate-900 dark:text-white">Zone</span>
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <!-- Language Switcher Pill -->
-            <div class="${th.surface} border ${th.border} rounded-xl p-0.5 flex items-center shadow-inner">
-              <button onclick="setLanguage('uz')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'uz' ? 'bg-blue-600 text-white shadow-sm' : th.muted + ' hover:text-blue-400'}">UZ</button>
-              <button onclick="setLanguage('ru')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'ru' ? 'bg-blue-600 text-white shadow-sm' : th.muted + ' hover:text-blue-400'}">RU</button>
-              <button onclick="setLanguage('en')" class="px-2 py-1 rounded-lg text-[10px] font-black transition ${currentLang === 'en' ? 'bg-blue-600 text-white shadow-sm' : th.muted + ' hover:text-blue-400'}">EN</button>
-            </div>
-            <button onclick="setTab('applications')" class="w-8 h-8 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center ${th.muted} hover:text-blue-400 transition relative">
-              <i class="fa-regular fa-bell text-xs"></i>
-              <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            <button onclick="setTab('applications')" class="w-9 h-9 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center ${th.textPrimary} hover:text-blue-500 transition relative" title="Bildirishnomalar">
+              <i class="fa-regular fa-bell text-base text-slate-700 dark:text-slate-200"></i>
+              <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900"></span>
             </button>
           </div>
         </div>
@@ -1211,39 +1372,37 @@
           ${buildCurrentTabBody('ios')}
         </div>
 
-        <!-- iOS Cupertino Bottom Tab Bar (Labels strictly positioned above home indicator) -->
+        <!-- iOS Bottom Tab Bar (5 tabs matching screenshot) -->
         <div class="absolute bottom-0 inset-x-0 h-[74px] pt-2 pb-8 ${th.bottomBar} border-t flex items-center justify-around z-40 text-xs shadow-2xl">
           <button onclick="setTab('feed')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
-            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'feed' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-house text-sm"></i>
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'feed' ? 'text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
+              <i class="fa-solid fa-house text-lg ${currentTab === 'feed' ? 'text-blue-500' : ''}"></i>
             </div>
-            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'feed' ? 'text-blue-400 font-bold' : th.muted}">${t.tabHome}</span>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'feed' ? 'text-blue-500 font-bold' : th.muted}">${t.tabHome || 'Bosh sahifa'}</span>
           </button>
           <button onclick="setTab('vacancies')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
-            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'vacancies' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-briefcase text-sm"></i>
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'vacancies' ? 'text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
+              <i class="fa-solid fa-shapes text-lg ${currentTab === 'vacancies' ? 'text-blue-500' : ''}"></i>
             </div>
-            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'vacancies' ? 'text-blue-400 font-bold' : th.muted}">${t.tabVacancies}</span>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'vacancies' ? 'text-blue-500 font-bold' : th.muted}">${t.tabVacancies || 'Vakansiyalar'}</span>
           </button>
-          <button onclick="setTab('chat')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90 relative">
-            <div class="relative px-3.5 py-1 rounded-2xl transition ${currentTab === 'chat' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-message text-sm"></i>
-              <span class="absolute top-1 right-2.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-slate-900 animate-pulse"></span>
+          <button onclick="setTab('saved')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'saved' ? 'text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
+              <i class="fa-regular fa-bookmark text-lg ${currentTab === 'saved' ? 'text-blue-500' : ''}"></i>
             </div>
-            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'chat' ? 'text-blue-400 font-bold' : th.muted}">${t.tabChat}</span>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'saved' ? 'text-blue-500 font-bold' : th.muted}">${t.tabSaved || 'Saqlanganlar'}</span>
           </button>
           <button onclick="setTab('applications')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90 relative">
-            <div class="relative px-3.5 py-1 rounded-2xl transition ${currentTab === 'applications' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-file-lines text-sm"></i>
-              <span class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">8</span>
+            <div class="relative px-3 py-1 rounded-2xl transition ${currentTab === 'applications' ? 'text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
+              <i class="fa-solid fa-briefcase text-lg ${currentTab === 'applications' ? 'text-blue-500' : ''}"></i>
             </div>
-            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'applications' ? 'text-blue-400 font-bold' : th.muted}">${t.tabApplications}</span>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'applications' ? 'text-blue-500 font-bold' : th.muted}">${t.tabApplications || 'Ariza holati'}</span>
           </button>
           <button onclick="setTab('profile')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
-            <div class="px-3.5 py-1 rounded-2xl transition ${currentTab === 'profile' ? 'bg-blue-500/20 text-blue-400 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-solid fa-circle-user text-sm"></i>
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'profile' ? 'text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
+              <i class="fa-regular fa-user text-lg ${currentTab === 'profile' ? 'text-blue-500' : ''}"></i>
             </div>
-            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'profile' ? 'text-blue-400 font-bold' : th.muted}">${t.tabProfile}</span>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'profile' ? 'text-blue-500 font-bold' : th.muted}">${t.tabProfile || 'Profil'}</span>
           </button>
         </div>
       `;
@@ -1256,6 +1415,8 @@
           return buildFeedTabContent(platform);
         case 'vacancies':
           return buildVacanciesTabContent(platform);
+        case 'saved':
+          return buildSavedTabContent(platform);
         case 'chat':
           return buildChatTabContent(platform);
         case 'applications':
@@ -1267,199 +1428,179 @@
       }
     }
 
-    // FEED TAB
+    // SAVED VACANCIES TAB
+    function buildSavedTabContent(platform) {
+      const t = I18N[currentLang] || I18N.uz;
+      const th = getThemeStyles();
+      return `
+        <div class="p-4 space-y-3">
+          <div class="flex justify-between items-center">
+            <h2 class="text-sm font-black ${th.textPrimary}">${t.tabSaved || 'Saqlanganlar'}</h2>
+            <span class="text-[10px] font-bold text-blue-500 font-mono">1 ta saqlangan</span>
+          </div>
+          <div class="space-y-2.5">
+            <div class="p-3.5 rounded-2xl ${th.card} border ${th.border} space-y-2 shadow-xs">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-2.5">
+                  ${getCompanyLogoSvg('uzum')}
+                  <div>
+                    <h4 class="text-xs font-bold ${th.textPrimary}">Frontend Developer</h4>
+                    <p class="text-[10px] ${th.muted}">Uzum • Toshkent · Full-time</p>
+                  </div>
+                </div>
+                <span class="text-xs font-bold text-emerald-500">18 000 000 so'm</span>
+              </div>
+              <div class="flex justify-between items-center pt-2 border-t ${th.border}">
+                <button onclick="handleQuickApply('uzum-fe', 'Frontend Developer', 'Uzum')" class="px-3.5 py-1.5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center gap-1.5 shadow-sm">
+                  <i class="fa-solid fa-paper-plane text-[9px]"></i>
+                  <span>${t.applyBtn || 'Ariza yuborish'}</span>
+                </button>
+                <button onclick="showFloatingToast('Saqlanganlardan olib tashlandi'); renderBothScreens();" class="text-rose-500 text-xs font-bold hover:underline">O‘chirish</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // FEED TAB (BOSH SAHIFA — Matching User Screenshot)
     function buildFeedTabContent(platform) {
       const t = I18N[currentLang] || I18N.uz;
       const th = getThemeStyles();
-      const pollOptions = POLL_DATA[currentLang] || POLL_DATA.uz;
-      const feedPosts = POSTS_DATA[currentLang] || POSTS_DATA.uz;
+      const currentList = POPULAR_FEED_VACANCIES.filter(v => {
+        const matchesCategory = activeFeedCategory === 'all' || v.category === activeFeedCategory || activeFeedCategory === 'IT & Dasturlash';
+        const matchesSearch = !homeSearchText || 
+          v.title.toLowerCase().includes(homeSearchText.toLowerCase()) || 
+          v.company.toLowerCase().includes(homeSearchText.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
 
       return `
-        <div class="p-4 space-y-4">
-          <!-- 1. Hero AI Promo Banner (Adaptive Height, No Text Clipping) -->
-          <div class="rounded-2xl p-4 bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-900 text-white shadow-xl space-y-2.5 relative overflow-hidden">
-            <div class="flex items-center justify-between">
-              <span class="text-[9px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">${t.heroTag}</span>
-              <span class="text-[10px] font-bold text-emerald-300">● 5,291 ${t.vacCountSuffix}</span>
-            </div>
-            <h2 class="text-base font-black leading-tight text-white">${t.heroHeading}</h2>
-            <p class="text-[11px] text-blue-100 leading-snug">${t.heroSub}</p>
-            
-            <!-- 4 Quick Highlight Feature Badges -->
-            <div class="flex flex-wrap gap-1.5 pt-1">
-              <span class="text-[9px] font-bold bg-white/15 px-2 py-0.5 rounded-md text-blue-100">🛡️ OneID Davlat</span>
-              <span class="text-[9px] font-bold bg-white/15 px-2 py-0.5 rounded-md text-blue-100">⚡ ATS AI Tahlil</span>
-              <span class="text-[9px] font-bold bg-white/15 px-2 py-0.5 rounded-md text-blue-100">💬 Real-Time Chat</span>
-              <span class="text-[9px] font-bold bg-white/15 px-2 py-0.5 rounded-md text-blue-100">📄 Shartnomalar</span>
-            </div>
-
-            <div class="pt-1.5 flex gap-2">
-              <button onclick="setTab('vacancies')" class="px-3.5 py-1.5 rounded-xl bg-white text-blue-700 font-black text-xs shadow-md hover:bg-blue-50 active:scale-95 transition">${t.heroBtn}</button>
-            </div>
-          </div>
-
-          <!-- 2. Top Stories Carousel -->
-          <div class="space-y-1.5">
-            <span class="text-[10px] font-black uppercase tracking-wider ${th.muted}">${t.topCompanies}</span>
-            <div class="flex gap-2 overflow-x-auto pb-1 screen-scroll">
-              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
-                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 to-rose-500">
-                  <div class="w-full h-full rounded-full ${th.surface} flex items-center justify-center font-black ${th.textPrimary} text-xs">Uzum</div>
+        <div class="space-y-3 pb-6">
+          <!-- 1. Floating Notification Banner -->
+          ${!isNotificationDismissed ? `
+            <div id="topNotificationAlert" class="mx-3.5 mt-2.5 px-3 py-2 rounded-2xl bg-[#EBF5FE] dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/80 flex items-center justify-between text-xs shadow-xs animate-fadeIn">
+              <div class="flex items-center gap-2 truncate">
+                <div class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[10px] shrink-0 shadow-xs">
+                  <i class="fa-solid fa-briefcase"></i>
                 </div>
-                <span class="text-[9px] ${th.textSecondary} font-bold">Uzum</span>
+                <span class="text-slate-800 dark:text-blue-100 font-bold truncate text-[11.5px]">
+                  Yangi vakansiya: <span class="font-extrabold text-slate-900 dark:text-white">Frontend Developer - Uzum</span>
+                </span>
               </div>
-              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
-                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-cyan-400 to-blue-600">
-                  <div class="w-full h-full rounded-full ${th.surface} flex items-center justify-center font-black ${th.textPrimary} text-xs">Payme</div>
-                </div>
-                <span class="text-[9px] ${th.textSecondary} font-bold">Payme</span>
-              </div>
-              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
-                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-emerald-400 to-teal-500">
-                  <div class="w-full h-full rounded-full ${th.surface} flex items-center justify-center font-black ${th.textPrimary} text-xs">Click</div>
-                </div>
-                <span class="text-[9px] ${th.textSecondary} font-bold">Click</span>
-              </div>
-              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
-                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-blue-400 to-indigo-600">
-                  <div class="w-full h-full rounded-full ${th.surface} flex items-center justify-center font-black ${th.textPrimary} text-xs">EPAM</div>
-                </div>
-                <span class="text-[9px] ${th.textSecondary} font-bold">EPAM</span>
-              </div>
-              <div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
-                <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-purple-400 to-pink-500">
-                  <div class="w-full h-full rounded-full ${th.surface} flex items-center justify-center font-black ${th.textPrimary} text-xs">Mohir</div>
-                </div>
-                <span class="text-[9px] ${th.textSecondary} font-bold">Mohirdev</span>
-              </div>
+              <button onclick="dismissNotificationAlert()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white px-1.5 font-bold text-xs">✕</button>
             </div>
-          </div>
+          ` : ''}
 
-          <!-- 3. Interactive Poll (So‘rovnoma) -->
-          <div class="p-3.5 rounded-2xl ${th.card} border ${th.border} space-y-2.5 shadow-sm">
-            <div class="flex justify-between items-center text-[10px]">
-              <span class="font-black text-blue-500 uppercase tracking-wide">${t.pollTitle}</span>
-              <span class="${th.muted} font-bold">${t.pollTotal}: ${pollOptions.reduce((a, b) => a + b.votes, 0)}</span>
-            </div>
-            <h3 class="text-xs font-bold ${th.textPrimary}">${t.pollQuestion}</h3>
-            <div class="space-y-1.5 pt-1">
-              ${pollOptions.map((opt, idx) => {
-                const total = pollOptions.reduce((a, b) => a + b.votes, 0);
-                const pct = Math.round((opt.votes / total) * 100);
-                return `
-                  <div onclick="votePoll(${idx})" class="p-2.5 rounded-xl border ${th.border} hover:border-blue-500 ${th.surface} cursor-pointer transition relative overflow-hidden">
-                    <div class="absolute inset-y-0 left-0 bg-blue-600/20" style="width: ${pct}%"></div>
-                    <div class="relative flex justify-between items-center text-[11px] font-bold">
-                      <span class="${th.textPrimary}">${opt.text}</span>
-                      <span class="text-blue-500">${pct}%</span>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-
-          <!-- 4. JONLI IZOHLAR (Clean title, NO '1s Real-time', NO pulsing dot!) -->
-          <div class="p-3.5 rounded-2xl ${th.card} border ${th.border} space-y-3 shadow-sm">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-black uppercase tracking-wider ${th.textPrimary} flex items-center gap-1.5">
-                <i class="fa-regular fa-comments text-blue-500"></i>
-                <span>${t.liveCommentsTitle || 'Jonli Izohlar'}</span>
-              </h3>
-              <span class="text-[9px] font-bold text-blue-500 font-mono">${liveComments.length} ${t.commentsSuffix}</span>
-            </div>
-
-            <!-- New Comment Box -->
-            <div class="space-y-2">
-              <div class="flex gap-1.5 overflow-x-auto pb-0.5">
-                <button onclick="setTopicTag('#fikr')" class="text-[9px] font-bold px-2 py-0.5 rounded-full transition ${selectedTopicTag === '#fikr' ? 'bg-blue-600 text-white' : th.surface + ' ' + th.muted}">#fikr</button>
-                <button onclick="setTopicTag('#vakansiya')" class="text-[9px] font-bold px-2 py-0.5 rounded-full transition ${selectedTopicTag === '#vakansiya' ? 'bg-blue-600 text-white' : th.surface + ' ' + th.muted}">#vakansiya</button>
-                <button onclick="setTopicTag('#maslahat')" class="text-[9px] font-bold px-2 py-0.5 rounded-full transition ${selectedTopicTag === '#maslahat' ? 'bg-blue-600 text-white' : th.surface + ' ' + th.muted}">#maslahat</button>
-              </div>
-              <div class="flex gap-1.5">
-                <input id="liveCommentInput" type="text" placeholder="${t.commentPlaceholder || 'Fikringiz yoki kasbiy maslahatingizni yozing...'}" class="flex-1 px-3 py-1.5 rounded-xl ${th.input} text-xs outline-none focus:ring-1 focus:ring-blue-500 border ${th.border}" onkeydown="if(event.key==='Enter') submitLiveComment()" />
-                <button onclick="submitLiveComment()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs active:scale-95 transition shadow-sm">
-                  ${t.sendCommentBtn || 'Yuborish'}
+          <!-- 2. AI Resume Hero Banner -->
+          <div class="mx-3.5 mt-1.5 rounded-3xl p-4 bg-gradient-to-br from-[#09122c] via-[#0d1b3f] to-[#060c1d] text-white shadow-xl border border-blue-900/40 relative overflow-hidden">
+            <div class="flex items-center justify-between gap-3">
+              <!-- Left Content -->
+              <div class="flex-1 space-y-2.5">
+                <h2 class="text-sm sm:text-base font-black leading-tight tracking-tight text-white">
+                  ${t.aiResumeBannerHeading1 || 'AI bilan'} <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-300 text-transparent bg-clip-text font-black">${t.aiResumeBannerHighlight || '10 soniyada'}</span><br/>${t.aiResumeBannerHeading2 || 'professional rezyume<br/>yarating'}
+                </h2>
+                <button onclick="openCreateResumeModal()" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 active:scale-95 text-white font-black text-[11px] flex items-center gap-1.5 shadow-lg shadow-blue-500/30 transition">
+                  <span>✨ ${t.aiResumeBtn || 'AI Rezyume Yaratish'}</span>
+                  <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </button>
               </div>
+
+              <!-- Right Glowing Graphic -->
+              <div class="relative w-20 h-24 rounded-2xl bg-gradient-to-b from-blue-950/90 to-slate-950/90 border border-cyan-400/50 shadow-[0_0_20px_rgba(56,189,248,0.35)] flex items-center justify-center shrink-0">
+                <div class="absolute -top-3 -right-3 w-10 h-10 bg-purple-500/30 rounded-full blur-md"></div>
+                <div class="absolute -bottom-3 -left-3 w-10 h-10 bg-cyan-500/30 rounded-full blur-md"></div>
+                
+                <div class="relative w-14 h-18 rounded-xl border border-cyan-300/40 bg-slate-900/80 p-1.5 flex flex-col items-center justify-center">
+                  <div class="absolute top-0 right-0 w-3 h-3 bg-cyan-400/30 rounded-bl-md border-b border-l border-cyan-300/60"></div>
+                  
+                  <svg class="w-8 h-8 text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04" />
+                    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04" />
+                    <circle cx="12" cy="7" r="1" fill="#A855F7" stroke="#A855F7" />
+                    <circle cx="12" cy="12" r="1" fill="#38BDF8" stroke="#38BDF8" />
+                    <circle cx="12" cy="17" r="1" fill="#A855F7" stroke="#A855F7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Search Bar -->
+          <div class="mx-3.5 mt-2.5 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl px-3.5 py-2.5 flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2.5 flex-1 mr-2">
+              <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+              <input type="text" id="feedSearchInput" value="${homeSearchText}" oninput="handleFeedSearch(this.value)" placeholder="${t.searchPlaceholder || 'Kasb, kompaniya yoki kalit so\'z bo\'yicha qidiruv'}" class="bg-transparent text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none w-full font-medium" />
+            </div>
+            <button onclick="setTab('vacancies')" class="text-slate-400 hover:text-blue-600 transition pl-1">
+              <i class="fa-solid fa-sliders text-xs"></i>
+            </button>
+          </div>
+
+          <!-- 4. Mashhur kategoriyalar -->
+          <div class="mx-3.5 mt-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">${t.popularCategories || 'Mashhur kategoriyalar'}</h3>
+              <button onclick="setCategoryFilter('all')" class="text-[11px] font-semibold text-slate-400 hover:text-blue-600 flex items-center gap-1">
+                ${t.viewAllCategories || 'Barchasi'} <i class="fa-solid fa-chevron-right text-[8px]"></i>
+              </button>
+            </div>
+            <div class="flex gap-2 overflow-x-auto pb-1 screen-scroll no-scrollbar">
+              <button onclick="setCategoryFilter('IT & Dasturlash')" class="px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${activeFeedCategory === 'IT & Dasturlash' ? 'bg-[#EBF2FE] text-blue-600 border border-blue-200' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700'}">
+                <span>&lt;/&gt;</span>
+                <span>IT & Dasturlash</span>
+              </button>
+              <button onclick="setCategoryFilter('Dizayn')" class="px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${activeFeedCategory === 'Dizayn' ? 'bg-[#EBF2FE] text-blue-600 border border-blue-200' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700'}">
+                <span>💬</span>
+                <span>Dizayn</span>
+              </button>
+              <button onclick="setCategoryFilter('Marketing')" class="px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${activeFeedCategory === 'Marketing' ? 'bg-[#EBF2FE] text-blue-600 border border-blue-200' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700'}">
+                <span>📢</span>
+                <span>Marketing</span>
+              </button>
+              <button onclick="setCategoryFilter('Moliya')" class="px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${activeFeedCategory === 'Moliya' ? 'bg-[#EBF2FE] text-blue-600 border border-blue-200' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700'}">
+                <span>🧾</span>
+                <span>Moliya</span>
+              </button>
+              <button onclick="setCategoryFilter('HR')" class="px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${activeFeedCategory === 'HR' ? 'bg-[#EBF2FE] text-blue-600 border border-blue-200' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700'}">
+                <span>👥</span>
+                <span>HR</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 5. Mashhur vakansiyalar -->
+          <div class="mx-3.5 mt-3.5 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">${t.popularVacancies || 'Mashhur vakansiyalar'}</h3>
+              <button onclick="setTab('vacancies')" class="text-[11px] font-semibold text-slate-400 hover:text-blue-600 flex items-center gap-1">
+                ${t.viewAll || 'Barchasini ko\'rish'} <i class="fa-solid fa-chevron-right text-[8px]"></i>
+              </button>
             </div>
 
-            <!-- Comments Stream -->
-            <div class="space-y-2 pt-1 max-h-[300px] overflow-y-auto screen-scroll pr-1">
-              ${liveComments.map(c => `
-                <div class="p-2.5 rounded-xl ${th.surface} border ${th.border} space-y-1.5 text-xs">
-                  <div class="flex justify-between items-center text-[10px]">
-                    <div class="flex items-center gap-1.5">
-                      <span class="w-6 h-6 rounded-lg bg-blue-600 text-white font-black flex items-center justify-center text-[9px] shadow-sm">${c.avatar}</span>
+            <div class="space-y-3">
+              ${currentList.map(v => `
+                <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-800/95 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5 shadow-xs hover:border-blue-500 transition">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="flex items-start gap-3">
+                      ${getCompanyLogoSvg(v.companyLogoType)}
                       <div>
-                        <span class="font-bold ${th.textPrimary} block leading-tight">${c.author}</span>
-                        <span class="text-[8px] ${th.muted}">${c.role}</span>
+                        <h4 onclick="openVacancyModal('${v.id}')" class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight cursor-pointer hover:text-blue-600 transition">${v.title}</h4>
+                        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">${v.company}</p>
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">${v.location}</p>
                       </div>
                     </div>
-                    <span class="font-bold text-blue-500 text-[9px]">${c.topic}</span>
+                    <div class="text-right">
+                      <span class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">${v.salary}</span>
+                    </div>
                   </div>
-                  <p class="${th.textSecondary} text-[11px] leading-snug">${c.content}</p>
-                  <div class="flex justify-between items-center text-[9px] ${th.muted} pt-1 border-t ${th.border}">
-                    <span>${c.time}</span>
-                    <button onclick="toggleLikeComment('${c.id}')" class="flex items-center gap-1 transition ${c.liked ? 'text-rose-500 font-bold' : th.muted + ' hover:text-blue-500'}">
-                      <i class="fa-solid fa-heart"></i>
-                      <span>${c.likes}</span>
-                    </button>
-                  </div>
+                  <button onclick="handleQuickApply('${v.id}', '${v.title}', '${v.company}')" class="w-full py-2.5 rounded-full bg-[#2563EB] hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition">
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                    <span>${t.applyBtn || 'Ariza yuborish'}</span>
+                  </button>
                 </div>
               `).join('')}
             </div>
-          </div>
-
-          <!-- 5. Live Community Posts -->
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-black uppercase tracking-wider ${th.textPrimary}">${t.communityTitle}</h3>
-              <span class="text-[9px] font-bold text-blue-500">${t.liveFeed}</span>
-            </div>
-            ${feedPosts.map(p => `
-              <div class="p-3.5 rounded-2xl ${th.card} border ${th.border} space-y-2 shadow-sm">
-                <div class="flex justify-between items-center">
-                  <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-xs">${p.avatar}</div>
-                    <div>
-                      <h4 class="text-xs font-bold ${th.textPrimary} leading-none">${p.author}</h4>
-                      <span class="text-[9px] ${th.muted}">${p.role} • ${p.time}</span>
-                    </div>
-                  </div>
-                  <span class="text-[9px] px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-500 font-bold">${p.badge}</span>
-                </div>
-                <h5 class="text-xs font-bold ${th.textPrimary}">${p.title}</h5>
-                <p class="text-[11px] ${th.textSecondary} leading-relaxed">${p.content}</p>
-                <div class="flex justify-between items-center pt-2 border-t ${th.border} text-[11px]">
-                  <button onclick="likeFeedPost('${p.id}')" class="flex items-center gap-1.5 ${p.liked ? 'text-rose-500 font-bold' : th.muted + ' hover:text-blue-500'}">
-                    <i class="fa-solid fa-heart"></i>
-                    <span>${p.likes}</span>
-                  </button>
-                  <span class="${th.muted}"><i class="fa-regular fa-comment"></i> ${p.comments_count} ${t.commentsSuffix}</span>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-
-          <!-- 6. Featured Vacancies Carousel -->
-          <div class="space-y-2">
-            <div class="flex justify-between items-center">
-              <h3 class="text-xs font-black uppercase tracking-wider ${th.textPrimary}">${t.featuredTitle}</h3>
-              <span onclick="setTab('vacancies')" class="text-[10px] text-blue-500 font-bold cursor-pointer hover:underline">${t.viewAll}</span>
-            </div>
-            ${vacancies.slice(0, 3).map(v => `
-              <div onclick="openVacancyModal('${v.id}')" class="p-3 rounded-2xl ${th.card} border ${th.border} hover:border-blue-500 cursor-pointer transition space-y-1 shadow-sm">
-                <div class="flex justify-between text-[10px]">
-                  <span class="font-bold text-blue-500">${v.company || 'Kompaniya'}</span>
-                  <span class="${th.muted}">📍 ${v.location || 'Toshkent'}</span>
-                </div>
-                <h4 class="text-xs font-bold ${th.textPrimary}">${v.title}</h4>
-                <div class="text-[11px] font-black text-emerald-500">
-                  ${v.salary_min ? `${v.salary_min} - ${v.salary_max} ${v.salary_currency || 'USD'}` : t.salaryNegotiable}
-                </div>
-              </div>
-            `).join('')}
           </div>
         </div>
       `;
@@ -1753,6 +1894,78 @@
         applications = applications.filter(a => a.id !== id);
         renderBothScreens();
       }
+    }
+
+    function openCreateResumeModal() {
+      document.getElementById('modalTitle').innerText = '✨ AI bilan 10 soniyada Professional Rezyume';
+      document.getElementById('modalBody').innerHTML = `
+        <div class="space-y-4">
+          <div class="p-3.5 rounded-2xl bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-purple-600/10 border border-blue-500/30 text-xs space-y-2">
+            <span class="font-extrabold text-blue-500 flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>10 soniyada sun’iy intellekt rezyumesi</span>
+            </span>
+            <p class="text-slate-300">Kasbiy tajribangiz, ko'nikmalaringiz va yutuqlaringiz asosida xalqaro ATS talablariga mos rezyume avtomatik tayyorlanadi.</p>
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-300">Mutaxassisligingiz yoki maqsadli kasb:</label>
+            <input id="aiResumeTargetRole" type="text" placeholder="Masalan: Frontend Developer, Node.js Dasturchi..." value="Frontend Developer" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs outline-none focus:ring-1 focus:ring-blue-500 font-medium" />
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-300">Asosiy ko'nikmalaringiz (vergul bilan):</label>
+            <input id="aiResumeTargetSkills" type="text" placeholder="React, TypeScript, Next.js, Redux..." value="React, Next.js, TypeScript, Tailwind CSS, REST API" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs outline-none focus:ring-1 focus:ring-blue-500 font-medium" />
+          </div>
+          <div id="aiResumeGeneratingStatus" class="hidden p-3 rounded-xl bg-blue-900/30 border border-blue-700/40 text-blue-300 text-xs flex items-center gap-2">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>AI rezyumeni 10 soniyada tahlil qilib shakllantirmoqda...</span>
+          </div>
+        </div>
+      `;
+      document.getElementById('modalFooter').innerHTML = `
+        <button onclick="closeModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs">Yopish</button>
+        <button onclick="generateAIResumeInstant()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black text-xs flex items-center gap-1.5 shadow-lg shadow-blue-500/25">
+          <span>✨ Rezyume Yaratish</span>
+          <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </button>
+      `;
+      document.getElementById('detailModal').classList.remove('hidden');
+    }
+
+    function generateAIResumeInstant() {
+      const status = document.getElementById('aiResumeGeneratingStatus');
+      if (status) status.classList.remove('hidden');
+      setTimeout(() => {
+        closeModal();
+        showFloatingToast('✨ Professional AI Rezyumengiz muvaffaqiyatli yaratildi va profilingizga biriktirildi!');
+        setTab('profile');
+      }, 1000);
+    }
+
+    function openNotificationsModal() {
+      document.getElementById('modalTitle').innerText = '🔔 Bildirishnomalar';
+      document.getElementById('modalBody').innerHTML = `
+        <div class="space-y-2.5">
+          <div class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs space-y-1">
+            <div class="flex justify-between items-center text-[10px]">
+              <span class="font-bold text-blue-400">Yangi vakansiya</span>
+              <span class="text-slate-400">Hozirgina</span>
+            </div>
+            <p class="font-bold text-white">Frontend Developer — Uzum</p>
+            <p class="text-slate-300 text-[11px]">Toshkent shahri · 18 000 000 so'm</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-xs space-y-1">
+            <div class="flex justify-between items-center text-[10px]">
+              <span class="font-bold text-emerald-400">Ariza holati</span>
+              <span class="text-slate-400">1 soat oldin</span>
+            </div>
+            <p class="font-bold text-white">Uzum Technologies arizangizni ko'rib chiqmoqda</p>
+          </div>
+        </div>
+      `;
+      document.getElementById('modalFooter').innerHTML = `
+        <button onclick="closeModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs">Yopish</button>
+      `;
+      document.getElementById('detailModal').classList.remove('hidden');
     }
 
     function sendChatMessage() {

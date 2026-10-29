@@ -460,10 +460,10 @@ export const translations: Record<Language, TranslationDictionary> = {
     chat: 'Xabarlar & Muloqot',
     liveChat: 'WZone Muloqot',
 
-    navFeed: 'Asosiy',
+    navFeed: 'Bosh sahifa',
     navVacancies: 'Vakansiyalar',
     navResumes: 'Nomzodlar',
-    navApplications: 'Arizalar',
+    navApplications: 'Ariza holati',
     navChat: 'Chat',
     navSaved: 'Saqlanganlar',
     navMyVacancies: 'E’lonlarim',

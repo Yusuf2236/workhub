@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WZone — Figma iOS Mobile Design & Interactive Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+    }
+    
+    .code-font {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Figma Dot Grid Pattern */
+    .figma-grid {
+      background-color: #1a1a1d;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.05);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #47474d;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #63636b;
+    }
+
+    /* iOS Glass Blur */
+    .ios-glass {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* Floating Center Button Aura Glow (exactly as in the screenshot) */
+    .aura-glow {
+      box-shadow: 0 0 28px 10px rgba(94, 53, 177, 0.38), 0 8px 18px rgba(94, 53, 177, 0.45);
+    }
+
+    /* Bottom Nav Shadow */
+    .bar-shadow {
+      box-shadow: 0 -10px 30px -5px rgba(28, 16, 56, 0.08), 0 -2px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    /* Smooth Transitions for sheets */
+    .sheet-transition {
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    }
+  </style>
+</head>
+<body class="bg-[#121214] text-[#e4e4e7] h-screen w-screen overflow-hidden flex flex-col">
+
+  <!-- Top Figma Header Toolbar -->
+  <header class="h-12 bg-[#232326] border-b border-[#323236] px-4 flex items-center justify-between z-30 select-none">
+    <div class="flex items-center space-x-3">
+      <!-- WZone Brand Pill -->
+      <div class="flex items-center space-x-2">
+        <div class="w-7 h-7 bg-gradient-to-tr from-[#4c229a] to-[#7c4dff] rounded-lg flex items-center justify-center font-extrabold text-white text-xs shadow-md shadow-purple-900/40">
+          WZ
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="text-sm font-bold text-white tracking-tight">WZone</span>
+          <span class="text-[10px] text-purple-300 bg-purple-950/80 px-2 py-0.5 rounded-full border border-purple-800/60 font-semibold">iOS 18+ App UI</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode Selector & Controls -->
+    <div class="flex items-center space-x-2">
+      <div class="bg-[#18181b] p-1 rounded-xl flex items-center border border-zinc-700/60 text-xs font-medium">
+        <button id="view-prototype-btn" onclick="setViewMode('prototype')" class="px-3 py-1 rounded-lg bg-[#5e35b1] text-white transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-mobile-screen"></i> <span>Interaktiv Prototipe</span>
+        </button>
+        <button id="view-artboards-btn" onclick="setViewMode('artboards')" class="px-3 py-1 rounded-lg text-zinc-400 hover:text-white transition flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group"></i> <span>5 ta Figma Artboard</span>
+        </button>
+      </div>
+
+      <div class="h-5 w-[1px] bg-zinc-700 mx-1"></div>
+
+      <!-- Zoom -->
+      <div class="flex items-center text-xs text-zinc-300 bg-[#1e1e21] rounded-lg border border-zinc-700/60 px-2 py-1">
+        <button onclick="changeZoom(-0.1)" class="hover:text-white px-1 text-sm"><i class="fa-solid fa-minus"></i></button>
+        <span id="zoom-text" class="w-12 text-center text-[11px] font-mono">100%</span>
+        <button onclick="changeZoom(0.1)" class="hover:text-white px-1 text-sm"><i class="fa-solid fa-plus"></i></button>
+      </div>
+    </div>
+
+    <!-- Actions & Code Drawer -->
+    <div class="flex items-center space-x-2">
+      <button onclick="exportFigmaSVG()" class="text-xs bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-zinc-200">
+        <i class="fa-solid fa-file-arrow-down text-purple-400"></i>
+        <span>Figma SVG Export</span>
+      </button>
+      <button onclick="toggleInspectDrawer()" class="text-xs bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white font-medium px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-md shadow-purple-900/30">
+        <i class="fa-solid fa-code"></i> <span>Kodni Olish (Dev Mode)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Canvas Workspace -->
+  <div class="flex-1 relative flex overflow-hidden">
+    
+    <!-- Left Navigation / Screen Layers -->
+    <aside class="w-64 bg-[#1f1f22] border-r border-[#303034] flex flex-col z-20 shrink-0 text-xs">
+      <div class="p-3.5 border-b border-[#303034] flex justify-between items-center text-zinc-300 font-semibold uppercase tracking-wider text-[10px]">
+        <span>Navigatsiya Bo'limlari</span>
+        <span class="text-purple-400 font-mono">5 ta tab</span>
+      </div>
+      <div class="overflow-y-auto flex-1 p-2.5 space-y-1">
+        <button onclick="switchScreen('home')" id="layer-home" class="w-full text-left px-3 py-2.5 rounded-xl bg-[#5e35b1]/20 text-white font-medium flex items-center justify-between border border-[#5e35b1]/40 transition">
+          <span class="flex items-center gap-2.5"><i class="fa-solid fa-house text-[#5e35b1]"></i> 1. Asosiy (Home)</span>
+          <span class="w-2 h-2 rounded-full bg-[#5e35b1]"></span>
+        </button>
+        <button onclick="switchScreen('vacancies')" id="layer-vacancies" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-zinc-800 text-zinc-400 font-medium flex items-center justify-between transition">
+          <span class="flex items-center gap-2.5"><i class="fa-solid fa-briefcase"></i> 2. Vakansiyalar</span>
+        </button>
+        <button onclick="openAddModal()" id="layer-add" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-zinc-800 text-purple-300 font-semibold flex items-center justify-between transition">
+          <span class="flex items-center gap-2.5"><i class="fa-solid fa-circle-plus text-purple-400"></i> 3. Yangi E'lon / CV (+)</span>
+          <span class="text-[10px] bg-purple-950 px-1.5 py-0.5 rounded text-purple-300">Floating</span>
+        </button>
+        <button onclick="switchScreen('applications')" id="layer-applications" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-zinc-800 text-zinc-400 font-medium flex items-center justify-between transition">
+          <span class="flex items-center gap-2.5"><i class="fa-regular fa-clock"></i> 4. Arizalarim (Tracker)</span>
+        </button>
+        <button onclick="switchScreen('profile')" id="layer-profile" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-zinc-800 text-zinc-400 font-medium flex items-center justify-between transition">
+          <span class="flex items-center gap-2.5"><i class="fa-regular fa-user"></i> 5. Profil</span>
+        </button>
+      </div>
+
+      <!-- Quick Guidance -->
+      <div class="p-3.5 bg-[#17171a] border-t border-[#303034] text-zinc-400">
+        <p class="font-bold text-[11px] text-white mb-1.5 flex items-center gap-1.5">
+          <i class="fa-solid fa-sparkles text-purple-400"></i> Yangilangan Tuzilma
+        </p>
+        <p class="text-[10.5px] leading-relaxed text-zinc-400">
+          Istalgan vakansiya kartochkasiga bosing — to'liq ma'lumotlar bilan <b>iOS Bottom Sheet</b> ochiladi. O'rtadagi <b class="text-purple-300">+</b> tugmasi esa rezyume yoki vakansiya qo'shish oynasini ochadi.
+        </p>
+      </div>
+    </aside>
+
+    <!-- Canvas Workspace Area -->
+    <main id="canvas-container" class="flex-1 figma-grid overflow-auto relative p-8 flex items-center justify-center">
+      
+      <!-- MODE 1: SINGLE INTERACTIVE PROTOTYPE VIEW (DEFAULT) -->
+      <div id="prototype-view" class="transition-transform duration-150 origin-center">
+        <!-- Frame label -->
+        <div class="flex items-center justify-between mb-2 text-xs text-zinc-400 px-3 font-mono">
+          <span class="flex items-center gap-1.5"><i class="fa-brands fa-apple text-sm"></i> iPhone 16 Pro • 393 × 852</span>
+          <span class="text-purple-300 bg-purple-950/70 border border-purple-800/40 px-2.5 py-0.5 rounded-full" id="active-screen-badge">Home (Faol)</span>
+        </div>
+
+        <!-- Phone Device Frame -->
+        <div class="w-[390px] h-[810px] bg-black rounded-[54px] p-3 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.85)] border-[4px] border-[#343438] relative flex flex-col overflow-hidden">
+          
+          <!-- Dynamic Island -->
+          <div class="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-full z-50 flex items-center justify-end pr-2 space-x-1 pointer-events-none">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#18181a]"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#1e1035]"></span>
+          </div>
+
+          <!-- Phone Inner Screen -->
+          <div class="w-full h-full bg-[#f6f5fb] rounded-[44px] overflow-hidden flex flex-col relative">
+            
+            <!-- iOS Status Bar -->
+            <div class="h-11 px-6 pt-3 flex justify-between items-center text-xs font-semibold text-zinc-900 select-none z-40 bg-transparent shrink-0">
+              <span class="font-bold">9:41</span>
+              <div class="flex items-center space-x-1.5 text-[10.5px]">
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-full text-xs"></i>
+              </div>
+            </div>
+
+            <!-- DYNAMIC SCREEN CONTENT CONTAINER (SCROLLABLE) -->
+            <div id="phone-screen-content" class="flex-1 overflow-y-auto px-4 pb-28 pt-1">
+              <!-- Content injected via JS dynamically -->
+            </div>
+
+            <!-- CREATIVE 5-TAB BOTTOM NAVIGATION BAR WITH GLOWING '+' -->
+            <div class="absolute bottom-0 left-0 right-0 z-40 bg-white rounded-t-[32px] bar-shadow pt-2 pb-6 px-3 border-t border-purple-50/70 select-none">
+              
+              <!-- Subtle notch shadow aura behind '+' -->
+              <div class="absolute -top-7 left-1/2 -translate-x-1/2 w-20 h-14 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none rounded-t-full"></div>
+
+              <div class="flex items-center justify-around relative">
+                
+                <!-- 1. Home -->
+                <button onclick="switchScreen('home')" id="nav-btn-home" class="flex flex-col items-center justify-center min-w-[56px] transition-all group py-1">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center transition">
+                    <i class="fa-solid fa-house text-[21px] text-[#2c1b54]" id="nav-icon-home"></i>
+                  </div>
+                  <span class="text-[11px] font-bold text-[#2c1b54] tracking-tight mt-0.5" id="nav-label-home">Home</span>
+                </button>
+
+                <!-- 2. Vakansiyalar -->
+                <button onclick="switchScreen('vacancies')" id="nav-btn-vacancies" class="flex flex-col items-center justify-center min-w-[56px] transition-all group py-1">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center transition">
+                    <i class="fa-solid fa-briefcase text-[20px] text-[#8e8e93]" id="nav-icon-vacancies"></i>
+                  </div>
+                  <span class="text-[11px] font-medium text-[#8e8e93] tracking-tight mt-0.5" id="nav-label-vacancies">Vakansiyalar</span>
+                </button>
+
+                <!-- 3. Markaziy Creative Floating '+' Tugmasi (Oq ramkasiz, toza binafsha aura bilan) -->
+                <button onclick="openAddModal()" id="nav-btn-add" class="flex items-center justify-center -mt-8 transition-transform duration-200 hover:scale-105 active:scale-95 group focus:outline-none z-50">
+                  <div class="w-[56px] h-[56px] rounded-full bg-[#5e35b1] text-white flex items-center justify-center aura-glow transition-all">
+                    <i class="fa-solid fa-plus text-2xl font-bold transition-transform duration-300 group-hover:rotate-90"></i>
+                  </div>
+                </button>
+
+                <!-- 4. Arizalarim -->
+                <button onclick="switchScreen('applications')" id="nav-btn-applications" class="flex flex-col items-center justify-center min-w-[56px] transition-all group py-1">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center transition">
+                    <i class="fa-regular fa-clock text-[20px] text-[#8e8e93]" id="nav-icon-applications"></i>
+                  </div>
+                  <span class="text-[11px] font-medium text-[#8e8e93] tracking-tight mt-0.5" id="nav-label-applications">Arizalarim</span>
+                </button>
+
+                <!-- 5. Profil -->
+                <button onclick="switchScreen('profile')" id="nav-btn-profile" class="flex flex-col items-center justify-center min-w-[56px] transition-all group py-1">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center transition">
+                    <i class="fa-regular fa-user text-[20px] text-[#8e8e93]" id="nav-icon-profile"></i>
+                  </div>
+                  <span class="text-[11px] font-medium text-[#8e8e93] tracking-tight mt-0.5" id="nav-label-profile">Profil</span>
+                </button>
+
+              </div>
+
+              <!-- iOS Home Indicator -->
+              <div class="w-32 h-1 bg-zinc-900 rounded-full mx-auto mt-3.5 opacity-80"></div>
+            </div>
+
+            <!-- VACANCY DETAIL SHEET (MODAL WITH FULL INFO) -->
+            <div id="vacancy-detail-sheet" class="absolute inset-0 z-50 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300 flex flex-col justify-end">
+              <div id="vacancy-sheet-panel" class="bg-white rounded-t-[36px] max-h-[88%] w-full overflow-hidden flex flex-col transform translate-y-full sheet-transition shadow-2xl">
+                <!-- Sheet drag handle -->
+                <div class="w-full pt-3 pb-2 flex justify-center cursor-pointer" onclick="closeVacancyDetail()">
+                  <div class="w-12 h-1.5 bg-zinc-300 rounded-full"></div>
+                </div>
+
+                <!-- Dynamic Detailed Content Injected Here -->
+                <div id="vacancy-detail-body" class="overflow-y-auto px-5 pb-24 pt-1 space-y-4 text-zinc-800">
+                  <!-- Injected via openVacancyDetail() -->
+                </div>
+              </div>
+            </div>
+
+            <!-- ADD MODAL (+ TUGMASI BOSILGANDA OCHILADIGAN OYNA) -->
+            <div id="add-modal" class="absolute inset-0 z-50 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300 flex flex-col justify-end">
+              <div id="add-modal-panel" class="bg-white rounded-t-[36px] p-5 pb-8 transform translate-y-full sheet-transition shadow-2xl space-y-4">
+                <div class="w-12 h-1.5 bg-zinc-300 rounded-full mx-auto -mt-2 cursor-pointer" onclick="closeAddModal()"></div>
+                
+                <div class="flex items-center justify-between pt-1">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-purple-100 text-[#5e35b1] flex items-center justify-center text-lg font-bold">
+                      <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <div>
+                      <h3 class="text-sm font-extrabold text-zinc-900">WZone E'lon / Rezyume</h3>
+                      <p class="text-[11px] text-zinc-500">Qaysi amalni bajarmoqchisiz?</p>
+                    </div>
+                  </div>
+                  <button onclick="closeAddModal()" class="w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+
+                <div class="space-y-2.5 pt-1">
+                  <div class="p-3.5 rounded-2xl border-2 border-purple-200 hover:border-[#5e35b1] bg-purple-50/50 cursor-pointer flex items-center space-x-3 transition">
+                    <div class="w-10 h-10 rounded-xl bg-[#5e35b1] text-white flex items-center justify-center text-sm shadow">
+                      <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <div class="flex-1">
+                      <h4 class="text-xs font-bold text-zinc-900">Yangi Rezyume yaratish</h4>
+                      <p class="text-[10.5px] text-zinc-500">OneID va AI yordamida tezkor CV shakllantirish</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xs text-purple-700"></i>
+                  </div>
+
+                  <div class="p-3.5 rounded-2xl border border-zinc-200 hover:border-purple-400 bg-white cursor-pointer flex items-center space-x-3 transition">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">
+                      <i class="fa-solid fa-briefcase"></i>
+                    </div>
+                    <div class="flex-1">
+                      <h4 class="text-xs font-bold text-zinc-900">Vakansiya e'lon qilish</h4>
+                      <p class="text-[10.5px] text-zinc-500">Kompaniya uchun yangi xodim qidirish</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xs text-zinc-400"></i>
+                  </div>
+                </div>
+
+                <button onclick="closeAddModal()" class="w-full py-3 bg-[#5e35b1] text-white font-bold text-xs rounded-2xl shadow-lg shadow-purple-900/20">
+                  Yopish
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- MODE 2: FIGMA MULTI-ARTBOARDS OVERVIEW -->
+      <div id="artboards-view" class="hidden transition-transform duration-150 origin-top flex-wrap items-start justify-center gap-10 py-6 max-w-[1700px]">
+        <!-- Artboard cards dynamically created here -->
+      </div>
+
+    </main>
+
+    <!-- Right Dev Mode / Code Inspector Drawer -->
+    <aside id="inspect-drawer" class="w-96 bg-[#1e1e22] border-l border-[#303034] flex flex-col z-20 shrink-0 text-xs">
+      <div class="h-12 border-b border-[#303034] px-4 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-white font-semibold">
+          <i class="fa-solid fa-code text-[#7c4dff]"></i>
+          <span>WZone Dev Mode (iOS & Web)</span>
+        </div>
+        <button onclick="toggleInspectDrawer()" class="text-zinc-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Code language selection -->
+      <div class="p-3 border-b border-[#303034] flex space-x-2 bg-[#17171a]">
+        <button onclick="selectCodeTab('swift')" id="tab-swift" class="px-2.5 py-1 rounded-md bg-[#5e35b1] text-white font-medium">SwiftUI (iOS)</button>
+        <button onclick="selectCodeTab('react')" id="tab-react" class="px-2.5 py-1 rounded-md text-zinc-400 hover:text-white font-medium">React + Tailwind</button>
+        <button onclick="selectCodeTab('flutter')" id="tab-flutter" class="px-2.5 py-1 rounded-md text-zinc-400 hover:text-white font-medium">Flutter</button>
+      </div>
+
+      <!-- Specifications & Code Block -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        
+        <div class="bg-[#242429] rounded-2xl p-3 border border-zinc-700/60">
+          <h4 class="text-white font-bold text-[11px] uppercase tracking-wider mb-2 flex items-center justify-between">
+            <span>iOS Dizayn Spetsifikatsiyasi</span>
+            <span class="text-purple-400"><i class="fa-solid fa-palette"></i></span>
+          </h4>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div class="bg-zinc-800/80 p-2 rounded-xl">
+              <span class="text-zinc-400 block text-[10px]">Asosiy Brand</span>
+              <span class="font-mono text-purple-300 font-bold">#5E35B1</span>
+            </div>
+            <div class="bg-zinc-800/80 p-2 rounded-xl">
+              <span class="text-zinc-400 block text-[10px]">Faol matn (Active)</span>
+              <span class="font-mono text-white font-bold">#2C1B54</span>
+            </div>
+            <div class="bg-zinc-800/80 p-2 rounded-xl">
+              <span class="text-zinc-400 block text-[10px]">Tugma Glow Aura</span>
+              <span class="font-mono text-white font-bold">rgba(94,53,177,0.38)</span>
+            </div>
+            <div class="bg-zinc-800/80 p-2 rounded-xl">
+              <span class="text-zinc-400 block text-[10px]">Radius burchak</span>
+              <span class="font-mono text-white font-bold">32px (rounded-t)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-[#18181b] rounded-2xl p-3 border border-zinc-800 flex flex-col">
+          <div class="flex items-center justify-between mb-2 pb-2 border-b border-zinc-800">
+            <span class="text-zinc-400 font-mono text-[10.5px]" id="code-snippet-title">WZoneBottomNav.swift (SwiftUI)</span>
+            <button onclick="copyCode()" class="text-purple-400 hover:text-purple-300 font-semibold text-[11px] flex items-center gap-1">
+              <i class="fa-regular fa-copy"></i> <span id="copy-status">Nusxalash</span>
+            </button>
+          </div>
+          <pre id="code-box" class="code-font text-[10.5px] leading-relaxed text-zinc-300 overflow-x-auto whitespace-pre p-1 h-96"></pre>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+
+  <script>
+    // Database of Real Vacancies for WZone
+    const vacanciesDB = [
+      {
+        id: 'vac-1',
+        title: 'Senior Frontend / React Engineer',
+        company: 'WZone Tech Hub',
+        location: 'Toshkent • Gibrid',
+        salary: '$2,000 – $2,800',
+        salaryPeriod: 'oyiga',
+        experience: '3–5 yil tajriba',
+        tags: ['React', 'Next.js', 'Tailwind', 'TypeScript'],
+        posted: 'Bugun, 10:30',
+        logoText: 'WZ',
+        logoBg: 'bg-purple-100 text-[#5e35b1]',
+        description: 'WZone ekotizimining eng muhim qismlaridan biri bo‘lgan milliy ish qidiruv va vakansiya platformasining mobil-veb arxitekturasini yaratish uchun iqtidorli Senior Frontend dasturchini jamoamizga chorlaymiz.',
+        requirements: [
+          'Next.js 14+ (App Router), React, TypeScript bo‘yhbar chuqur bilim;',
+          'Tailwind CSS, murakkab micro-interaksiyalar va animatsiyalarni qura olish;',
+          'REST API va WebSocket bilan ishlash malakasi;',
+          'Clean Architecture va modul testlash (Jest/Playwright) tajribasi.'
+        ],
+        benefits: [
+          'Rasmiy bandlik va o‘z vaqtida to‘lanadigan daromad;',
+          'Shinam zamonaviy ofis (Toshkent markazi) + gibrid grafik;',
+          'Eng so‘nggi Apple texnikasi bilan ta’minlanish;',
+          'Kasbiy kurslar va konferensiyalar to‘liq qoplanishi.'
+        ]
+      },
+      {
+        id: 'vac-2',
+        title: 'Product UI/UX Designer (Mobile)',
+        company: 'PayTech Solutions',
+        location: 'Toshkent • Masofaviy (Remote)',
+        salary: '18 – 25 mln so‘m',
+        salaryPeriod: 'oyiga',
+        experience: '2+ yil tajriba',
+        tags: ['Figma', 'iOS HIG', 'Design System', 'Prototyping'],
+        posted: 'Kecha, 17:45',
+        logoText: 'PT',
+        logoBg: 'bg-indigo-100 text-indigo-700',
+        description: 'Foydalanuvchilarga qulay, zamonaviy iOS 18 talablariga mos ilova interfeyslarini yaratish, foydalanuvchilar bilan tadqiqotlar o‘tkazish (UX research) va dizayn-tizimni yuritish.',
+        requirements: [
+          'Figma-da mukammal darajada Auto Layout, Components, Variables bilan ishlash;',
+          'Apple Human Interface Guidelines (HIG) va Material You qoidalarini bilish;',
+          'Chiroyli va tushunarli interaktiv prototiplar yaratish;',
+          'Dasturchilar bilan birgalikda dizayn auditini olib borish.'
+        ],
+        benefits: [
+          'To‘liq erkin masofaviy ishlash imkoniyati;',
+          'Kvartal bonuslari va jamoaviy sayohatlar;',
+          'Sog‘liqni saqlash sug‘urtasi.'
+        ]
+      },
+      {
+        id: 'vac-3',
+        title: 'Middle / Senior Flutter Dasturchi',
+        company: 'Uzum Ecosystem',
+        location: 'Toshkent • Ofis',
+        salary: '$1,800 – $2,400',
+        salaryPeriod: 'oyiga',
+        experience: '3+ yil tajriba',
+        tags: ['Flutter', 'Dart', 'Bloc', 'REST'],
+        posted: '2 kun oldin',
+        logoText: 'UZ',
+        logoBg: 'bg-emerald-100 text-emerald-700',
+        description: 'Mintaqadagi eng yirik fintex va savdo platformalarining mobil ilovalarini qo‘llab-quvvatlash va yangi modullarni ishlab chiqish.',
+        requirements: [
+          'Flutter va Dart ekotizimida 3 yildan ortiq professional tajriba;',
+          'BLoC / Cubit holat boshqaruvi (State Management);',
+          'Native kod bilan aloqa (Method Channels) tajribasi;',
+          'App Store va Google Play nashr qilish jarayonlarini bilish.'
+        ],
+        benefits: [
+          'Katta masshtabdagi loyihalarda bevosita ishlash;',
+          'Bepul ovqatlanish va fitnes abonementi;',
+          'Yillik xalqaro konferensiyalarga yuborish.'
+        ]
+      }
+    ];
+
+    let currentScreen = 'home';
+    let currentView = 'prototype';
+    let currentZoom = 1.0;
+    let currentCodeTab = 'swift';
+
+    // RENDER SCREENS
+    const screensData = {
+      // 1. HOME TAB (Faqat WZone brendi, Jobs so'zi yo'q)
+      home: {
+        id: 'home',
+        name: 'Asosiy (Home)',
+        render: () => `
+          <div class="space-y-4 pt-1">
+            
+            <!-- Header bar strictly 'WZone' (Matches exact screenshot) -->
+            <div class="flex items-start justify-between">
+              <div>
+                <h1 class="text-3xl font-black text-[#1C1335] tracking-tight leading-none">WZone</h1>
+                <p class="text-[13px] font-semibold text-[#6c6882] mt-1.5 leading-snug">O‘zbekiston bo‘yicha eng sara bo‘sh ish o‘rinlari</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button onclick="switchScreen('vacancies')" class="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-zinc-700 border border-zinc-100 transition hover:bg-zinc-50">
+                  <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </button>
+                <div class="relative">
+                  <div class="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-zinc-700 border border-zinc-100">
+                    <i class="fa-regular fa-bell text-xs"></i>
+                  </div>
+                  <span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- iOS Search Box -->
+            <div onclick="switchScreen('vacancies')" class="bg-white rounded-2xl p-3 shadow-sm flex items-center space-x-3 border border-zinc-100 cursor-pointer hover:border-purple-300 transition">
+              <i class="fa-solid fa-magnifying-glass text-zinc-400 pl-1"></i>
+              <span class="text-xs text-zinc-400 flex-1">Kasb, kompaniya yoki skill qidiring...</span>
+              <span class="text-[10px] bg-purple-50 text-[#5e35b1] font-bold px-2 py-1 rounded-lg">Filtr</span>
+            </div>
+
+            <!-- Categories Chips -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+              <span class="px-3.5 py-1.5 rounded-full font-bold text-white shadow-sm bg-[#5e35b1] shrink-0 cursor-pointer">Barchasi</span>
+              <span class="px-3.5 py-1.5 rounded-full font-medium bg-white text-zinc-700 border border-zinc-200/80 shrink-0 cursor-pointer hover:bg-zinc-50">Dasturlash</span>
+              <span class="px-3.5 py-1.5 rounded-full font-medium bg-white text-zinc-700 border border-zinc-200/80 shrink-0 cursor-pointer hover:bg-zinc-50">Dizayn</span>
+              <span class="px-3.5 py-1.5 rounded-full font-medium bg-white text-zinc-700 border border-zinc-200/80 shrink-0 cursor-pointer hover:bg-zinc-50">Moliya</span>
+            </div>
+
+            <!-- Interactive Banner: AI Rezyume va OneID -->
+            <div class="rounded-3xl p-4 text-white relative overflow-hidden shadow-lg shadow-purple-900/20" style="background: linear-gradient(135deg, #5e35b1 0%, #311b92 100%);">
+              <div class="relative z-10 max-w-[210px] space-y-1.5">
+                <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-purple-100">OneID Tasdiqlangan</span>
+                <h3 class="text-sm font-bold leading-tight">Rezyumeni 1 bosishda shakllantiring</h3>
+                <p class="text-[11px] text-purple-200">95% kompaniyalar tasdiqlangan profilni tanlaydi</p>
+                <button onclick="openAddModal()" class="mt-2 text-[10.5px] bg-white text-[#2c1b54] font-bold px-3 py-1.5 rounded-xl shadow-sm hover:bg-purple-50 transition">
+                  Rezyume yaratish
+                </button>
+              </div>
+              <div class="absolute -right-3 -bottom-4 text-7xl text-white/10 rotate-12 pointer-events-none">
+                <i class="fa-solid fa-address-card"></i>
+              </div>
+            </div>
+
+            <!-- Top Vacancies Feed (Clicking opens Detail Sheet) -->
+            <div class="space-y-2.5 pt-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-zinc-900">Eng so‘nggi vakansiyalar</span>
+                <button onclick="switchScreen('vacancies')" class="text-[11px] font-bold text-[#5e35b1]">Barchasi (140+)</button>
+              </div>
+
+              ${vacanciesDB.map(vac => `
+                <div onclick="openVacancyDetail('${vac.id}')" class="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 flex flex-col space-y-2.5 cursor-pointer hover:border-purple-300 hover:shadow-md transition">
+                  <div class="flex items-start justify-between">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-11 h-11 rounded-2xl ${vac.logoBg} flex items-center justify-center font-bold text-sm shadow-sm">
+                        ${vac.logoText}
+                      </div>
+                      <div>
+                        <h4 class="text-xs font-bold text-zinc-900 leading-snug">${vac.title}</h4>
+                        <p class="text-[11px] text-zinc-500">${vac.company} • ${vac.location}</p>
+                      </div>
+                    </div>
+                    <span class="text-zinc-400 hover:text-purple-600"><i class="fa-regular fa-bookmark text-xs"></i></span>
+                  </div>
+
+                  <div class="flex flex-wrap gap-1.5 pt-0.5">
+                    ${vac.tags.map(t => `<span class="bg-zinc-100 text-zinc-700 text-[10px] px-2 py-0.5 rounded-lg font-medium">${t}</span>`).join('')}
+                  </div>
+
+                  <div class="flex items-center justify-between pt-1 border-t border-zinc-100">
+                    <span class="text-xs font-extrabold text-[#2c1b54]">${vac.salary} <span class="text-[10px] font-normal text-zinc-400">/${vac.salaryPeriod}</span></span>
+                    <span class="text-[10.5px] font-bold text-[#5e35b1] flex items-center gap-1">
+                      Ko'rish <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                    </span>
+                  </div>
+                </div>
+              `).join('')}
+
+            </div>
+
+          </div>
+        `
+      },
+
+      // 2. VAKANSIYALAR TAB
+      vacancies: {
+        id: 'vacancies',
+        name: 'Vakansiyalar',
+        render: () => `
+          <div class="space-y-3.5 pt-1">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Izlash & Saralash</span>
+              <h2 class="text-xl font-extrabold text-zinc-900 leading-tight">Barcha Vakansiyalar</h2>
+            </div>
+
+            <!-- Search and Filter Bar -->
+            <div class="flex items-center space-x-2">
+              <div class="flex-1 bg-white rounded-2xl p-2.5 shadow-sm border border-zinc-100 flex items-center space-x-2">
+                <i class="fa-solid fa-magnifying-glass text-zinc-400 text-xs pl-1"></i>
+                <input type="text" placeholder="Frontend, Designer, Toshkent..." class="w-full text-xs bg-transparent focus:outline-none text-zinc-800" />
+              </div>
+              <button class="w-10 h-10 rounded-2xl bg-[#5e35b1] text-white flex items-center justify-center text-xs shadow-md shadow-purple-900/30">
+                <i class="fa-solid fa-sliders"></i>
+              </button>
+            </div>
+
+            <!-- Quick filter tabs -->
+            <div class="flex space-x-2 text-xs overflow-x-auto pb-1 no-scrollbar">
+              <span class="px-3 py-1 bg-purple-100 text-[#5e35b1] font-bold rounded-xl shrink-0">Barchasi (420)</span>
+              <span class="px-3 py-1 bg-white border border-zinc-200 text-zinc-700 font-medium rounded-xl shrink-0">Masofaviy (Remote)</span>
+              <span class="px-3 py-1 bg-white border border-zinc-200 text-zinc-700 font-medium rounded-xl shrink-0">$1,500+</span>
+            </div>
+
+            <!-- Vacancy List with click to open detail -->
+            <div class="space-y-3 pt-1">
+              ${vacanciesDB.map(vac => `
+                <div onclick="openVacancyDetail('${vac.id}')" class="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 hover:border-purple-400 cursor-pointer transition space-y-2">
+                  <div class="flex items-start justify-between">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-10 h-10 rounded-2xl ${vac.logoBg} flex items-center justify-center font-bold text-xs">
+                        ${vac.logoText}
+                      </div>
+                      <div>
+                        <h4 class="text-xs font-bold text-zinc-900">${vac.title}</h4>
+                        <p class="text-[11px] text-zinc-500">${vac.company} • ${vac.location}</p>
+                      </div>
+                    </div>
+                    <span class="text-[10px] text-zinc-400 font-medium">${vac.posted}</span>
+                  </div>
+
+                  <p class="text-[11px] text-zinc-600 line-clamp-2 leading-relaxed">
+                    ${vac.description}
+                  </p>
+
+                  <div class="flex items-center justify-between pt-1">
+                    <span class="text-xs font-black text-[#2c1b54]">${vac.salary}</span>
+                    <button class="px-3 py-1 rounded-xl bg-purple-50 text-[#5e35b1] font-bold text-[11px] hover:bg-[#5e35b1] hover:text-white transition">
+                      Batafsil
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+          </div>
+        `
+      },
+
+      // 4. ARIZALARIM TAB (Tracker)
+      applications: {
+        id: 'applications',
+        name: 'Arizalarim',
+        render: () => `
+          <div class="space-y-4 pt-1">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Holat & Natijalar</span>
+              <h2 class="text-xl font-extrabold text-zinc-900">Topshirilgan Arizalarim</h2>
+            </div>
+
+            <!-- Status Tabs -->
+            <div class="bg-zinc-200/70 p-1 rounded-2xl flex text-xs font-semibold">
+              <button class="flex-1 py-1.5 rounded-xl bg-white text-zinc-900 shadow-sm">Faol (3)</button>
+              <button class="flex-1 py-1.5 rounded-xl text-zinc-600">Suhbatlar (1)</button>
+              <button class="flex-1 py-1.5 rounded-xl text-zinc-600">Arxiv</button>
+            </div>
+
+            <!-- Application Cards -->
+            <div class="space-y-3">
+              <div class="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">Ko'rib chiqilmoqda</span>
+                    <h4 class="text-xs font-bold text-zinc-900 mt-1">Senior Frontend Engineer</h4>
+                    <p class="text-[11px] text-zinc-500">WZone Tech Hub • 1 kun oldin</p>
+                  </div>
+                  <div class="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400">
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                  </div>
+                </div>
+                <div class="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full bg-[#5e35b1]" style="width: 50%;"></div>
+                </div>
+                <p class="text-[10px] text-zinc-400">HR arizangizni ko'rib chiqmoqda</p>
+              </div>
+
+              <div class="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">Suhbat belgilandi 📅</span>
+                    <h4 class="text-xs font-bold text-zinc-900 mt-1">Product UI/UX Designer</h4>
+                    <p class="text-[11px] text-zinc-500">PayTech Solutions • Ertaga 15:00</p>
+                  </div>
+                  <div class="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400">
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                  </div>
+                </div>
+                <div class="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full bg-emerald-500" style="width: 85%;"></div>
+                </div>
+                <p class="text-[10px] text-emerald-600 font-semibold">Google Meet havola profilingizga yuborildi</p>
+              </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="p-3.5 rounded-3xl bg-purple-50/80 border border-purple-100 flex items-start space-x-3">
+              <i class="fa-solid fa-lightbulb text-[#5e35b1] text-base mt-0.5"></i>
+              <div class="text-[11px]">
+                <span class="font-bold text-zinc-900 block">Javob berish tezligi</span>
+                <span class="text-zinc-600">OneID orqali tasdiqlangan arizachilar 2 barobar tezroq suhbatga chaqiriladi.</span>
+              </div>
+            </div>
+
+          </div>
+        `
+      },
+
+      // 5. PROFIL TAB
+      profile: {
+        id: 'profile',
+        name: 'Profil',
+        render: () => `
+          <div class="space-y-4 pt-1">
+            
+            <!-- User Info Card -->
+            <div class="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 flex items-center space-x-3.5">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#5e35b1] to-[#7c4dff] text-white flex items-center justify-center font-bold text-lg shadow-md shadow-purple-900/30">
+                AB
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-1.5">
+                  <h3 class="text-sm font-bold text-zinc-900">Anvar Berdiyev</h3>
+                  <i class="fa-solid fa-circle-check text-blue-500 text-xs" title="OneID Tasdiqlangan"></i>
+                </div>
+                <p class="text-xs text-zinc-500">Senior Mobile & Frontend Dev</p>
+                <span class="inline-flex items-center gap-1 mt-1 text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-md">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Faol qidirmoqda
+                </span>
+              </div>
+            </div>
+
+            <!-- Profile Menu -->
+            <div class="bg-white rounded-3xl shadow-sm border border-zinc-100 divide-y divide-zinc-100 text-xs">
+              <div class="p-3.5 flex items-center justify-between hover:bg-zinc-50 cursor-pointer">
+                <div class="flex items-center gap-3 text-zinc-800">
+                  <i class="fa-solid fa-id-card text-[#5e35b1] w-4 text-center"></i>
+                  <span class="font-semibold">OneID Integratsiyasi</span>
+                </div>
+                <span class="text-[10.5px] text-emerald-600 font-bold">Tasdiqlangan ✓</span>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between hover:bg-zinc-50 cursor-pointer">
+                <div class="flex items-center gap-3 text-zinc-800">
+                  <i class="fa-solid fa-file-pdf text-[#5e35b1] w-4 text-center"></i>
+                  <span class="font-semibold">Mening Rezyumeim (WZone CV)</span>
+                </div>
+                <i class="fa-solid fa-download text-zinc-400"></i>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between hover:bg-zinc-50 cursor-pointer">
+                <div class="flex items-center gap-3 text-zinc-800">
+                  <i class="fa-solid fa-sliders text-[#5e35b1] w-4 text-center"></i>
+                  <span class="font-semibold">Ish qidiruv parametrlari</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-zinc-400 text-xs"></i>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between hover:bg-zinc-50 cursor-pointer">
+                <div class="flex items-center gap-3 text-zinc-800">
+                  <i class="fa-solid fa-globe text-[#5e35b1] w-4 text-center"></i>
+                  <span class="font-semibold">Ilova tili</span>
+                </div>
+                <span class="text-zinc-500 font-medium">O'zbekcha</span>
+              </div>
+            </div>
+
+            <!-- Log out -->
+            <div class="bg-white p-3.5 rounded-3xl border border-zinc-100 flex items-center justify-between text-xs text-red-600 font-bold hover:bg-red-50 cursor-pointer">
+              <div class="flex items-center gap-3">
+                <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i>
+                <span>Hisobdan chiqish</span>
+              </div>
+            </div>
+
+          </div>
+        `
+      }
+    };
+
+    // SWITCH SCREEN HANDLER
+    function switchScreen(screenKey) {
+      currentScreen = screenKey;
+      
+      const contentContainer = document.getElementById('phone-screen-content');
+      contentContainer.innerHTML = screensData[screenKey].render();
+
+      document.getElementById('active-screen-badge').innerText = screensData[screenKey].name + ' (Faol)';
+
+      // Update sidebar layer indicator
+      ['home', 'vacancies', 'applications', 'profile'].forEach(key => {
+        const layerBtn = document.getElementById(`layer-${key}`);
+        if (layerBtn) {
+          if (key === screenKey) {
+            layerBtn.className = "w-full text-left px-3 py-2.5 rounded-xl bg-[#5e35b1]/20 text-white font-medium flex items-center justify-between border border-[#5e35b1]/40 transition";
+          } else {
+            layerBtn.className = "w-full text-left px-3 py-2.5 rounded-xl hover:bg-zinc-800 text-zinc-400 font-medium flex items-center justify-between transition";
+          }
+        }
+      });
+
+      // Update bottom navigation visual state (exact styling)
+      const tabs = ['home', 'vacancies', 'applications', 'profile'];
+      tabs.forEach(tab => {
+        const icon = document.getElementById(`nav-icon-${tab}`);
+        const label = document.getElementById(`nav-label-${tab}`);
+
+        if (tab === screenKey) {
+          icon.style.color = '#2c1b54';
+          label.style.color = '#2c1b54';
+          label.classList.remove('font-medium');
+          label.classList.add('font-bold');
+        } else {
+          icon.style.color = '#8e8e93';
+          label.style.color = '#8e8e93';
+          label.classList.remove('font-bold');
+          label.classList.add('font-medium');
+        }
+      });
+
+      updateCodeSnippet();
+    }
+
+    // OPEN VACANCY DETAIL SHEET WITH FULL INFORMATION
+    function openVacancyDetail(vacancyId) {
+      const vac = vacanciesDB.find(v => v.id === vacancyId) || vacanciesDB[0];
+      const sheet = document.getElementById('vacancy-detail-sheet');
+      const panel = document.getElementById('vacancy-sheet-panel');
+      const body = document.getElementById('vacancy-detail-body');
+
+      body.innerHTML = `
+        <!-- Header & Company -->
+        <div class="flex items-start justify-between border-b border-zinc-100 pb-3">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-2xl ${vac.logoBg} flex items-center justify-center font-black text-base shadow-sm">
+              ${vac.logoText}
+            </div>
+            <div>
+              <h2 class="text-sm font-extrabold text-zinc-900 leading-snug">${vac.title}</h2>
+              <p class="text-xs text-zinc-500">${vac.company} • ${vac.location}</p>
+            </div>
+          </div>
+          <button onclick="closeVacancyDetail()" class="w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Salary and Experience Pill Grid -->
+        <div class="grid grid-cols-2 gap-2 pt-1 text-xs">
+          <div class="bg-purple-50/70 p-3 rounded-2xl border border-purple-100/60">
+            <span class="text-zinc-500 text-[10px] block font-medium">Taklif etilayotgan maosh</span>
+            <span class="font-extrabold text-[#2c1b54] text-xs">${vac.salary}</span>
+          </div>
+          <div class="bg-zinc-50 p-3 rounded-2xl border border-zinc-100">
+            <span class="text-zinc-500 text-[10px] block font-medium">Talab etiladigan tajriba</span>
+            <span class="font-extrabold text-zinc-900 text-xs">${vac.experience}</span>
+          </div>
+        </div>
+
+        <!-- Tags / Skills -->
+        <div>
+          <h4 class="text-[11px] font-bold text-zinc-900 uppercase tracking-wider mb-1.5">Talab qilinadigan texnologiyalar</h4>
+          <div class="flex flex-wrap gap-1.5">
+            ${vac.tags.map(t => `<span class="bg-purple-50 text-[#5e35b1] border border-purple-100 text-xs px-2.5 py-1 rounded-xl font-semibold">${t}</span>`).join('')}
+          </div>
+        </div>
+
+        <!-- Job Description -->
+        <div>
+          <h4 class="text-[11px] font-bold text-zinc-900 uppercase tracking-wider mb-1">Vakansiya haqida</h4>
+          <p class="text-xs text-zinc-600 leading-relaxed">${vac.description}</p>
+        </div>
+
+        <!-- Requirements List -->
+        <div>
+          <h4 class="text-[11px] font-bold text-zinc-900 uppercase tracking-wider mb-1.5">Nomzodga qo'yiladigan talablar</h4>
+          <ul class="space-y-1.5 text-xs text-zinc-600">
+            ${vac.requirements.map(req => `
+              <li class="flex items-start gap-2">
+                <i class="fa-solid fa-circle-check text-purple-600 text-xs mt-0.5"></i>
+                <span>${req}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+
+        <!-- Benefits List -->
+        <div>
+          <h4 class="text-[11px] font-bold text-zinc-900 uppercase tracking-wider mb-1.5">Kompaniya tomonidan beriladigan imtiyozlar</h4>
+          <ul class="space-y-1.5 text-xs text-zinc-600">
+            ${vac.benefits.map(ben => `
+              <li class="flex items-start gap-2">
+                <i class="fa-solid fa-gift text-emerald-600 text-xs mt-0.5"></i>
+                <span>${ben}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+
+        <!-- Apply Button Action -->
+        <div class="pt-2">
+          <button onclick="applyToJob('${vac.title}')" class="w-full py-3.5 bg-gradient-to-r from-[#5e35b1] to-[#4527a0] text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-purple-900/30 flex items-center justify-center gap-2 hover:opacity-95 active:scale-[0.98] transition">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Tezkor ariza topshirish (OneID CV)</span>
+          </button>
+        </div>
+      `;
+
+      sheet.classList.remove('pointer-events-none');
+      sheet.classList.remove('opacity-0');
+      panel.classList.remove('translate-y-full');
+    }
+
+    function closeVacancyDetail() {
+      const sheet = document.getElementById('vacancy-detail-sheet');
+      const panel = document.getElementById('vacancy-sheet-panel');
+      panel.classList.add('translate-y-full');
+      sheet.classList.add('opacity-0');
+      setTimeout(() => {
+        sheet.classList.add('pointer-events-none');
+      }, 300);
+    }
+
+    function applyToJob(title) {
+      closeVacancyDetail();
+      setTimeout(() => {
+        switchScreen('applications');
+      }, 350);
+    }
+
+    // ADD MODAL (+)
+    function openAddModal() {
+      const modal = document.getElementById('add-modal');
+      const panel = document.getElementById('add-modal-panel');
+      modal.classList.remove('pointer-events-none');
+      modal.classList.remove('opacity-0');
+      panel.classList.remove('translate-y-full');
+    }
+
+    function closeAddModal() {
+      const modal = document.getElementById('add-modal');
+      const panel = document.getElementById('add-modal-panel');
+      panel.classList.add('translate-y-full');
+      modal.classList.add('opacity-0');
+      setTimeout(() => {
+        modal.classList.add('pointer-events-none');
+      }, 300);
+    }
+
+    // ZOOM HANDLER
+    function changeZoom(delta) {
+      currentZoom = Math.min(Math.max(currentZoom + delta, 0.6), 1.6);
+      document.getElementById('zoom-text').innerText = `${Math.round(currentZoom * 100)}%`;
+      document.getElementById('prototype-view').style.transform = `scale(${currentZoom})`;
+      document.getElementById('artboards-view').style.transform = `scale(${currentZoom})`;
+    }
+
+    // VIEW MODE TOGGLE
+    function setViewMode(mode) {
+      currentView = mode;
+      const protoBtn = document.getElementById('view-prototype-btn');
+      const artBtn = document.getElementById('view-artboards-btn');
+      const protoView = document.getElementById('prototype-view');
+      const artboardsView = document.getElementById('artboards-view');
+
+      if (mode === 'prototype') {
+        protoBtn.className = "px-3 py-1 rounded-lg bg-[#5e35b1] text-white transition flex items-center gap-1.5 shadow-sm";
+        artBtn.className = "px-3 py-1 rounded-lg text-zinc-400 hover:text-white transition flex items-center gap-1.5";
+        protoView.classList.remove('hidden');
+        artboardsView.classList.add('hidden');
+      } else {
+        artBtn.className = "px-3 py-1 rounded-lg bg-[#5e35b1] text-white transition flex items-center gap-1.5 shadow-sm";
+        protoBtn.className = "px-3 py-1 rounded-lg text-zinc-400 hover:text-white transition flex items-center gap-1.5";
+        protoView.classList.add('hidden');
+        artboardsView.classList.remove('hidden');
+        renderArtboardsView();
+      }
+    }
+
+    // RENDER 5 ARTBOARDS IN FIGMA CANVAS
+    function renderArtboardsView() {
+      const container = document.getElementById('artboards-view');
+      container.innerHTML = '';
+
+      const screens = [
+        { key: 'home', title: '01. WZone Home' },
+        { key: 'vacancies', title: '02. Vakansiyalar' },
+        { key: 'home', title: '03. Creative Add Modal (+)' },
+        { key: 'applications', title: '04. Arizalarim Tracker' },
+        { key: 'profile', title: '05. Profil & OneID' }
+      ];
+
+      screens.forEach((item, index) => {
+        const board = document.createElement('div');
+        board.className = "flex flex-col space-y-2";
+        board.innerHTML = `
+          <div class="flex items-center justify-between text-xs text-zinc-400 px-1 font-mono">
+            <span>${item.title}</span>
+            <span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">393 × 852</span>
+          </div>
+          <div class="w-[310px] h-[640px] bg-black rounded-[42px] p-2.5 shadow-2xl border-[3px] border-[#38383c] relative flex flex-col overflow-hidden">
+            <div class="w-full h-full bg-[#f6f5fb] rounded-[34px] overflow-hidden flex flex-col relative">
+              <div class="h-8 px-4 pt-2 flex justify-between items-center text-[10px] font-semibold text-zinc-800">
+                <span>9:41</span>
+                <div class="flex items-center space-x-1"><i class="fa-solid fa-wifi text-[8px]"></i><i class="fa-solid fa-battery-full text-[9px]"></i></div>
+              </div>
+              <div class="flex-1 overflow-y-auto px-3 pb-20 text-[11px] transform scale-95 origin-top">
+                ${screensData[item.key].render()}
+              </div>
+              
+              <!-- Mini Bottom Bar -->
+              <div class="absolute bottom-0 left-0 right-0 z-20 bg-white rounded-t-[24px] pt-1.5 pb-4 px-2 bar-shadow border-t border-purple-50">
+                <div class="flex items-center justify-around">
+                  <span class="text-[9px] ${item.key === 'home' ? 'font-bold text-[#2c1b54]' : 'text-zinc-400'}">Home</span>
+                  <span class="text-[9px] ${item.key === 'vacancies' ? 'font-bold text-[#2c1b54]' : 'text-zinc-400'}">Vakansiyalar</span>
+                  <div class="-mt-5 w-9 h-9 rounded-full bg-[#5e35b1] text-white flex items-center justify-center border-2 border-white aura-glow text-xs">
+                    +
+                  </div>
+                  <span class="text-[9px] ${item.key === 'applications' ? 'font-bold text-[#2c1b54]' : 'text-zinc-400'}">Arizalarim</span>
+                  <span class="text-[9px] ${item.key === 'profile' ? 'font-bold text-[#2c1b54]' : 'text-zinc-400'}">Profil</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(board);
+      });
+    }
+
+    // INSPECTOR DRAWER
+    function toggleInspectDrawer() {
+      const drawer = document.getElementById('inspect-drawer');
+      drawer.classList.toggle('hidden');
+    }
+
+    function selectCodeTab(tab) {
+      currentCodeTab = tab;
+      ['swift', 'react', 'flutter'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          btn.className = "px-2.5 py-1 rounded-md bg-[#5e35b1] text-white font-medium";
+        } else {
+          btn.className = "px-2.5 py-1 rounded-md text-zinc-400 hover:text-white font-medium";
+        }
+      });
+      updateCodeSnippet();
+    }
+
+    function updateCodeSnippet() {
+      const codeBox = document.getElementById('code-box');
+      const title = document.getElementById('code-snippet-title');
+
+      if (currentCodeTab === 'swift') {
+        title.innerText = 'WZoneBottomBar.swift (SwiftUI)';
+        codeBox.innerText = `//
+// WZone Bottom Navigation Bar
+// iOS 18+ HIG Compliant
+//
+
+import SwiftUI
+
+struct WZoneBottomBar: View {
+    @Binding var selectedTab: TabItem
+    var onAddTapped: () -> Void
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            // Background White Bar with rounded top
+            UnevenRoundedRectangle(
+                topLeadingRadius: 32,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: 32
+            )
+            .fill(Color.white)
+            .shadow(color: Color(hex: "1C1038").opacity(0.08), radius: 15, x: 0, y: -8)
+            .frame(height: 84)
+
+            HStack {
+                // 1. Home
+                TabBarItem(icon: "house.fill", label: "Home", isSelected: selectedTab == .home) {
+                    selectedTab = .home
+                }
+                
+                // 2. Vakansiyalar
+                TabBarItem(icon: "briefcase.fill", label: "Vakansiyalar", isSelected: selectedTab == .vacancies) {
+                    selectedTab = .vacancies
+                }
+
+                // 3. Creative Floating '+' Button with Aura Glow
+                Button(action: onAddTapped) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: "5E35B1"))
+                            .frame(width: 56, height: 56)
+                            .shadow(color: Color(hex: "5E35B1").opacity(0.45), radius: 14, x: 0, y: 6)
+                            .overlay(
+                                Circle().stroke(Color.white, lineWidth: 4)
+                            )
+                        Image(systemName: "plus")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                .offset(y: -24)
+
+                // 4. Arizalarim
+                TabBarItem(icon: "clock.fill", label: "Arizalarim", isSelected: selectedTab == .applications) {
+                    selectedTab = .applications
+                }
+
+                // 5. Profil
+                TabBarItem(icon: "person.fill", label: "Profil", isSelected: selectedTab == .profile) {
+                    selectedTab = .profile
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+        }
+        .ignoresSafeArea(.all, edges: .bottom)
+    }
+}`;
+      } else if (currentCodeTab === 'react') {
+        title.innerText = 'WZoneBottomBar.tsx (React + Tailwind)';
+        codeBox.innerText = `import React from 'react';
+import { Home, Briefcase, Plus, Clock, User } from 'lucide-react';
+
+export default function WZoneBottomBar({ activeTab, onTabChange, onAddClick }) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[32px] shadow-[0_-10px_30px_rgba(28,16,56,0.08)] pt-2 pb-6 px-3 border-t border-purple-50">
+      <div className="max-w-md mx-auto flex items-center justify-around relative">
+        
+        {/* 1. Home */}
+        <button onClick={() => onTabChange('home')} className="flex flex-col items-center min-w-[56px]">
+          <Home size={22} className={activeTab === 'home' ? 'text-[#2c1b54]' : 'text-[#8e8e93]'} strokeWidth={activeTab === 'home' ? 2.4 : 1.8} />
+          <span className={\`text-[11px] mt-0.5 \${activeTab === 'home' ? 'font-bold text-[#2c1b54]' : 'font-medium text-[#8e8e93]'}\`}>Home</span>
+        </button>
+
+        {/* 2. Vakansiyalar */}
+        <button onClick={() => onTabChange('vacancies')} className="flex flex-col items-center min-w-[56px]">
+          <Briefcase size={22} className={activeTab === 'vacancies' ? 'text-[#2c1b54]' : 'text-[#8e8e93]'} strokeWidth={activeTab === 'vacancies' ? 2.4 : 1.8} />
+          <span className={\`text-[11px] mt-0.5 \${activeTab === 'vacancies' ? 'font-bold text-[#2c1b54]' : 'font-medium text-[#8e8e93]'}\`}>Vakansiyalar</span>
+        </button>
+
+        {/* 3. Creative '+' Button */}
+        <button onClick={onAddClick} className="flex items-center justify-center -mt-8 group focus:outline-none">
+          <div className="w-14 h-14 rounded-full bg-[#5e35b1] text-white flex items-center justify-center border-4 border-white shadow-[0_0_24px_rgba(94,53,177,0.45)] transition transform group-hover:scale-105 active:scale-95">
+            <Plus size={28} strokeWidth={2.8} />
+          </div>
+        </button>
+
+        {/* 4. Arizalarim */}
+        <button onClick={() => onTabChange('applications')} className="flex flex-col items-center min-w-[56px]">
+          <Clock size={22} className={activeTab === 'applications' ? 'text-[#2c1b54]' : 'text-[#8e8e93]'} strokeWidth={activeTab === 'applications' ? 2.4 : 1.8} />
+          <span className={\`text-[11px] mt-0.5 \${activeTab === 'applications' ? 'font-bold text-[#2c1b54]' : 'font-medium text-[#8e8e93]'}\`}>Arizalarim</span>
+        </button>
+
+        {/* 5. Profil */}
+        <button onClick={() => onTabChange('profile')} className="flex flex-col items-center min-w-[56px]">
+          <User size={22} className={activeTab === 'profile' ? 'text-[#2c1b54]' : 'text-[#8e8e93]'} strokeWidth={activeTab === 'profile' ? 2.4 : 1.8} />
+          <span className={\`text-[11px] mt-0.5 \${activeTab === 'profile' ? 'font-bold text-[#2c1b54]' : 'font-medium text-[#8e8e93]'}\`}>Profil</span>
+        </button>
+
+      </div>
+      {/* iOS Indicator */}
+      <div className="w-32 h-1 bg-zinc-900 rounded-full mx-auto mt-3.5 opacity-80" />
+    </div>
+  );
+}`;
+      } else {
+        title.innerText = 'wzone_nav.dart (Flutter)';
+        codeBox.innerText = `import 'package:flutter/material.dart';
+
+class WZoneNavBar extends StatelessWidget {
+  final int currentIndex;
+  final Function(int) onTabChange;
+  final VoidCallback onAddTapped;
+
+  const WZoneNavBar({
+    Key? key,
+    required this.currentIndex,
+    required this.onTabChange,
+    required this.onAddTapped,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1C1038).withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
+          )
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _item(Icons.home_rounded, 'Home', 0),
+              _item(Icons.work_rounded, 'Vakansiyalar', 1),
+              // Floating '+' Button with Aura
+              GestureDetector(
+                onTap: onAddTapped,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5E35B1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF5E35B1).withOpacity(0.4),
+                        blurRadius: 18,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.add, color: Colors.white, size: 30),
+                ),
+              ),
+              _item(Icons.access_time_rounded, 'Arizalarim', 2),
+              _item(Icons.person_rounded, 'Profil', 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _item(IconData icon, String label, int index) {
+    final bool active = currentIndex == index;
+    return GestureDetector(
+      onTap: () => onTabChange(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: active ? const Color(0xFF2C1B54) : const Color(0xFF8E8E93), size: 22),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: active ? FontWeight.bold : FontWeight.w500,
+              color: active ? const Color(0xFF2C1B54) : const Color(0xFF8E8E93),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}`;
+      }
+    }
+
+    function copyCode() {
+      const code = document.getElementById('code-box').innerText;
+      document.execCommand('copy');
+      const status = document.getElementById('copy-status');
+      status.innerText = "Nusxalandi! ✓";
+      setTimeout(() => {
+        status.innerText = "Nusxalash";
+      }, 2000);
+    }
+
+    // Direct Figma SVG download
+    function exportFigmaSVG() {
+      const svg = `<svg width="393" height="100" viewBox="0 0 393 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="aura" x="160" y="-14" width="74" height="74" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#5E35B1" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <path d="M0 32C0 14.3 14.3 0 32 0H361C378.7 0 393 14.3 393 32V100H0V32Z" fill="white"/>
+  <circle cx="197" cy="20" r="27" fill="#5E35B1" stroke="white" stroke-width="4" filter="url(#aura)"/>
+  <path d="M197 10V30M187 20H207" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>`;
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'wzone-ios-navbar.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Initialize on load
+    window.onload = function() {
+      switchScreen('home');
+      updateCodeSnippet();
+    };
+  </script>
+</body>
+</html>

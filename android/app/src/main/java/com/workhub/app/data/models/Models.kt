@@ -118,3 +118,13 @@ data class CompanySpotlight(
     val verified: Boolean,
     val tagline: String
 )
+
+data class AppNotification(
+    val id: String = "",
+    val userId: String = "",
+    val title: String = "",
+    val body: String = "",
+    val isRead: Boolean = false,
+    val createdAt: String = ""
+)
+

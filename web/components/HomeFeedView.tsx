@@ -124,6 +124,7 @@ export default function HomeFeedView({
   // WZone Interactive Animated Advertisement Carousel
   const [promoSlide, setPromoSlide] = useState(0);
   const [videoAdModalOpen, setVideoAdModalOpen] = useState(false);
+  const [isNotificationDismissed, setIsNotificationDismissed] = useState(false);
 
   const PROMO_SLIDES = [
     {
@@ -583,6 +584,28 @@ export default function HomeFeedView({
 
   return (
     <div className="space-y-6 pb-24">
+      {/* 0. TOP NOTIFICATION BANNER MATCHING MOBILE SCREENSHOT */}
+      {!isNotificationDismissed && (
+        <div className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-[#EBF5FE] dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/80 shadow-xs text-xs">
+          <div className="flex items-center gap-2.5 truncate">
+            <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[10px] shrink-0 shadow-xs">
+              <Briefcase size={12} />
+            </div>
+            <span className="text-slate-800 dark:text-blue-100 font-medium truncate text-xs">
+              {lang === 'ru' ? 'Новая вакансия: ' : lang === 'en' ? 'New vacancy: ' : 'Yangi vakansiya: '}
+              <strong className="font-extrabold text-slate-900 dark:text-white">Frontend Developer - Uzum</strong>
+            </span>
+          </div>
+          <button
+            onClick={() => setIsNotificationDismissed(true)}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-white px-1.5 font-bold text-xs cursor-pointer"
+            aria-label="Close notification"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* 1. HERO SEARCH & WZONE ANIMATED PROMOTIONAL SHOWCASE */}
       <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm relative overflow-hidden">
         {/* Ambient Animated Glow Accents */}

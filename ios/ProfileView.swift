@@ -1,11 +1,29 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @State private var skills = ["Go", "Swift", "SwiftUI", "PostgreSQL", "Docker", "REST API"]
+    @ObservedObject var session = SessionManager.shared
+    @State private var resumes: [Resume] = []
+    @State private var skills: [String] = ["Go", "Swift", "SwiftUI", "PostgreSQL", "Docker", "REST API"]
     @State private var newSkill = ""
     @State private var selectedLanguage = "O‘zbekcha (UZ)"
     @State private var darkMode = false
     @State private var notifications = true
+
+    @State private var showEditProfile = false
+    @State private var showAddResume = false
+    @State private var showDeleteAccountAlert = false
+
+    @State private var editName = ""
+    @State private var editPhone = ""
+    @State private var editProfession = ""
+    @State private var editLocation = ""
+    @State private var editBio = ""
+
+    @State private var resumeTitle = ""
+    @State private var resumeSkills = ""
+    @State private var resumeExperience = "2"
+    @State private var resumeSummary = ""
+
     var onLogout: () -> Void = {}
 
     var body: some View {
@@ -20,38 +38,83 @@ struct ProfileView: View {
                             .foregroundColor(.blue)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Farrux Zokirov")
+                            Text(session.currentUser?.name ?? "Foydalanuvchi")
                                 .font(.headline)
                                 .fontWeight(.bold)
-                            Text("farrux@wzone.uz")
+                            Text(session.currentUser?.email ?? "foydalanuvchi@wzone.uz")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text("Senior Mobile & Backend Engineer")
+                            Text(session.currentUser?.profession ?? "Mutaxassis")
                                 .font(.caption2)
+                                .foregroundColor(.blue)
+                        }
+
+                        Spacer()
+
+                        Button(action: {
+                            editName = session.currentUser?.name ?? ""
+                            editPhone = session.currentUser?.phone ?? ""
+                            editProfession = session.currentUser?.profession ?? ""
+                            editLocation = session.currentUser?.location ?? ""
+                            editBio = session.currentUser?.bio ?? ""
+                            showEditProfile = true
+                        }) {
+                            Image(systemName: "pencil.circle")
+                                .font(.title3)
                                 .foregroundColor(.blue)
                         }
                     }
                     .padding(.vertical, 4)
                 }
 
-                // 1-O'RIN: REZYUMELAR VA KO'NIKMALAR (SKILLS)
+                // REZYUMELAR BO'LIMI
                 Section {
                     HStack {
-                        Text("ATS Moslik indeksi:")
+                        Text("Rezyumelar soni: \(resumes.count)")
                             .font(.caption)
-                            .fontWeight(.semibold)
+                            .foregroundColor(.secondary)
                         Spacer()
-                        Text("88% Mos")
-                            .font(.caption)
-                            .fontWeight(.black)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(Color.green.opacity(0.15))
-                            .foregroundColor(.green)
-                            .cornerRadius(6)
+                        Button("+ Yangi Rezyume") {
+                            showAddResume = true
+                        }
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.blue)
                     }
 
-                    // Skills Tags
+                    if resumes.isEmpty {
+                        Text("Hozircha rezyume qo‘shilmagan. Ariza topshirish uchun yangi rezyume yarating.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        ForEach(resumes) { res in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(res.title)
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
+                                    Text("\(res.profession ?? "Dasturchi") • \(res.experienceYears ?? 0) yil tajriba")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Button(role: .destructive) {
+                                    deleteResume(id: res.id)
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.caption)
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    Text("1. Mening Rezyumelarim")
+                        .foregroundColor(.blue)
+                        .fontWeight(.black)
+                }
+
+                // KO'NIKMALAR (SKILLS)
+                Section {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Mening Ko‘nikmalarim:")
                             .font(.caption)
@@ -68,6 +131,9 @@ struct ProfileView: View {
                                         .background(Color.blue.opacity(0.1))
                                         .foregroundColor(.blue)
                                         .cornerRadius(8)
+                                        .onTapGesture {
+                                            skills.removeAll { $0 == skill }
+                                        }
                                 }
                             }
                         }
@@ -79,6 +145,7 @@ struct ProfileView: View {
                                 if !newSkill.trimmingCharacters(in: .whitespaces).isEmpty {
                                     skills.append(newSkill.trimmingCharacters(in: .whitespaces))
                                     newSkill = ""
+                                    saveSkills()
                                 }
                             }
                             .font(.caption)
@@ -86,12 +153,12 @@ struct ProfileView: View {
                         }
                     }
                 } header: {
-                    Text("1. Rezyumelar & Skillar")
+                    Text("2. Ko‘nikmalar (Skills)")
                         .foregroundColor(.blue)
                         .fontWeight(.black)
                 }
 
-                // 2-O'RIN: SAYT VA PROFIL SOZLAMALARI
+                // SOZLAMALAR VA XAVFSIZLIK
                 Section {
                     Picker("Ilova tili", selection: $selectedLanguage) {
                         Text("O‘zbekcha (UZ)").tag("O‘zbekcha (UZ)")
@@ -102,23 +169,163 @@ struct ProfileView: View {
                     Toggle("Tungi rejim (Dark Mode)", isOn: $darkMode)
                     Toggle("Bildirishnomalar", isOn: $notifications)
 
+                    // APPLE REVIEW GUIDELINE 5.1.1(v) TALABI: Akkauntni o'chirish
                     Button(role: .destructive) {
+                        showDeleteAccountAlert = true
+                    } label: {
+                        HStack {
+                            Text("Akkauntni Butunlay O‘chirish")
+                                .font(.subheadline)
+                                .foregroundColor(.red)
+                            Spacer()
+                            Image(systemName: "exclamationmark.triangle")
+                                .foregroundColor(.red)
+                        }
+                    }
+
+                    Button(role: .cancel) {
+                        session.clearSession()
                         onLogout()
                     } label: {
                         HStack {
                             Spacer()
                             Text("Tizimdan chiqish")
                                 .fontWeight(.bold)
+                                .foregroundColor(.red)
                             Spacer()
                         }
                     }
                 } header: {
-                    Text("2. Ilova va Tizim Sozlamalari")
+                    Text("3. Ilova va Maxfiylik Sozlamalari")
                         .foregroundColor(.blue)
                         .fontWeight(.black)
                 }
             }
             .navigationTitle("Profil & Sozlamalar")
+            .onAppear {
+                loadProfileAndResumes()
+            }
+            .sheet(isPresented: $showEditProfile) {
+                NavigationStack {
+                    Form {
+                        TextField("Ism", text: $editName)
+                        TextField("Telefon", text: $editPhone)
+                        TextField("Kasb", text: $editProfession)
+                        TextField("Manzil", text: $editLocation)
+                        TextField("Bio", text: $editBio)
+                    }
+                    .navigationTitle("Profilni tahrirlash")
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Saqlash") {
+                                saveProfile()
+                                showEditProfile = false
+                            }
+                        }
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Bekor qilish") {
+                                showEditProfile = false
+                            }
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showAddResume) {
+                NavigationStack {
+                    Form {
+                        TextField("Rezyume sarlavhasi", text: $resumeTitle)
+                        TextField("Ko‘nikmalar", text: $resumeSkills)
+                        TextField("Tajriba (yil)", text: $resumeExperience)
+                        TextField("Qisqacha ta'rif", text: $resumeSummary)
+                    }
+                    .navigationTitle("Yangi Rezyume")
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Yaratish") {
+                                createResume()
+                                showAddResume = false
+                            }
+                        }
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Bekor qilish") {
+                                showAddResume = false
+                            }
+                        }
+                    }
+                }
+            }
+            .alert("Akkauntni o‘chirish", isPresented: $showDeleteAccountAlert) {
+                Button("O‘chirish", role: .destructive) {
+                    session.clearSession()
+                    onLogout()
+                }
+                Button("Bekor qilish", role: .cancel) {}
+            } message: {
+                Text("Haqiqatan ham akkauntingizni va barcha ma'lumotlaringizni butunlay o‘chirib tashlamoqchimisiz?")
+            }
+        }
+    }
+
+    private func loadProfileAndResumes() {
+        Task {
+            if let user = try? await APIClient.shared.fetchProfile() {
+                await MainActor.run {
+                    if let s = user.skills, !s.isEmpty {
+                        self.skills = s.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                    }
+                }
+            }
+            if let items = try? await APIClient.shared.fetchResumes() {
+                await MainActor.run {
+                    self.resumes = items
+                }
+            }
+        }
+    }
+
+    private func saveProfile() {
+        Task {
+            _ = try? await APIClient.shared.updateProfile(
+                name: editName,
+                phone: editPhone,
+                profession: editProfession,
+                location: editLocation,
+                bio: editBio,
+                skills: skills.joined(separator: ",")
+            )
+        }
+    }
+
+    private func saveSkills() {
+        saveProfile()
+    }
+
+    private func createResume() {
+        Task {
+            let exp = Int(resumeExperience) ?? 1
+            if let created = try? await APIClient.shared.createResume(
+                title: resumeTitle.isEmpty ? "Mening Rezyumem" : resumeTitle,
+                fullName: session.currentUser?.name ?? "Nomzod",
+                phone: session.currentUser?.phone ?? "",
+                email: session.currentUser?.email ?? "",
+                profession: session.currentUser?.profession ?? "Dasturchi",
+                skills: resumeSkills.isEmpty ? skills.joined(separator: ",") : resumeSkills,
+                experienceYears: exp,
+                summary: resumeSummary
+            ) {
+                await MainActor.run {
+                    self.resumes.insert(created, at: 0)
+                }
+            }
+        }
+    }
+
+    private func deleteResume(id: String) {
+        Task {
+            _ = try? await APIClient.shared.deleteResume(id: id)
+            await MainActor.run {
+                self.resumes.removeAll { $0.id == id }
+            }
         }
     }
 }

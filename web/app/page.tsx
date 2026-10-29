@@ -1532,32 +1532,37 @@ export default function WZonePortal() {
           </span>
         </button>
 
-        {/* Tab 3: Rezyume (Candidate) or Nomzodlar (Company) */}
+        {/* Tab 3: Saqlanganlar (Candidate) or Nomzodlar (Company) */}
         <button
           onClick={() => {
             if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
-            setCurrentTab('resumes');
+            setCurrentTab(isCompany ? 'resumes' : 'saved');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
           <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
-            currentTab === 'resumes'
+            (isCompany ? currentTab === 'resumes' : currentTab === 'saved')
               ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
               : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }`}>
             {isCompany ? (
               <Users size={20} className={currentTab === 'resumes' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
             ) : (
-              <FileText size={20} className={currentTab === 'resumes' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+              <Bookmark size={20} className={currentTab === 'saved' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            )}
+            {!isCompany && savedIds.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[10px] font-black flex items-center justify-center shadow-sm">
+                {savedIds.length}
+              </span>
             )}
           </div>
           <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
-            currentTab === 'resumes'
+            (isCompany ? currentTab === 'resumes' : currentTab === 'saved')
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
           }`}>
-            {isCompany ? 'Nomzodlar' : 'Rezyume'}
+            {isCompany ? 'Nomzodlar' : t.navSaved}
           </span>
         </button>
 

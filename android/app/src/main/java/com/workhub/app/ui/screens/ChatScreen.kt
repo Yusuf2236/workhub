@@ -1,6 +1,7 @@
 package com.workhub.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,75 +49,98 @@ fun ChatScreen(
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+                shadowElevation = 3.dp
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 10.dp),
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onBack) {
-                        Text("← Orqaga", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    IconButton(onClick = onBack) {
+                        Text("←", fontSize = 18.sp, fontWeight = FontWeight.Black)
                     }
 
+                    // Avatar + Room Info
                     Row(
                         modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF10B981))
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Box {
+                            Surface(
+                                modifier = Modifier.size(40.dp),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("💼", fontSize = 18.sp)
+                                }
+                            }
+                            // Online Indicator Dot
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF10B981))
+                                    .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                                    .align(Alignment.BottomEnd)
+                            )
+                        }
+
                         Column {
                             Text(
-                                text = "WZone Jonli Muloqot",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Black
+                                text = "WorkHub Hamjamiyati & HR",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Online • Umumiy xona",
-                                fontSize = 10.sp,
+                                text = "Jonli suhbat • Ish beruvchilar va nomzodlar",
+                                fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.width(48.dp))
                 }
             }
         },
         bottomBar = {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 8.dp
+                shadowElevation = 10.dp,
+                modifier = Modifier.border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+                )
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedTextField(
                         value = inputMessage,
                         onValueChange = { inputMessage = it },
-                        placeholder = { Text("Xabaringizni yozing...", fontSize = 12.sp) },
+                        placeholder = { Text("Xabar yozing...", fontSize = 13.sp) },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        maxLines = 3
+                        shape = RoundedCornerShape(24.dp),
+                        maxLines = 3,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                        )
                     )
 
                     Button(
                         onClick = {
-                            if (inputMessage.isNotBlank() && !isSending) {
-                                val text = inputMessage.trim()
-                                inputMessage = ""
+                            val text = inputMessage.trim()
+                            if (text.isNotEmpty() && !isSending) {
                                 isSending = true
+                                inputMessage = ""
                                 scope.launch {
                                     repository.sendChatMessage("general", text)
                                     isSending = false
@@ -123,10 +148,15 @@ fun ChatScreen(
                             }
                         },
                         enabled = inputMessage.isNotBlank() && !isSending,
-                        shape = RoundedCornerShape(14.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                        shape = CircleShape,
+                        modifier = Modifier.size(46.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text("Yuborish", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        if (isSending) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                        } else {
+                            Text("➤", fontSize = 16.sp, fontWeight = FontWeight.Black)
+                        }
                     }
                 }
             }
@@ -140,59 +170,114 @@ fun ChatScreen(
         ) {
             if (messages.isEmpty()) {
                 Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text("Xabarlar yo‘q", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Text("Birinchi bo‘lib suhbatni boshlang!", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Surface(
+                        modifier = Modifier.size(60.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("💬", fontSize = 26.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "Suhbat hali boshlanmadi",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Birinchi bo‘lib xabar yozing va suhbatni boshlang!",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             } else {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(messages) { msg ->
                         val isMe = msg.isMe || (currentUser != null && msg.userId == currentUser?.id)
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
                         ) {
-                            Card(
-                                shape = RoundedCornerShape(
-                                    topStart = 16.dp,
-                                    topEnd = 16.dp,
-                                    bottomStart = if (isMe) 16.dp else 4.dp,
-                                    bottomEnd = if (isMe) 4.dp else 16.dp
-                                ),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                                modifier = Modifier.widthIn(max = 280.dp)
-                            ) {
-                                Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    if (!isMe && msg.senderName.isNotBlank()) {
+                            if (!isMe) {
+                                Surface(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .align(Alignment.Bottom),
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.secondaryContainer
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
                                         Text(
-                                            text = msg.senderName,
-                                            fontSize = 10.sp,
+                                            text = msg.senderName.take(1).uppercase(),
+                                            fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
                                         )
                                     }
+                                }
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+
+                            Column(
+                                modifier = Modifier.widthIn(max = 280.dp),
+                                horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
+                            ) {
+                                if (!isMe) {
                                     Text(
-                                        text = msg.content,
-                                        fontSize = 13.sp,
-                                        color = if (isMe) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                        text = msg.senderName,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
                                     )
-                                    if (msg.createdAt.isNotBlank()) {
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(
+                                        topStart = 16.dp,
+                                        topEnd = 16.dp,
+                                        bottomStart = if (isMe) 16.dp else 4.dp,
+                                        bottomEnd = if (isMe) 4.dp else 16.dp
+                                    ),
+                                    color = if (isMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                                    shadowElevation = 1.dp,
+                                    modifier = Modifier.border(
+                                        width = 1.dp,
+                                        color = if (isMe) Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(
+                                            topStart = 16.dp,
+                                            topEnd = 16.dp,
+                                            bottomStart = if (isMe) 16.dp else 4.dp,
+                                            bottomEnd = if (isMe) 4.dp else 16.dp
+                                        )
+                                    )
+                                ) {
+                                    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                                         Text(
-                                            text = msg.createdAt,
+                                            text = msg.content,
+                                            fontSize = 13.sp,
+                                            color = if (isMe) Color.White else MaterialTheme.colorScheme.onSurface,
+                                            lineHeight = 18.sp
+                                        )
+                                        Text(
+                                            text = msg.createdAt.ifBlank { "Hozirgina" },
                                             fontSize = 9.sp,
-                                            color = if (isMe) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.align(Alignment.End)
+                                            color = if (isMe) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.align(Alignment.End).padding(top = 2.dp)
                                         )
                                     }
                                 }

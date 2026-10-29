@@ -1,14 +1,18 @@
 package com.workhub.app.data.repository
 
+import android.content.Context
 import com.workhub.app.data.api.ApiClient
 import com.workhub.app.data.models.*
+import com.workhub.app.data.session.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class JobRepository {
+class JobRepository(context: Context? = null) {
 
-    private val _currentUser = MutableStateFlow<User?>(null)
+    private val sessionManager = context?.let { SessionManager.getInstance(it) }
+
+    private val _currentUser = MutableStateFlow<User?>(sessionManager?.getUser() ?: ApiClient.currentUser)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
     private val _vacancies = MutableStateFlow<List<Vacancy>>(emptyList())
@@ -20,10 +24,16 @@ class JobRepository {
     private val _applications = MutableStateFlow<List<Application>>(emptyList())
     val applications: StateFlow<List<Application>> = _applications.asStateFlow()
 
+    private val _resumes = MutableStateFlow<List<Resume>>(emptyList())
+    val resumes: StateFlow<List<Resume>> = _resumes.asStateFlow()
+
     private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
 
-    private val _savedIds = MutableStateFlow<Set<String>>(emptySet())
+    private val _notifications = MutableStateFlow<List<AppNotification>>(emptyList())
+    val notifications: StateFlow<List<AppNotification>> = _notifications.asStateFlow()
+
+    private val _savedIds = MutableStateFlow<Set<String>>(sessionManager?.getSavedVacancyIds() ?: emptySet())
     val savedIds: StateFlow<Set<String>> = _savedIds.asStateFlow()
 
     private val _newsList = MutableStateFlow<List<NewsItem>>(getInitialNews())
@@ -32,9 +42,25 @@ class JobRepository {
     private val _commentsList = MutableStateFlow<List<CommunityComment>>(getInitialComments())
     val commentsList: StateFlow<List<CommunityComment>> = _commentsList.asStateFlow()
 
+    init {
+        // Agar sessiyada token bo'lsa, uni tiklaymiz
+        sessionManager?.let {
+            val token = it.getToken()
+            val user = it.getUser()
+            if (!token.isNullOrBlank() && user != null) {
+                ApiClient.authToken = token
+                ApiClient.currentUser = user
+                _currentUser.value = user
+            }
+        }
+    }
+
+    // ---------------- AUTH ----------------
+
     suspend fun login(email: String, pass: String): Result<User> {
         val result = ApiClient.login(email, pass)
-        return result.map { (user, _) ->
+        return result.map { (user, token) ->
+            sessionManager?.saveAuth(token, user)
             _currentUser.value = user
             user
         }
@@ -42,17 +68,62 @@ class JobRepository {
 
     suspend fun register(name: String, email: String, pass: String): Result<User> {
         val result = ApiClient.register(name, email, pass)
-        return result.map { (user, _) ->
+        return result.map { (user, token) ->
+            sessionManager?.saveAuth(token, user)
             _currentUser.value = user
             user
         }
     }
 
-    fun logout() {
+    fun setAuthSession(user: User, token: String) {
+        sessionManager?.saveAuth(token, user)
+        ApiClient.authToken = token
+        ApiClient.currentUser = user
+        _currentUser.value = user
+    }
+
+    suspend fun logout() {
+        try {
+            ApiClient.logout()
+        } catch (_: Exception) {}
+        sessionManager?.clearSession()
         _currentUser.value = null
         ApiClient.authToken = null
         ApiClient.currentUser = null
     }
+
+    suspend fun forgotPassword(email: String): Result<String> {
+        return ApiClient.forgotPassword(email)
+    }
+
+    // ---------------- PROFILE ----------------
+
+    suspend fun fetchProfile(): Result<User> {
+        val res = ApiClient.getProfile()
+        res.onSuccess { user ->
+            sessionManager?.updateCurrentUser(user)
+            _currentUser.value = user
+        }
+        return res
+    }
+
+    suspend fun updateProfile(
+        name: String,
+        phone: String,
+        profession: String,
+        location: String,
+        bio: String,
+        skills: String
+    ): Result<User> {
+        val res = ApiClient.updateProfile(name, phone, profession, location, bio, skills)
+        res.onSuccess { updatedUser ->
+            sessionManager?.updateCurrentUser(updatedUser)
+            _currentUser.value = updatedUser
+        }
+        return res
+    }
+
+    // ---------------- VACANCIES ----------------
 
     suspend fun fetchVacancies(search: String = "", category: String = "", location: String = "") {
         _isLoadingVacancies.value = true
@@ -73,8 +144,12 @@ class JobRepository {
         }
     }
 
-    suspend fun apply(vacancy: Vacancy, coverLetter: String = "Assalomu alaykum! Men ushbu vakansiyaga o‘z nomzodimni taqdim etmoqchiman."): Result<Boolean> {
-        val res = ApiClient.applyToVacancy(vacancy.id, coverLetter)
+    suspend fun apply(
+        vacancy: Vacancy,
+        coverLetter: String = "Assalomu alaykum! Men ushbu vakansiyaga o‘z nomzodimni taqdim etmoqchiman.",
+        resumeId: String = ""
+    ): Result<Boolean> {
+        val res = ApiClient.applyToVacancy(vacancy.id, coverLetter, resumeId)
         if (res.isSuccess) {
             val newApp = Application(
                 id = "app-${System.currentTimeMillis()}",
@@ -91,6 +166,71 @@ class JobRepository {
         return res
     }
 
+    fun toggleSaveVacancy(vacancyId: String) {
+        val updated = sessionManager?.toggleSaveVacancy(vacancyId) ?: run {
+            val current = _savedIds.value.toMutableSet()
+            if (current.contains(vacancyId)) current.remove(vacancyId) else current.add(vacancyId)
+            current
+        }
+        _savedIds.value = updated
+    }
+
+    // ---------------- RESUMES ----------------
+
+    suspend fun fetchResumes() {
+        val res = ApiClient.getResumes()
+        res.onSuccess {
+            _resumes.value = it
+        }
+    }
+
+    suspend fun createResume(
+        title: String,
+        fullName: String,
+        phone: String,
+        email: String,
+        profession: String,
+        skills: String,
+        experienceYears: Int,
+        summary: String
+    ): Result<Resume> {
+        val res = ApiClient.createResume(
+            title, fullName, phone, email, profession, skills, experienceYears, summary
+        )
+        res.onSuccess { created ->
+            _resumes.value = listOf(created) + _resumes.value
+        }
+        return res
+    }
+
+    suspend fun deleteResume(resumeId: String): Result<Boolean> {
+        val res = ApiClient.deleteResume(resumeId)
+        res.onSuccess {
+            _resumes.value = _resumes.value.filter { it.id != resumeId }
+        }
+        return res
+    }
+
+    // ---------------- NOTIFICATIONS ----------------
+
+    suspend fun fetchNotifications() {
+        val res = ApiClient.getNotifications()
+        res.onSuccess {
+            _notifications.value = it
+        }
+    }
+
+    suspend fun markNotificationRead(id: String) {
+        val res = ApiClient.markNotificationRead(id)
+        if (res.isSuccess) {
+            _notifications.value = _notifications.value.map {
+                if (it.id == id) it.copy(isRead = true) else it
+            }
+        }
+    }
+
+    // ---------------- CHAT ----------------
+
     suspend fun fetchChatMessages(room: String = "general") {
         val res = ApiClient.getChatMessages(room)
         res.onSuccess {
@@ -106,15 +246,7 @@ class JobRepository {
         return res
     }
 
-    fun toggleSaveVacancy(vacancyId: String) {
-        val current = _savedIds.value.toMutableSet()
-        if (current.contains(vacancyId)) {
-            current.remove(vacancyId)
-        } else {
-            current.add(vacancyId)
-        }
-        _savedIds.value = current
-    }
+    // ---------------- COMMUNITY & FEED ----------------
 
     fun addComment(content: String, topic: String) {
         val user = _currentUser.value
@@ -155,7 +287,7 @@ class JobRepository {
                 imageUrl = "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80",
                 author = "Sanjar Rahimov",
                 authorRole = "Bozor tahlilchisi",
-                date = "28-sentyabr, 2026",
+                date = "28-oktyabr, 2026",
                 readTime = "4 daqiqa",
                 views = 1420,
                 likes = 89,
@@ -170,7 +302,7 @@ class JobRepository {
                 imageUrl = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80",
                 author = "Aziza Yo‘ldosheva",
                 authorRole = "Tadbir koordinatori",
-                date = "27-sentyabr, 2026",
+                date = "27-oktyabr, 2026",
                 readTime = "3 daqiqa",
                 views = 2150,
                 likes = 142,
@@ -185,7 +317,7 @@ class JobRepository {
                 imageUrl = "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=800&q=80",
                 author = "Dilnoza Karimova",
                 authorRole = "HR Konsul",
-                date = "26-sentyabr, 2026",
+                date = "26-oktyabr, 2026",
                 readTime = "5 daqiqa",
                 views = 3100,
                 likes = 210,
@@ -221,11 +353,11 @@ class JobRepository {
                 authorName = "Jasur Alimov",
                 authorRole = "UI/UX Designer",
                 authorAvatar = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80",
-                content = "WZone mobil ilovasi juda qulay va tez ishlayapti. Ayniqsa chat orqali rekruter bilan to'g'ridan-to'g'ri bog'lanish zo'r funksiya bo'libdi!",
+                content = "WorkHub mobil ilovasi juda qulay va tez ishlayapti. Ayniqsa chat orqali rekruter bilan to'g'ridan-to'g'ri bog'lanish zo'r funksiya bo'libdi!",
                 timestamp = "2 soat oldin",
                 likes = 19,
                 likedByMe = true,
-                topicTag = "#wzone_app"
+                topicTag = "#workhub_app"
             )
         )
 

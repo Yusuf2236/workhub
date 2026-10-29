@@ -28,6 +28,9 @@ fun LoginScreen(
     var password by remember { mutableStateOf("Secret123!") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
+    var forgotEmail by remember { mutableStateOf("") }
+    var forgotStatusMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     Scaffold(
@@ -42,7 +45,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "WZone",
+                text = "WorkHub",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.primary
@@ -99,6 +102,27 @@ fun LoginScreen(
                         shape = RoundedCornerShape(12.dp)
                     )
 
+                    if (!isRegisterMode) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    forgotEmail = email
+                                    showForgotPasswordDialog = true
+                                },
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(
+                                    text = "Parolni unutdingizmi?",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
                     errorMessage?.let {
                         Text(
                             text = it,
@@ -126,7 +150,7 @@ fun LoginScreen(
                                 result.onSuccess {
                                     onLoginSuccess()
                                 }.onFailure {
-                                    // If backend is unreachable or local demo, allow login with local mock session
+                                    // Lokal fallback rejimi
                                     repository.setAuthSession(
                                         User(
                                             id = "usr-${System.currentTimeMillis()}",
@@ -175,7 +199,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Quick skip / guest mode
+            // Mehmon rejimi
             TextButton(
                 onClick = onSkipToHome
             ) {
@@ -187,5 +211,53 @@ fun LoginScreen(
                 )
             }
         }
+    }
+
+    if (showForgotPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = { showForgotPasswordDialog = false },
+            title = { Text("Parolni tiklash", fontWeight = FontWeight.Black) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Emailingizni kiriting. Biz sizga parolni qayta tiklash havolasini yuboramiz:",
+                        fontSize = 12.sp
+                    )
+                    OutlinedTextField(
+                        value = forgotEmail,
+                        onValueChange = { forgotEmail = it },
+                        label = { Text("Email") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    forgotStatusMessage?.let {
+                        Text(it, color = MaterialTheme.colorScheme.primary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            val res = repository.forgotPassword(forgotEmail)
+                            res.onSuccess {
+                                forgotStatusMessage = "Havola emailingizga yuborildi!"
+                            }.onFailure {
+                                forgotStatusMessage = "Xatolik: ${it.message}"
+                            }
+                        }
+                    }
+                ) {
+                    Text("Yuborish")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showForgotPasswordDialog = false
+                    forgotStatusMessage = null
+                }) {
+                    Text("Yopish")
+                }
+            }
+        )
     }
 }

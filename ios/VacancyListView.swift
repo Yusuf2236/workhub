@@ -4,6 +4,9 @@ struct VacancyListView: View {
     @State private var searchQuery = ""
     @State private var selectedCategory = "Barchasi"
     @State private var selectedRegion = "Barcha hududlar"
+    @State private var vacancies: [Vacancy] = []
+    @State private var isLoading = false
+    @State private var errorMessage: String?
 
     let categories = [
         "Barchasi",
@@ -29,18 +32,10 @@ struct VacancyListView: View {
         "Masofaviy (Remote)"
     ]
 
-    let vacancies = [
-        Vacancy(id: "1", title: "Senior Go Backend Architect", company: "WorkHub Global", location: "Tashkent / Remote", description: "Designing high-concurrency microservices, PostgreSQL, and Redis caching systems.", salary: "$4000 - $6000", category: "IT & Dasturlash"),
-        Vacancy(id: "2", title: "Mobile iOS Lead (SwiftUI)", company: "Mobile Studio", location: "Tashkent shahri", description: "Native SwiftUI architecture and WebSocket integrations.", salary: "$3500 - $5000", category: "IT & Dasturlash"),
-        Vacancy(id: "3", title: "Cloud & DevOps Engineer", company: "InfraCorp", location: "Tashkent shahri", description: "Managing Kubernetes clusters, MinIO storage, and Docker pipelines.", salary: "$3000 - $4500", category: "IT & Dasturlash"),
-        Vacancy(id: "4", title: "Lead Product Designer (UI/UX)", company: "Fintech Hub", location: "Samarqand viloyati", description: "Mobile and web design systems, user journeys, Figma prototypes.", salary: "$2000 - $3500", category: "Dizayn & UX"),
-        Vacancy(id: "5", title: "HR Business Partner", company: "Tech Talent", location: "Toshkent shahri", description: "Talent acquisition, culture development, ATS workflow management.", salary: "$1500 - $2800", category: "HR & Menejment")
-    ]
-
     var filteredVacancies: [Vacancy] {
         vacancies.filter { vac in
             let matchesSearch = searchQuery.isEmpty || vac.title.localizedCaseInsensitiveContains(searchQuery) || vac.company.localizedCaseInsensitiveContains(searchQuery)
-            let matchesCategory = selectedCategory == "Barchasi" || vac.category == selectedCategory
+            let matchesCategory = selectedCategory == "Barchasi" || (vac.category ?? "").localizedCaseInsensitiveContains(selectedCategory)
             let matchesRegion = selectedRegion == "Barcha hududlar" || vac.location.localizedCaseInsensitiveContains(selectedRegion)
             return matchesSearch && matchesCategory && matchesRegion
         }
@@ -55,6 +50,9 @@ struct VacancyListView: View {
                         .foregroundColor(.secondary)
                     TextField("Kasb, lavozim yoki kompaniya...", text: $searchQuery)
                         .font(.subheadline)
+                        .onSubmit {
+                            loadVacancies()
+                        }
                 }
                 .padding(10)
                 .background(Color(UIColor.secondarySystemBackground))
@@ -68,6 +66,7 @@ struct VacancyListView: View {
                         ForEach(regions, id: \.self) { reg in
                             Button(reg) {
                                 selectedRegion = reg
+                                loadVacancies()
                             }
                         }
                     } label: {
@@ -98,17 +97,18 @@ struct VacancyListView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(categories, id: \.self) { cat in
-                            Button {
+                            Button(action: {
                                 selectedCategory = cat
-                            } label: {
+                                loadVacancies()
+                            }) {
                                 Text(cat)
                                     .font(.caption)
-                                    .fontWeight(.bold)
+                                    .fontWeight(.medium)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
                                     .background(selectedCategory == cat ? Color.blue : Color(UIColor.secondarySystemBackground))
                                     .foregroundColor(selectedCategory == cat ? .white : .primary)
-                                    .cornerRadius(10)
+                                    .cornerRadius(16)
                             }
                         }
                     }
@@ -117,39 +117,93 @@ struct VacancyListView: View {
                 }
 
                 // Vacancy list
-                List(filteredVacancies) { vac in
-                    NavigationLink(destination: VacancyDetailView(vacancy: vac)) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text(vac.company)
-                                    .font(.caption)
-                                    .fontWeight(.bold)
+                if isLoading && vacancies.isEmpty {
+                    Spacer()
+                    ProgressView("Vakansiyalar yuklanmoqda...")
+                    Spacer()
+                } else if filteredVacancies.isEmpty {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "tray")
+                            .font(.largeTitle)
+                            .foregroundColor(.secondary)
+                        Text("Vakansiyalar topilmadi")
+                            .font(.headline)
+                        Text("Qidiruv parametrlarini o'zgartirib ko'ring")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                } else {
+                    List(filteredVacancies) { vacancy in
+                        NavigationLink(destination: VacancyDetailView(vacancy: vacancy)) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(vacancy.title)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+
+                                Text(vacancy.company)
+                                    .font(.subheadline)
                                     .foregroundColor(.blue)
-                                Spacer()
-                                Text(vac.location)
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                            }
 
-                            Text(vac.title)
-                                .font(.headline)
-
-                            Text(vac.description)
+                                HStack {
+                                    Text(vacancy.location)
+                                    Spacer()
+                                    Text(vacancy.salaryFormatted)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.green)
+                                }
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                                .lineLimit(2)
-
-                            Text(vac.salary)
-                                .font(.footnote)
-                                .fontWeight(.black)
-                                .foregroundColor(.green)
+                            }
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
+                    }
+                    .listStyle(.plain)
+                    .refreshable {
+                        await loadVacanciesAsync()
                     }
                 }
-                .listStyle(.plain)
             }
             .navigationTitle("Vakansiyalar")
+            .onAppear {
+                if vacancies.isEmpty {
+                    loadVacancies()
+                }
+            }
+        }
+    }
+
+    private func loadVacancies() {
+        Task {
+            await loadVacanciesAsync()
+        }
+    }
+
+    private func loadVacanciesAsync() async {
+        isLoading = true
+        do {
+            let items = try await APIClient.shared.fetchVacancies(
+                search: searchQuery,
+                category: selectedCategory,
+                location: selectedRegion
+            )
+            await MainActor.run {
+                self.vacancies = items
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                // Fallback mock items agar server offline bo'lsa
+                if self.vacancies.isEmpty {
+                    self.vacancies = [
+                        Vacancy(id: "1", title: "Senior Go Backend Architect", company: "WorkHub Global", location: "Tashkent / Remote", description: "Designing high-concurrency microservices, PostgreSQL, and Redis caching systems.", salaryMin: 4000, salaryMax: 6000, salaryCurrency: "USD", category: "IT & Dasturlash"),
+                        Vacancy(id: "2", title: "Mobile iOS Lead (SwiftUI)", company: "Mobile Studio", location: "Tashkent shahri", description: "Native SwiftUI architecture and WebSocket integrations.", salaryMin: 3500, salaryMax: 5000, salaryCurrency: "USD", category: "IT & Dasturlash"),
+                        Vacancy(id: "3", title: "Cloud & DevOps Engineer", company: "InfraCorp", location: "Tashkent shahri", description: "Managing Kubernetes clusters, MinIO storage, and Docker pipelines.", salaryMin: 3000, salaryMax: 4500, salaryCurrency: "USD", category: "IT & Dasturlash")
+                    ]
+                }
+                self.isLoading = false
+            }
         }
     }
 }
