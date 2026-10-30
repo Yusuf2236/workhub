@@ -87,6 +87,233 @@
       0% { transform: scale(0.92); opacity: 0; filter: blur(4px); }
       100% { transform: scale(1); opacity: 1; filter: blur(0px); }
     }
+
+    /* ============================================== */
+    /* 🌓 COMPREHENSIVE PHONE THEME SYSTEM (iOS & Android) */
+    /* ============================================== */
+    
+    /* Light Mode Status Bar & Dock */
+    .status-bar-light {
+      background-color: rgba(246, 245, 251, 0.88) !important;
+      color: #18181b !important;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+    }
+    .bottom-dock-light {
+      background-color: rgba(255, 255, 255, 0.94) !important;
+      border-top: 1px solid rgba(108, 71, 216, 0.1) !important;
+    }
+
+    /* 🌙 DARK THEME ROOT & CONTAINERS */
+    .phone-dark-theme {
+      background-color: #0c0d16 !important;
+      color: #f8fafc !important;
+    }
+
+    /* Phone Cards & Panels in Dark Mode */
+    .phone-dark-theme .bg-white,
+    .phone-dark-theme [class*="bg-white/"],
+    .phone-dark-theme [class*="bg-white"] {
+      background-color: #151828 !important;
+      color: #f8fafc !important;
+      border-color: #262c42 !important;
+    }
+
+    .phone-dark-theme .bg-zinc-50,
+    .phone-dark-theme [class*="bg-zinc-50"] {
+      background-color: #1a1e32 !important;
+      color: #e2e8f0 !important;
+      border-color: #2b314d !important;
+    }
+
+    .phone-dark-theme .bg-zinc-100 {
+      background-color: #242940 !important;
+      color: #f1f5f9 !important;
+    }
+
+    /* Text Colors - Ultra High Contrast in Dark Mode */
+    .phone-dark-theme .text-zinc-900,
+    .phone-dark-theme .text-zinc-800,
+    .phone-dark-theme [class*="text-[#1C1335]"],
+    .phone-dark-theme [class*="text-[#2E1C59]"],
+    .phone-dark-theme h1,
+    .phone-dark-theme h2,
+    .phone-dark-theme h3,
+    .phone-dark-theme h4,
+    .phone-dark-theme .font-bold.text-xs,
+    .phone-dark-theme .font-semibold {
+      color: #f8fafc !important;
+    }
+
+    .phone-dark-theme .text-zinc-700,
+    .phone-dark-theme .text-zinc-600,
+    .phone-dark-theme [class*="text-[#6c6882]"] {
+      color: #cbd5e1 !important;
+    }
+
+    /* Form inputs and controls in Dark Mode */
+    .phone-dark-theme input,
+    .phone-dark-theme textarea,
+    .phone-dark-theme select {
+      background-color: #1a1e32 !important;
+      color: #f8fafc !important;
+      border-color: #2e3552 !important;
+    }
+    .phone-dark-theme input::placeholder,
+    .phone-dark-theme textarea::placeholder {
+      color: #64748b !important;
+    }
+
+    /* Gradient Promo Banners in Dark Mode */
+    .phone-dark-theme [class*="from-amber-50"] {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(124, 92, 255, 0.15)) !important;
+      border-color: rgba(245, 158, 11, 0.3) !important;
+    }
+    .phone-dark-theme [class*="from-rose-50"] {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(124, 92, 255, 0.15)) !important;
+      border-color: rgba(244, 63, 94, 0.3) !important;
+    }
+    .phone-dark-theme [class*="from-blue-50"] {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(124, 92, 255, 0.15)) !important;
+      border-color: rgba(37, 99, 235, 0.3) !important;
+    }
+
+    /* Bottom Sheets & Dialogs in Dark Mode */
+    .phone-dark-theme #ios-sheet-panel,
+    .phone-dark-theme #android-sheet-panel,
+    .phone-dark-sheet {
+      background-color: #121526 !important;
+      color: #f8fafc !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.85) !important;
+    }
+    .phone-dark-theme #ios-sheet-panel .bg-white,
+    .phone-dark-theme #android-sheet-panel .bg-white {
+      background-color: #181c30 !important;
+      border-color: #282f4c !important;
+    }
+    .phone-dark-theme #ios-sheet-panel .bg-zinc-50,
+    .phone-dark-theme #android-sheet-panel .bg-zinc-50 {
+      background-color: #1d223a !important;
+      border-color: #2a314e !important;
+    }
+    .phone-dark-theme #ios-sheet-panel .bg-zinc-100,
+    .phone-dark-theme #android-sheet-panel .bg-zinc-100 {
+      background-color: #252b46 !important;
+      color: #cbd5e1 !important;
+    }
+
+    .phone-dark-theme .text-zinc-500,
+    .phone-dark-theme .text-zinc-400 {
+      color: #94a3b8 !important;
+    }
+
+    /* Force all child elements of menu rows to be readable */
+    .phone-dark-theme .text-zinc-800 span,
+    .phone-dark-theme .text-zinc-900 span {
+      color: #f8fafc !important;
+    }
+
+    /* Borders & Dividers in Dark Mode */
+    .phone-dark-theme .border-zinc-100,
+    .phone-dark-theme .border-zinc-200,
+    .phone-dark-theme .border-zinc-200\/60,
+    .phone-dark-theme [class*="border-zinc-"] {
+      border-color: #252a3f !important;
+    }
+
+    .phone-dark-theme .divide-zinc-100 > :not([hidden]) ~ :not([hidden]),
+    .phone-dark-theme [class*="divide-zinc-"] > :not([hidden]) ~ :not([hidden]) {
+      border-color: #22273b !important;
+    }
+
+    .phone-dark-theme .hover\:bg-purple-50\/50:hover,
+    .phone-dark-theme .hover\:bg-zinc-50:hover {
+      background-color: rgba(124, 92, 255, 0.12) !important;
+    }
+
+    /* Status Bar in Dark Mode */
+    .phone-dark-theme #ios-status-bar,
+    .phone-dark-theme #android-status-bar {
+      background-color: rgba(12, 13, 22, 0.9) !important;
+      color: #f8fafc !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    }
+
+    /* Bottom Dock in Dark Mode */
+    .phone-dark-theme #ios-bottom-dock,
+    .phone-dark-theme #android-bottom-dock {
+      background-color: rgba(18, 20, 36, 0.96) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.55) !important;
+    }
+
+    .phone-dark-theme #ios-home-bar,
+    .phone-dark-theme #android-home-bar {
+      background-color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    /* Universal Bottom Sheet Panel in Dark Mode */
+    .phone-dark-theme #ios-sheet-panel,
+    .phone-dark-theme #android-sheet-panel,
+    .phone-dark-sheet {
+      background-color: #121526 !important;
+      color: #f8fafc !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.85) !important;
+    }
+
+    .phone-dark-theme #ios-sheet-handle,
+    .phone-dark-theme #android-sheet-handle {
+      background-color: #475569 !important;
+    }
+
+    .phone-dark-theme #ios-sheet-content,
+    .phone-dark-theme #android-sheet-content {
+      color: #f8fafc !important;
+    }
+
+    /* Badges & Chips in Dark Mode */
+    .phone-dark-theme .bg-emerald-50,
+    .phone-dark-theme [class*="bg-emerald-50"] {
+      background-color: rgba(16, 185, 129, 0.15) !important;
+      color: #6ee7b7 !important;
+      border: 1px solid rgba(16, 185, 129, 0.3) !important;
+    }
+
+    .phone-dark-theme .bg-amber-50,
+    .phone-dark-theme [class*="bg-amber-50"] {
+      background-color: rgba(245, 158, 11, 0.15) !important;
+      color: #fcd34d !important;
+      border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    }
+
+    .phone-dark-theme .bg-rose-50,
+    .phone-dark-theme [class*="bg-rose-50"] {
+      background-color: rgba(244, 63, 94, 0.15) !important;
+      color: #fda4af !important;
+      border: 1px solid rgba(244, 63, 94, 0.3) !important;
+    }
+
+    .phone-dark-theme .bg-purple-50,
+    .phone-dark-theme [class*="bg-purple-50"] {
+      background-color: rgba(124, 92, 255, 0.15) !important;
+      color: #c4b5fd !important;
+      border: 1px solid rgba(124, 92, 255, 0.3) !important;
+    }
+
+    .phone-dark-theme .bg-red-50,
+    .phone-dark-theme [class*="bg-red-50"] {
+      background-color: rgba(239, 68, 68, 0.15) !important;
+      color: #fca5a5 !important;
+      border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    }
+
+    .phone-dark-theme .bg-blue-50,
+    .phone-dark-theme [class*="bg-blue-50"] {
+      background-color: rgba(37, 99, 235, 0.15) !important;
+      color: #93c5fd !important;
+      border: 1px solid rgba(37, 99, 235, 0.3) !important;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -100,7 +327,7 @@
       <div>
         <h1 class="text-sm font-extrabold text-white tracking-tight flex items-center gap-2">
           <span>WZone Mobile Studio</span>
-          <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold">Port 3020</span>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">Jonli Sinov</span>
         </h1>
       </div>
     </div>
@@ -146,14 +373,18 @@
       <div id="wrapper-ios" class="flex flex-col items-center space-y-3">
         <div class="flex items-center justify-between w-full px-2 text-xs text-zinc-400 font-mono">
           <span class="flex items-center gap-1.5"><i class="fa-brands fa-apple text-sm text-zinc-300"></i> Apple iPhone 16 Pro</span>
-          <button onclick="playSplashSequence('ios')" class="text-[11px] text-purple-300 bg-purple-950/60 hover:bg-purple-900/80 px-2 py-0.5 rounded border border-purple-800/40 flex items-center gap-1">
-            <i class="fa-solid fa-rotate-right text-[9px]"></i> <span>Splash iOS</span>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button id="theme-btn-ios" onclick="quickToggleTheme('ios')" class="text-[11px] text-purple-200 bg-purple-950/80 hover:bg-purple-900 px-2 py-0.5 rounded border border-purple-800/50 flex items-center gap-1 transition shadow-xs" title="Mavzuni almashtirish">
+              <i class="fa-solid fa-moon text-[10px] text-purple-400"></i> <span>Tungi</span>
+            </button>
+            <button onclick="playSplashSequence('ios')" class="text-[11px] text-purple-300 bg-purple-950/60 hover:bg-purple-900/80 px-2 py-0.5 rounded border border-purple-800/40 flex items-center gap-1">
+              <i class="fa-solid fa-rotate-right text-[9px]"></i> <span>Splash iOS</span>
+            </button>
+          </div>
         </div>
 
         <!-- Phone Outer Frame -->
         <div class="w-[392px] h-[835px] bg-black rounded-[54px] p-3.5 iphone-frame relative flex flex-col overflow-hidden">
-          
           <!-- Dynamic Island -->
           <div class="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-full z-50 flex items-center justify-end pr-2 space-x-1 pointer-events-none">
             <span class="w-2.5 h-2.5 rounded-full bg-[#18181a]"></span>
@@ -161,7 +392,7 @@
           </div>
 
           <!-- Screen Inner Content -->
-          <div class="w-full h-full bg-[#f6f5fb] rounded-[44px] overflow-hidden flex flex-col relative text-zinc-800">
+          <div id="ios-screen-root" class="w-full h-full bg-[#f6f5fb] rounded-[44px] overflow-hidden flex flex-col relative text-zinc-800 transition-colors duration-300">
             
             <!-- ============================================== -->
             <!-- 🎬 iOS LAUNCH SPLASH OVERLAY (W ochiladi, kattalashadi) -->
@@ -189,7 +420,7 @@
             <div id="ios-app-container" class="w-full h-full flex flex-col relative">
               
               <!-- iOS Status Bar -->
-              <div class="h-11 px-7 pt-3 flex justify-between items-center text-xs font-semibold text-zinc-900 select-none z-30 shrink-0">
+              <div id="ios-status-bar" class="h-11 px-7 pt-3 flex justify-between items-center text-xs font-semibold text-zinc-900 select-none z-30 shrink-0 sticky top-0 backdrop-blur-md bg-[#f6f5fb]/80 transition-colors duration-300">
                 <span class="font-bold">9:41</span>
                 <div class="flex items-center space-x-1.5 text-[10.5px]">
                   <i class="fa-solid fa-signal"></i>
@@ -212,7 +443,7 @@
                 <div class="absolute left-1/2 -top-4 -translate-x-1/2 w-16 h-16 bg-[#6C47D8]/45 rounded-full blur-xl pointer-events-none"></div>
 
                 <!-- Asosiy oq panel (32px yuqori burchaklar, Frosted Glass Blur) -->
-                <div class="relative bg-white/90 backdrop-blur-xl rounded-t-[32px] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pt-2 pb-6 px-3 border-t border-purple-100/50">
+                <div id="ios-bottom-dock" class="relative bg-white/90 backdrop-blur-xl rounded-t-[32px] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pt-2 pb-6 px-3 border-t border-purple-100/50 transition-colors duration-300">
                   
                   <div class="flex items-center justify-around relative">
                     
@@ -258,7 +489,7 @@
                   </div>
 
                   <!-- iOS Home Indicator Chizig'i -->
-                  <div class="w-32 h-1 bg-zinc-900 rounded-full mx-auto mt-3.5 opacity-80"></div>
+                  <div id="ios-home-bar" class="w-32 h-1 bg-zinc-900 rounded-full mx-auto mt-3.5 opacity-80 transition-colors"></div>
                 </div>
               </div>
 
@@ -267,7 +498,7 @@
             <!-- UNIVERSAL INTERACTIVE BOTTOM SHEET (iOS) -->
             <div id="ios-sheet-overlay" class="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 flex flex-col justify-end">
               <div id="ios-sheet-panel" class="bg-white rounded-t-[36px] max-h-[92%] w-full overflow-hidden flex flex-col transform translate-y-full sheet-anim shadow-2xl p-5 pb-7 space-y-3">
-                <div class="w-12 h-1.5 bg-zinc-300 rounded-full mx-auto -mt-2 cursor-pointer hover:bg-zinc-400 transition" onclick="closeSheet('ios')"></div>
+                <div id="ios-sheet-handle" class="w-12 h-1.5 bg-zinc-300 rounded-full mx-auto -mt-2 cursor-pointer hover:bg-zinc-400 transition" onclick="closeSheet('ios')"></div>
                 <div id="ios-sheet-content" class="overflow-y-auto phone-scroll space-y-3 pt-1 text-xs text-zinc-800 pr-1">
                   <!-- Dynamic content injected via openSheet('ios', type, data) -->
                 </div>
@@ -291,9 +522,14 @@
       <div id="wrapper-android" class="flex flex-col items-center space-y-3">
         <div class="flex items-center justify-between w-full px-2 text-xs text-zinc-400 font-mono">
           <span class="flex items-center gap-1.5"><i class="fa-brands fa-android text-sm text-emerald-400"></i> Samsung Galaxy S24 (Android)</span>
-          <button onclick="playSplashSequence('android')" class="text-[11px] text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900/80 px-2 py-0.5 rounded border border-emerald-800/40 flex items-center gap-1">
-            <i class="fa-solid fa-rotate-right text-[9px]"></i> <span>Splash Android</span>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button id="theme-btn-android" onclick="quickToggleTheme('android')" class="text-[11px] text-purple-200 bg-purple-950/80 hover:bg-purple-900 px-2 py-0.5 rounded border border-purple-800/50 flex items-center gap-1 transition shadow-xs" title="Mavzuni almashtirish">
+              <i class="fa-solid fa-moon text-[10px] text-purple-400"></i> <span>Tungi</span>
+            </button>
+            <button onclick="playSplashSequence('android')" class="text-[11px] text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900/80 px-2 py-0.5 rounded border border-emerald-800/40 flex items-center gap-1">
+              <i class="fa-solid fa-rotate-right text-[9px]"></i> <span>Splash Android</span>
+            </button>
+          </div>
         </div>
 
         <!-- Phone Outer Frame -->
@@ -330,7 +566,7 @@
             <div id="android-app-container" class="w-full h-full flex flex-col relative">
 
               <!-- Android Status Bar -->
-              <div class="h-10 px-6 pt-2 flex justify-between items-center text-xs font-semibold text-zinc-900 select-none z-30 shrink-0">
+              <div id="android-status-bar" class="h-10 px-6 pt-2 flex justify-between items-center text-xs font-semibold text-zinc-900 select-none z-30 shrink-0 sticky top-0 backdrop-blur-md bg-[#f6f5fb]/80 transition-colors duration-300">
                 <span class="font-bold text-[11px]">12:30</span>
                 <div class="flex items-center space-x-2 text-[10.5px]">
                   <span class="text-[9.5px] font-black text-purple-700">5G</span>
@@ -351,7 +587,7 @@
                 <div class="absolute left-1/2 -top-4 -translate-x-1/2 w-16 h-16 bg-[#6C47D8]/45 rounded-full blur-xl pointer-events-none"></div>
 
                 <!-- Asosiy oq panel (32dp rounded top, Frosted Glass Blur) -->
-                <div class="relative bg-white/90 backdrop-blur-xl rounded-t-[32px] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pt-2 pb-5 px-3 border-t border-purple-100/50">
+                <div id="android-bottom-dock" class="relative bg-white/90 backdrop-blur-xl rounded-t-[32px] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pt-2 pb-5 px-3 border-t border-purple-100/50 transition-colors duration-300">
                   <div class="flex items-center justify-around relative">
                     
                     <!-- 1. Home -->
@@ -397,7 +633,7 @@
             <!-- UNIVERSAL INTERACTIVE BOTTOM SHEET (Android) -->
             <div id="android-sheet-overlay" class="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 flex flex-col justify-end">
               <div id="android-sheet-panel" class="bg-white rounded-t-[36px] max-h-[92%] w-full overflow-hidden flex flex-col transform translate-y-full sheet-anim shadow-2xl p-5 pb-7 space-y-3">
-                <div class="w-12 h-1.5 bg-zinc-300 rounded-full mx-auto -mt-2 cursor-pointer hover:bg-zinc-400 transition" onclick="closeSheet('android')"></div>
+                <div id="android-sheet-handle" class="w-12 h-1.5 bg-zinc-300 rounded-full mx-auto -mt-2 cursor-pointer hover:bg-zinc-400 transition" onclick="closeSheet('android')"></div>
                 <div id="android-sheet-content" class="overflow-y-auto phone-scroll space-y-3 pt-1 text-xs text-zinc-800 pr-1">
                   <!-- Dynamic content injected via openSheet('android', type, data) -->
                 </div>
@@ -1803,6 +2039,941 @@
     }
 
     // Global State for Dual Simulators
+    // ==============================================
+    // ⚙️ DEVICE SETTINGS & LIVE THEME CONTROLLER
+    // ==============================================
+    const SETTINGS_COLORS = [
+      { name: 'Binafsha (Violet)', hex: '#7c3aed' },
+      { name: 'Moviy (Blue)', hex: '#2563eb' },
+      { name: 'Zumrad (Emerald)', hex: '#10b981' },
+      { name: 'Atirgul (Rose)', hex: '#f43f5e' },
+      { name: 'Qahrabo (Amber)', hex: '#f59e0b' },
+      { name: 'Moviy ko‘l (Cyan)', hex: '#06b6d4' }
+    ];
+
+    const SETTINGS_LANGUAGES = [
+      { code: 'uz', name: 'O‘zbekcha', flag: '🇺🇿' },
+      { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+      { code: 'en', name: 'English', flag: '🇺🇸' }
+    ];
+
+    function createDeviceSettings(platform) {
+      const isAndroid = platform === 'android';
+      let saved = null;
+      try {
+        const str = localStorage.getItem('workhub_device_settings_' + platform);
+        if (str) saved = JSON.parse(str);
+      } catch (_) {}
+
+      const defaults = {
+        dark: isAndroid, // Android dark by default, iOS light by default (independent!)
+        accent: isAndroid ? '#7c3aed' : '#2563eb',
+        textScale: 1.0,
+        radius: isAndroid ? 20 : 14,
+        lang: 'uz',
+        push: true,
+        messages: true,
+        promos: false,
+        sound: true,
+        vibration: true,
+        jobAlerts: true,
+        appStatusAlerts: true,
+        profilePublic: true,
+        phoneVerifiedOnly: true,
+        incognitoResume: false,
+        twoFactorAuth: false,
+
+        // Pending staged values
+        pendingDark: isAndroid,
+        pendingAccent: isAndroid ? '#7c3aed' : '#2563eb',
+        pendingTextScale: 1.0,
+        pendingRadius: isAndroid ? 20 : 14,
+        pendingLang: 'uz',
+        pendingPush: true,
+        pendingMessages: true,
+        pendingPromos: false,
+        pendingSound: true,
+        pendingVibration: true,
+        pendingJobAlerts: true,
+        pendingAppStatusAlerts: true,
+        pendingProfilePublic: true,
+        pendingPhoneVerifiedOnly: true,
+        pendingIncognitoResume: false,
+        pendingTwoFactorAuth: false,
+
+        currentSubRoute: 'main', // 'main' | 'appearance' | 'notifications' | 'privacy' | 'review'
+        isAnimating: false
+      };
+
+      if (saved) {
+        Object.assign(defaults, saved);
+        defaults.pendingDark = defaults.dark;
+        defaults.pendingAccent = defaults.accent;
+        defaults.pendingTextScale = defaults.textScale;
+        defaults.pendingRadius = defaults.radius;
+        defaults.pendingLang = defaults.lang;
+        defaults.pendingPush = defaults.push;
+        defaults.pendingMessages = defaults.messages;
+        defaults.pendingPromos = defaults.promos;
+        defaults.pendingSound = defaults.sound;
+        defaults.pendingVibration = defaults.vibration;
+        defaults.pendingJobAlerts = defaults.jobAlerts;
+        defaults.pendingAppStatusAlerts = defaults.appStatusAlerts;
+        defaults.pendingProfilePublic = defaults.profilePublic;
+        defaults.pendingPhoneVerifiedOnly = defaults.phoneVerifiedOnly;
+        defaults.pendingIncognitoResume = defaults.incognitoResume;
+        defaults.pendingTwoFactorAuth = defaults.twoFactorAuth;
+      }
+      return defaults;
+    }
+
+    const deviceSettings = {
+      ios: createDeviceSettings('ios'),
+      android: createDeviceSettings('android')
+    };
+
+    function getColorName(hex) {
+      const found = SETTINGS_COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
+      return found ? found.name : 'Maxsus';
+    }
+
+    function getTextScaleName(scale) {
+      if (scale <= 0.88) return 'Kichik (0.85x)';
+      if (scale <= 1.05) return 'Standart (1.0x)';
+      if (scale <= 1.2) return 'Katta (1.15x)';
+      return 'X-Katta (1.30x)';
+    }
+
+    function getRadiusStyleName(r) {
+      if (r >= 18) return 'Rounded (20px)';
+      if (r >= 12) return 'Soft (14px)';
+      return 'Crisp (6px)';
+    }
+
+    function getLanguageName(code) {
+      const found = SETTINGS_LANGUAGES.find(l => l.code === code);
+      return found ? `${found.flag} ${found.name}` : code.toUpperCase();
+    }
+
+    function hasSettingsChanges(platform) {
+      const s = deviceSettings[platform];
+      return s.dark !== s.pendingDark ||
+             s.accent.toLowerCase() !== s.pendingAccent.toLowerCase() ||
+             s.textScale !== s.pendingTextScale ||
+             s.radius !== s.pendingRadius ||
+             s.lang !== s.pendingLang ||
+             s.push !== s.pendingPush ||
+             s.messages !== s.pendingMessages ||
+             s.promos !== s.pendingPromos ||
+             s.sound !== s.pendingSound ||
+             s.vibration !== s.pendingVibration ||
+             s.jobAlerts !== s.pendingJobAlerts ||
+             s.appStatusAlerts !== s.pendingAppStatusAlerts ||
+             s.profilePublic !== s.pendingProfilePublic ||
+             s.phoneVerifiedOnly !== s.pendingPhoneVerifiedOnly ||
+             s.incognitoResume !== s.pendingIncognitoResume ||
+             s.twoFactorAuth !== s.pendingTwoFactorAuth;
+    }
+
+    function getSettingsChangesCount(platform) {
+      const s = deviceSettings[platform];
+      let n = 0;
+      if (s.dark !== s.pendingDark) n++;
+      if (s.accent.toLowerCase() !== s.pendingAccent.toLowerCase()) n++;
+      if (s.textScale !== s.pendingTextScale) n++;
+      if (s.radius !== s.pendingRadius) n++;
+      if (s.lang !== s.pendingLang) n++;
+      if (s.push !== s.pendingPush) n++;
+      if (s.messages !== s.pendingMessages) n++;
+      if (s.promos !== s.pendingPromos) n++;
+      if (s.sound !== s.pendingSound) n++;
+      if (s.vibration !== s.pendingVibration) n++;
+      if (s.jobAlerts !== s.pendingJobAlerts) n++;
+      if (s.appStatusAlerts !== s.pendingAppStatusAlerts) n++;
+      if (s.profilePublic !== s.pendingProfilePublic) n++;
+      if (s.phoneVerifiedOnly !== s.pendingPhoneVerifiedOnly) n++;
+      if (s.incognitoResume !== s.pendingIncognitoResume) n++;
+      if (s.twoFactorAuth !== s.pendingTwoFactorAuth) n++;
+      return n;
+    }
+
+    function discardSettingsChanges(platform) {
+      const s = deviceSettings[platform];
+      s.pendingDark = s.dark;
+      s.pendingAccent = s.accent;
+      s.pendingTextScale = s.textScale;
+      s.pendingRadius = s.radius;
+      s.pendingLang = s.lang;
+      s.pendingPush = s.push;
+      s.pendingMessages = s.messages;
+      s.pendingPromos = s.promos;
+      s.pendingSound = s.sound;
+      s.pendingVibration = s.vibration;
+      s.pendingJobAlerts = s.jobAlerts;
+      s.pendingAppStatusAlerts = s.appStatusAlerts;
+      s.pendingProfilePublic = s.profilePublic;
+      s.pendingPhoneVerifiedOnly = s.phoneVerifiedOnly;
+      s.pendingIncognitoResume = s.incognitoResume;
+      s.pendingTwoFactorAuth = s.twoFactorAuth;
+      s.currentSubRoute = 'main';
+      refreshSettingsSheet(platform);
+    }
+
+    function applyThemeToDevice(platform) {
+      const s = deviceSettings[platform];
+      const screenRoot = document.getElementById(`${platform}-screen-root`);
+      const appContainer = document.getElementById(`${platform}-app-container`);
+      const bodyContainer = document.getElementById(`${platform}-content-body`);
+      const statusBar = document.getElementById(`${platform}-status-bar`);
+      const bottomDock = document.getElementById(`${platform}-bottom-dock`);
+      const homeBar = document.getElementById(`${platform}-home-bar`);
+      const sheetPanel = document.getElementById(`${platform}-sheet-panel`);
+      const themeBtn = document.getElementById(`theme-btn-${platform}`);
+
+      const elements = [screenRoot, appContainer, bodyContainer].filter(Boolean);
+
+      if (s.dark) {
+        elements.forEach(el => el.classList.add('phone-dark-theme'));
+        if (screenRoot) {
+          screenRoot.classList.add('phone-dark-theme');
+          screenRoot.style.backgroundColor = '#0c0d16';
+        }
+        if (appContainer) {
+          appContainer.classList.add('phone-dark-theme');
+          appContainer.style.backgroundColor = '#0c0d16';
+        }
+        if (bodyContainer) {
+          bodyContainer.classList.add('phone-dark-theme');
+          bodyContainer.style.backgroundColor = '#0c0d16';
+        }
+        if (statusBar) {
+          statusBar.style.backgroundColor = 'rgba(12, 13, 22, 0.95)';
+          statusBar.style.color = '#f8fafc';
+        }
+        if (bottomDock) {
+          bottomDock.classList.remove('bg-white/90', 'bg-white');
+          bottomDock.style.backgroundColor = '#101322';
+          bottomDock.style.borderTopColor = 'rgba(255, 255, 255, 0.08)';
+          bottomDock.style.boxShadow = '0 -8px 30px rgba(0, 0, 0, 0.55)';
+        }
+        if (homeBar) homeBar.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
+        if (sheetPanel) {
+          sheetPanel.classList.add('phone-dark-sheet');
+          sheetPanel.classList.remove('bg-white');
+          sheetPanel.style.backgroundColor = '#121526';
+          sheetPanel.style.color = '#f8fafc';
+          sheetPanel.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
+        }
+        if (themeBtn) {
+          themeBtn.innerHTML = `<i class="fa-solid fa-moon text-[10px] text-purple-400"></i> <span>Tungi</span>`;
+          themeBtn.className = "text-[11px] text-purple-200 bg-purple-950/80 hover:bg-purple-900 px-2 py-0.5 rounded border border-purple-800/50 flex items-center gap-1 transition shadow-xs";
+        }
+      } else {
+        elements.forEach(el => el.classList.remove('phone-dark-theme'));
+        if (screenRoot) {
+          screenRoot.classList.remove('phone-dark-theme');
+          screenRoot.style.backgroundColor = '#f6f5fb';
+        }
+        if (appContainer) {
+          appContainer.classList.remove('phone-dark-theme');
+          appContainer.style.backgroundColor = '#f6f5fb';
+        }
+        if (bodyContainer) {
+          bodyContainer.classList.remove('phone-dark-theme');
+          bodyContainer.style.backgroundColor = '#f6f5fb';
+        }
+        if (statusBar) {
+          statusBar.style.backgroundColor = 'rgba(246, 245, 251, 0.88)';
+          statusBar.style.color = '#18181b';
+        }
+        if (bottomDock) {
+          bottomDock.classList.add('bg-white/90');
+          bottomDock.style.backgroundColor = 'rgba(255, 255, 255, 0.94)';
+          bottomDock.style.borderTopColor = 'rgba(108, 71, 216, 0.1)';
+          bottomDock.style.boxShadow = '0 -4px 24px rgba(0,0,0,0.06)';
+        }
+        if (homeBar) homeBar.style.backgroundColor = 'rgba(24, 24, 27, 0.8)';
+        if (sheetPanel) {
+          sheetPanel.classList.remove('phone-dark-sheet');
+          sheetPanel.classList.add('bg-white');
+          sheetPanel.style.backgroundColor = '#ffffff';
+          sheetPanel.style.color = '#18181b';
+          sheetPanel.style.borderTop = 'none';
+        }
+        if (themeBtn) {
+          themeBtn.innerHTML = `<i class="fa-solid fa-sun text-[10px] text-amber-400"></i> <span>Yorug'</span>`;
+          themeBtn.className = "text-[11px] text-amber-200 bg-amber-950/60 hover:bg-amber-900 px-2 py-0.5 rounded border border-amber-800/50 flex items-center gap-1 transition shadow-xs";
+        }
+      }
+
+      // Re-apply bottom dock active and inactive tab colors
+      const currentTab = state.currentTab[platform] || 'home';
+      const tabs = ['home', 'vacancies', 'applications', 'profile'];
+      tabs.forEach(tab => {
+        const icon = document.getElementById(`${platform}-icon-${tab}`);
+        const label = document.getElementById(`${platform}-label-${tab}`);
+        if (!icon || !label) return;
+        if (tab === currentTab) {
+          const activeCol = s.dark ? (s.accent || '#a78bfa') : '#2E1C59';
+          icon.style.color = activeCol;
+          label.style.color = activeCol;
+        } else {
+          const inactiveCol = s.dark ? '#94a3b8' : '#8E8E93';
+          icon.style.color = inactiveCol;
+          label.style.color = inactiveCol;
+        }
+      });
+    }
+
+    async function quickToggleTheme(platform) {
+      const s = deviceSettings[platform];
+      const newDark = !s.dark;
+      s.dark = newDark;
+      s.pendingDark = newDark;
+
+      try {
+        localStorage.setItem('workhub_device_settings_' + platform, JSON.stringify(s));
+      } catch (_) {}
+
+      applyThemeToDevice(platform);
+      renderScreen(platform, state.currentTab[platform]);
+
+      const sheetPanel = document.getElementById(`${platform}-sheet-panel`);
+      if (sheetPanel && !sheetPanel.classList.contains('translate-y-full')) {
+        refreshSettingsSheet(platform);
+      }
+
+      showToast(platform, newDark ? '🌙 Tungi rejim yoqildi' : '☀️ Yorug‘ rejim yoqildi', newDark ? 'fa-solid fa-moon text-purple-400' : 'fa-solid fa-sun text-amber-400');
+
+      try {
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('workhub_token') : null;
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        fetch(`${API_BASE}/profile`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ settings: { dark_mode: newDark } })
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
+    function toggleSettingsDark(platform, checked, event, elInput) {
+      const s = deviceSettings[platform];
+      if (s.isAnimating) return;
+      s.isAnimating = true;
+
+      const targetDark = checked;
+      s.pendingDark = targetDark;
+
+      const sheetPanel = document.getElementById(`${platform}-sheet-panel`);
+      const sheetContent = document.getElementById(`${platform}-sheet-content`);
+
+      if (!sheetPanel || !sheetContent) {
+        s.dark = targetDark;
+        applyThemeToDevice(platform);
+        refreshSettingsSheet(platform);
+        renderScreen(platform, state.currentTab[platform]);
+        s.isAnimating = false;
+        return;
+      }
+
+      const panelRect = sheetPanel.getBoundingClientRect();
+      let originX = panelRect.width - 50;
+      let originY = 160;
+
+      if (elInput && typeof elInput.getBoundingClientRect === 'function') {
+        const swRect = elInput.getBoundingClientRect();
+        originX = (swRect.left + swRect.width / 2) - panelRect.left;
+        originY = (swRect.top + swRect.height / 2) - panelRect.top;
+      } else if (event && event.clientX) {
+        originX = event.clientX - panelRect.left;
+        originY = event.clientY - panelRect.top;
+      }
+
+      const maxRadius = Math.hypot(
+        Math.max(originX, panelRect.width - originX),
+        Math.max(originY, panelRect.height - originY)
+      ) + 80;
+
+      // Render incoming content with targetDark preview
+      s.pendingDark = targetDark;
+      const incomingHTML = getSettingsContent(platform);
+      s.pendingDark = !targetDark; // keep old theme while circle expands
+
+      const overlay = document.createElement('div');
+      overlay.className = 'absolute inset-0 overflow-y-auto phone-scroll p-5 pb-12 space-y-3 z-30 pointer-events-none';
+      overlay.style.backgroundColor = targetDark ? '#121526' : '#ffffff';
+      overlay.style.color = targetDark ? '#f8fafc' : '#18181b';
+      overlay.style.clipPath = `circle(0px at ${originX}px ${originY}px)`;
+      overlay.style.willChange = 'clip-path';
+      overlay.innerHTML = incomingHTML;
+      overlay.scrollTop = sheetContent.scrollTop;
+
+      sheetPanel.appendChild(overlay);
+
+      const anim = overlay.animate([
+        { clipPath: `circle(0px at ${originX}px ${originY}px)` },
+        { clipPath: `circle(${maxRadius}px at ${originX}px ${originY}px)` }
+      ], {
+        duration: 540,
+        easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+        fill: 'forwards'
+      });
+
+      // Expanding wave ring with accent color
+      const ring = document.createElement('div');
+      ring.className = 'absolute inset-0 pointer-events-none z-35';
+      sheetPanel.appendChild(ring);
+
+      const ringAnim = ring.animate([
+        {
+          boxShadow: `inset 0 0 0 2px ${s.pendingAccent}`,
+          clipPath: `circle(0px at ${originX}px ${originY}px)`,
+          opacity: 1
+        },
+        {
+          boxShadow: `inset 0 0 35px 12px ${s.pendingAccent}`,
+          clipPath: `circle(${maxRadius}px at ${originX}px ${originY}px)`,
+          opacity: 0
+        }
+      ], {
+        duration: 540,
+        easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+      });
+
+      ringAnim.onfinish = () => ring.remove();
+
+      anim.onfinish = () => {
+        s.pendingDark = targetDark;
+        s.dark = targetDark; // apply live to device
+        try {
+          localStorage.setItem('workhub_device_settings_' + platform, JSON.stringify(s));
+        } catch (_) {}
+        applyThemeToDevice(platform);
+        refreshSettingsSheet(platform);
+        renderScreen(platform, state.currentTab[platform]);
+        overlay.remove();
+        s.isAnimating = false;
+
+        // Persist to backend asynchronously
+        try {
+          const token = typeof localStorage !== 'undefined' ? localStorage.getItem('workhub_token') : null;
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+          fetch(`${API_BASE}/profile`, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify({ settings: { dark_mode: targetDark } })
+          }).catch(() => {});
+        } catch (_) {}
+      };
+    }
+
+    function setSettingsSubRoute(platform, route) {
+      deviceSettings[platform].currentSubRoute = route;
+      refreshSettingsSheet(platform);
+    }
+
+    function setSettingsPendingAccent(platform, hex) {
+      deviceSettings[platform].pendingAccent = hex;
+      refreshSettingsSheet(platform);
+    }
+
+    function setSettingsPendingTextScale(platform, scale) {
+      deviceSettings[platform].pendingTextScale = parseFloat(scale);
+      refreshSettingsSheet(platform);
+    }
+
+    function setSettingsPendingRadius(platform, r) {
+      deviceSettings[platform].pendingRadius = parseInt(r, 10);
+      refreshSettingsSheet(platform);
+    }
+
+    function setSettingsPendingLang(platform, code) {
+      deviceSettings[platform].pendingLang = code;
+      refreshSettingsSheet(platform);
+    }
+
+    function toggleSettingsNotification(platform, prop, val) {
+      deviceSettings[platform][prop] = val;
+      refreshSettingsSheet(platform);
+    }
+
+    function refreshSettingsSheet(platform) {
+      const content = document.getElementById(`${platform}-sheet-content`);
+      if (content) {
+        content.innerHTML = getSettingsContent(platform);
+      }
+    }
+
+    async function saveSettingsToBackend(platform) {
+      const s = deviceSettings[platform];
+      s.dark = s.pendingDark;
+      s.accent = s.pendingAccent;
+      s.textScale = s.pendingTextScale;
+      s.radius = s.pendingRadius;
+      s.lang = s.pendingLang;
+      s.push = s.pendingPush;
+      s.messages = s.pendingMessages;
+      s.promos = s.pendingPromos;
+      s.sound = s.pendingSound;
+      s.vibration = s.pendingVibration;
+      s.jobAlerts = s.pendingJobAlerts;
+      s.appStatusAlerts = s.pendingAppStatusAlerts;
+      s.profilePublic = s.pendingProfilePublic;
+      s.phoneVerifiedOnly = s.pendingPhoneVerifiedOnly;
+      s.incognitoResume = s.pendingIncognitoResume;
+      s.twoFactorAuth = s.pendingTwoFactorAuth;
+      s.currentSubRoute = 'main';
+
+      try {
+        localStorage.setItem('workhub_device_settings_' + platform, JSON.stringify(s));
+      } catch (_) {}
+
+      applyThemeToDevice(platform);
+
+      // Persist to Go backend API & PostgreSQL
+      try {
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('workhub_token') : null;
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const payload = {
+          settings: {
+            dark_mode: s.dark,
+            accent_color: s.accent,
+            text_scale: s.textScale,
+            corner_radius: s.radius,
+            language: s.lang,
+            push_notifications: s.push,
+            messages_notifications: s.messages,
+            sound_enabled: s.sound,
+            vibration_enabled: s.vibration,
+            job_alerts: s.jobAlerts,
+            profile_public: s.profilePublic,
+            two_factor_auth: s.twoFactorAuth
+          }
+        };
+
+        const res = await fetch(`${API_BASE}/profile`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          showToast(platform, '✓ Sozlamalar saqlandi va PostgreSQL bazasida yangilandi!', 'fa-solid fa-cloud-arrow-up text-emerald-400');
+        } else {
+          showToast(platform, '✓ Sozlamalar muvaffaqiyatli saqlandi', 'fa-solid fa-check text-emerald-400');
+        }
+      } catch (err) {
+        showToast(platform, '✓ Sozlamalar qurilmada saqlandi', 'fa-solid fa-check text-emerald-400');
+      }
+
+      refreshSettingsSheet(platform);
+      renderScreen(platform, state.currentTab[platform]);
+    }
+
+    function getSettingsContent(platform) {
+      const s = deviceSettings[platform];
+      const p = state.userProfile;
+      const isDark = s.pendingDark;
+      const bgCard = isDark ? 'bg-[#181b28] text-zinc-100 border-[#272b3c]' : 'bg-white text-zinc-800 border-zinc-100';
+      const textTitle = isDark ? 'text-zinc-100' : 'text-zinc-900';
+      const textSub = isDark ? 'text-zinc-400' : 'text-zinc-500';
+      const changesCount = getSettingsChangesCount(platform);
+
+      // 1. SUB-VIEW: APPEARANCE
+      if (s.currentSubRoute === 'appearance') {
+        return `
+          <div class="space-y-4 pb-4">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b ${isDark ? 'border-zinc-800' : 'border-zinc-100'} pb-2.5">
+              <button onclick="setSettingsSubRoute('${platform}', 'main')" class="text-xs font-bold flex items-center gap-1.5 ${isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}">
+                <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                <span>Sozlamalarga qaytish</span>
+              </button>
+              <h3 class="text-xs font-black uppercase tracking-wider ${textSub}">Mavzu & Ranglar</h3>
+            </div>
+
+            <!-- Accent Color Selection -->
+            <div class="${bgCard} p-4 rounded-3xl border shadow-sm space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold ${textTitle}">Aksent rangi (Theme Color)</span>
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-lg text-white" style="background:${s.pendingAccent}">
+                  ${getColorName(s.pendingAccent)}
+                </span>
+              </div>
+              <p class="text-[11px] ${textSub}">Tugmalar, faol belgilar va vizual elementlar rangini tanlang</p>
+              <div class="grid grid-cols-6 gap-2 pt-1">
+                ${SETTINGS_COLORS.map(c => `
+                  <button onclick="setSettingsPendingAccent('${platform}', '${c.hex}')" class="h-10 rounded-2xl flex items-center justify-center transition-transform active:scale-90 relative ${s.pendingAccent.toLowerCase() === c.hex.toLowerCase() ? 'ring-2 ring-offset-2 scale-105 shadow-md' : 'hover:scale-95'}" style="background: ${c.hex}">
+                    ${s.pendingAccent.toLowerCase() === c.hex.toLowerCase() ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Text Scale -->
+            <div class="${bgCard} p-4 rounded-3xl border shadow-sm space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold ${textTitle}">Shrift kattaligi (Text Size)</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${isDark ? 'bg-zinc-800 text-zinc-200' : 'bg-purple-50 text-[#6C47D8]'}">
+                  ${getTextScaleName(s.pendingTextScale)}
+                </span>
+              </div>
+              <div class="grid grid-cols-4 gap-1.5 pt-1">
+                ${[0.85, 1.0, 1.15, 1.3].map(scale => `
+                  <button onclick="setSettingsPendingTextScale('${platform}', ${scale})" class="py-2 rounded-xl text-[11px] font-bold border transition ${s.pendingTextScale === scale ? 'text-white border-transparent shadow-sm' : (isDark ? 'bg-zinc-800/80 text-zinc-300 border-zinc-700' : 'bg-zinc-50 text-zinc-700 border-zinc-200')}" style="${s.pendingTextScale === scale ? 'background:' + s.pendingAccent : ''}">
+                    ${scale <= 0.88 ? 'Kichik' : (scale <= 1.05 ? 'Standart' : (scale <= 1.2 ? 'Katta' : 'X-Katta'))}
+                  </button>
+                `).join('')}
+              </div>
+              <div class="p-3 rounded-2xl ${isDark ? 'bg-zinc-900/80 text-zinc-300' : 'bg-zinc-50 text-zinc-600'} text-[11px] italic leading-relaxed">
+                "WorkHub — O‘zbekistondagi eng yaxshi bo‘sh ish o‘rinlari va yirik kompaniyalar platformasi."
+              </div>
+            </div>
+
+            <!-- Corner Radius Style -->
+            <div class="${bgCard} p-4 rounded-3xl border shadow-sm space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold ${textTitle}">Burchak radiusi (UI Style)</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${isDark ? 'bg-zinc-800 text-zinc-200' : 'bg-purple-50 text-[#6C47D8]'}">
+                  ${getRadiusStyleName(s.pendingRadius)}
+                </span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 pt-1">
+                ${[{ r: 6, label: 'Crisp (6px)' }, { r: 14, label: 'Soft (14px)' }, { r: 20, label: 'Rounded (20px)' }].map(item => `
+                  <button onclick="setSettingsPendingRadius('${platform}', ${item.r})" class="py-2.5 rounded-xl text-[11px] font-bold border transition ${s.pendingRadius === item.r ? 'text-white border-transparent shadow-sm' : (isDark ? 'bg-zinc-800/80 text-zinc-300 border-zinc-700' : 'bg-zinc-50 text-zinc-700 border-zinc-200')}" style="${s.pendingRadius === item.r ? 'background:' + s.pendingAccent : ''}; border-radius:${item.r}px">
+                    ${item.label}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <button onclick="setSettingsSubRoute('${platform}', 'main')" class="w-full py-3 text-white font-bold text-xs rounded-2xl shadow-md transition active:scale-95" style="background:${s.pendingAccent}">
+              Mavzu parametrlarini qo‘llash
+            </button>
+          </div>
+        `;
+      }
+
+      // 2. SUB-VIEW: NOTIFICATIONS
+      if (s.currentSubRoute === 'notifications') {
+        return `
+          <div class="space-y-4 pb-4">
+            <div class="flex items-center justify-between border-b ${isDark ? 'border-zinc-800' : 'border-zinc-100'} pb-2.5">
+              <button onclick="setSettingsSubRoute('${platform}', 'main')" class="text-xs font-bold flex items-center gap-1.5 ${isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}">
+                <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                <span>Sozlamalarga qaytish</span>
+              </button>
+              <h3 class="text-xs font-black uppercase tracking-wider ${textSub}">Bildirishnomalar</h3>
+            </div>
+
+            <div class="${bgCard} rounded-3xl border shadow-sm divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'} text-xs">
+              ${[
+                { prop: 'pendingPush', title: 'Push bildirishnomalar', sub: 'Ilovadan tezkor xabarnomalar' },
+                { prop: 'pendingMessages', title: 'Yangi xabarlar', sub: 'Ish beruvchilar bilan suhbat xabarlari' },
+                { prop: 'pendingJobAlerts', title: 'Mos vakansiya signallari', sub: 'Sizning ko‘nikmangizga mos yangi ishlar' },
+                { prop: 'pendingSound', title: 'Ilova tovushlari', sub: 'Harakatlar paytida ovozli signal' },
+                { prop: 'pendingVibration', title: 'Haptik tebranish', sub: 'Tugmalarni bosganda tebranish effekti' }
+              ].map(item => `
+                <div class="p-3.5 flex items-center justify-between">
+                  <div>
+                    <h4 class="font-bold ${textTitle}">${item.title}</h4>
+                    <p class="text-[10.5px] ${textSub}">${item.sub}</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" ${s[item.prop] ? 'checked' : ''} onchange="toggleSettingsNotification('${platform}', '${item.prop}', this.checked)" class="sr-only peer">
+                    <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:width-5 after:w-5 after:transition-all" style="${s[item.prop] ? 'background-color:' + s.pendingAccent : ''}"></div>
+                  </label>
+                </div>
+              `).join('')}
+            </div>
+
+            <button onclick="setSettingsSubRoute('${platform}', 'main')" class="w-full py-3 text-white font-bold text-xs rounded-2xl shadow-md transition active:scale-95" style="background:${s.pendingAccent}">
+              Tayyor
+            </button>
+          </div>
+        `;
+      }
+
+      // 3. SUB-VIEW: PRIVACY & SECURITY
+      if (s.currentSubRoute === 'privacy') {
+        return `
+          <div class="space-y-4 pb-4">
+            <div class="flex items-center justify-between border-b ${isDark ? 'border-zinc-800' : 'border-zinc-100'} pb-2.5">
+              <button onclick="setSettingsSubRoute('${platform}', 'main')" class="text-xs font-bold flex items-center gap-1.5 ${isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}">
+                <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                <span>Sozlamalarga qaytish</span>
+              </button>
+              <h3 class="text-xs font-black uppercase tracking-wider ${textSub}">Maxfiylik & Xavfsizlik</h3>
+            </div>
+
+            <div class="${bgCard} rounded-3xl border shadow-sm divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'} text-xs">
+              <div class="p-3.5 flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold ${textTitle}">Ommaviy profil</h4>
+                  <p class="text-[10.5px] ${textSub}">Ish beruvchilar rezyumeyingizni qidiruvda topa oladi</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" ${s.pendingProfilePublic ? 'checked' : ''} onchange="toggleSettingsNotification('${platform}', 'pendingProfilePublic', this.checked)" class="sr-only peer">
+                  <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all" style="${s.pendingProfilePublic ? 'background-color:' + s.pendingAccent : ''}"></div>
+                </label>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold ${textTitle}">Faqat OneID Tasdiqlangan</h4>
+                  <p class="text-[10.5px] ${textSub}">Faqat davlat reyestridan o‘tgan yuridik kompaniyalar</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" ${s.pendingPhoneVerifiedOnly ? 'checked' : ''} onchange="toggleSettingsNotification('${platform}', 'pendingPhoneVerifiedOnly', this.checked)" class="sr-only peer">
+                  <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all" style="${s.pendingPhoneVerifiedOnly ? 'background-color:' + s.pendingAccent : ''}"></div>
+                </label>
+              </div>
+
+              <div class="p-3.5 flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold ${textTitle}">Ikki bosqichli himoya (2FA)</h4>
+                  <p class="text-[10.5px] ${textSub}">SMS yoki OneID orqali tasdiqlash kodi</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" ${s.pendingTwoFactorAuth ? 'checked' : ''} onchange="toggleSettingsNotification('${platform}', 'pendingTwoFactorAuth', this.checked)" class="sr-only peer">
+                  <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all" style="${s.pendingTwoFactorAuth ? 'background-color:' + s.pendingAccent : ''}"></div>
+                </label>
+              </div>
+            </div>
+
+            <button onclick="setSettingsSubRoute('${platform}', 'main')" class="w-full py-3 text-white font-bold text-xs rounded-2xl shadow-md transition active:scale-95" style="background:${s.pendingAccent}">
+              Tayyor
+            </button>
+          </div>
+        `;
+      }
+
+      // 4. SUB-VIEW: REVIEW STAGED CHANGES
+      if (s.currentSubRoute === 'review') {
+        const diffs = [];
+        if (s.dark !== s.pendingDark) diffs.push({ label: 'Mavzu rejimi', oldVal: s.dark ? 'Tungi' : 'Yorug‘', newVal: s.pendingDark ? 'Tungi' : 'Yorug‘' });
+        if (s.accent.toLowerCase() !== s.pendingAccent.toLowerCase()) diffs.push({ label: 'Aksent rangi', oldVal: getColorName(s.accent), newVal: getColorName(s.pendingAccent) });
+        if (s.textScale !== s.pendingTextScale) diffs.push({ label: 'Shrift o‘lchami', oldVal: getTextScaleName(s.textScale), newVal: getTextScaleName(s.pendingTextScale) });
+        if (s.radius !== s.pendingRadius) diffs.push({ label: 'UI uslubi', oldVal: getRadiusStyleName(s.radius), newVal: getRadiusStyleName(s.pendingRadius) });
+        if (s.lang !== s.pendingLang) diffs.push({ label: 'Tizim tili', oldVal: getLanguageName(s.lang), newVal: getLanguageName(s.pendingLang) });
+        if (s.push !== s.pendingPush) diffs.push({ label: 'Push xabarlar', oldVal: s.push ? 'Yoqiq' : 'O‘chiq', newVal: s.pendingPush ? 'Yoqiq' : 'O‘chiq' });
+        if (s.messages !== s.pendingMessages) diffs.push({ label: 'Suhbat xabarlari', oldVal: s.messages ? 'Yoqiq' : 'O‘chiq', newVal: s.pendingMessages ? 'Yoqiq' : 'O‘chiq' });
+        if (s.sound !== s.pendingSound) diffs.push({ label: 'Ovoz signallari', oldVal: s.sound ? 'Yoqiq' : 'O‘chiq', newVal: s.pendingSound ? 'Yoqiq' : 'O‘chiq' });
+        if (s.vibration !== s.pendingVibration) diffs.push({ label: 'Vibratsiya', oldVal: s.vibration ? 'Yoqiq' : 'O‘chiq', newVal: s.pendingVibration ? 'Yoqiq' : 'O‘chiq' });
+
+        return `
+          <div class="space-y-4 pb-4">
+            <div class="flex items-center justify-between border-b ${isDark ? 'border-zinc-800' : 'border-zinc-100'} pb-2.5">
+              <button onclick="setSettingsSubRoute('${platform}', 'main')" class="text-xs font-bold flex items-center gap-1.5 ${isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}">
+                <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                <span>Sozlamalarga qaytish</span>
+              </button>
+              <h3 class="text-xs font-black uppercase tracking-wider ${textSub}">O‘zgarishlar Taqqoslash</h3>
+            </div>
+
+            <div class="${bgCard} rounded-3xl border shadow-sm p-4 space-y-3">
+              <div class="flex items-center gap-2 text-xs font-bold ${textTitle}">
+                <i class="fa-solid fa-clipboard-check text-emerald-500"></i>
+                <span>Kiritilgan o‘zgarishlar (${diffs.length} ta parametr)</span>
+              </div>
+              <div class="divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'} text-xs">
+                ${diffs.map(d => `
+                  <div class="py-2.5 flex items-center justify-between">
+                    <span class="font-semibold ${textSub}">${d.label}</span>
+                    <div class="flex items-center gap-2">
+                      <span class="line-through text-zinc-400 text-[11px]">${d.oldVal}</span>
+                      <i class="fa-solid fa-arrow-right text-[10px] text-zinc-400"></i>
+                      <span class="font-bold text-white px-2 py-0.5 rounded-lg text-[11px]" style="background:${s.pendingAccent}">${d.newVal}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="space-y-2">
+              <button onclick="saveSettingsToBackend('${platform}')" class="w-full py-3.5 text-white font-extrabold text-xs rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2" style="background:${s.pendingAccent}">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>✓ Bazada Saqlash va Sinxronlash</span>
+              </button>
+              <button onclick="discardSettingsChanges('${platform}')" class="w-full py-2.5 ${isDark ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'} font-bold text-xs rounded-2xl transition">
+                Barcha o‘zgarishlarni bekor qilish
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      // 5. MAIN SETTINGS VIEW
+      return `
+        <div class="space-y-4 pb-4">
+          <!-- Sheet Header -->
+          <div class="flex items-center justify-between border-b ${isDark ? 'border-zinc-800' : 'border-zinc-100'} pb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-xl flex items-center justify-center text-white text-xs font-bold" style="background:${s.pendingAccent}">
+                <i class="fa-solid fa-gear"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold ${textTitle}">Ilova & Tizim Sozlamalari</h3>
+                <p class="text-[10px] ${textSub}">${platform === 'ios' ? 'Apple iOS (SwiftUI)' : 'Google Android (Compose)'} • Jonli Baza</p>
+              </div>
+            </div>
+            <button onclick="closeSheet('${platform}')" class="w-7 h-7 rounded-full ${isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-400'} flex items-center justify-center hover:opacity-80 transition">
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
+
+          <!-- Real Backend User Profile Card -->
+          <div class="${bgCard} p-3.5 rounded-3xl border shadow-sm space-y-2.5">
+            <div class="flex items-center space-x-3">
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-white text-sm shadow-md shrink-0" style="background: linear-gradient(135deg, ${s.pendingAccent}, #1e1b4b)">
+                ${(p.name || 'YU').split(' ').map(n=>n[0]).join('').slice(0, 2)}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="text-xs font-extrabold ${textTitle} truncate">${p.name || 'Yusuf Usmonov'}</h4>
+                  <span class="text-[9.5px] bg-emerald-50 text-emerald-700 font-extrabold px-1.5 py-0.2 rounded">✓ OneID</span>
+                </div>
+                <p class="text-[10.5px] ${textSub} truncate">${p.email || 'usmonovyusuf693@gmail.com'}</p>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span class="text-[9.5px] font-semibold text-emerald-600 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    PostgreSQL Real-time Sync
+                  </span>
+                </div>
+              </div>
+            </div>
+            ${p.bio ? `
+              <p class="text-[10.5px] ${textSub} italic border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'} pt-2 line-clamp-2">
+                "${p.bio}"
+              </p>
+            ` : ''}
+          </div>
+
+          <!-- Section: TIZIM REJIMI & KO'RINISH -->
+          <div class="space-y-1.5">
+            <span class="text-[10px] font-black uppercase tracking-wider ${textSub} px-1">Mavzu & Ko‘rinish</span>
+            <div class="${bgCard} rounded-3xl border shadow-sm divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'} text-xs overflow-hidden">
+              <!-- Dark Mode with Circular Ripple Animation -->
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl flex items-center justify-center transition" style="background:${isDark ? '#2e1065' : '#ede9fe'}; color:${s.pendingAccent}">
+                    <i class="fa-solid ${isDark ? 'fa-moon' : 'fa-sun'} text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold block ${textTitle}">Qorong‘i rejim (Dark Mode)</span>
+                    <span class="text-[10px] ${textSub}">To‘lqinsimon aylanma animatsiya bilan</span>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" ${isDark ? 'checked' : ''} onchange="toggleSettingsDark('${platform}', this.checked, event, this)" class="sr-only peer">
+                  <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all" style="${isDark ? 'background-color:' + s.pendingAccent : ''}"></div>
+                </label>
+              </div>
+
+              <!-- Appearance & Colors Link -->
+              <div onclick="setSettingsSubRoute('${platform}', 'appearance')" class="p-3.5 flex items-center justify-between hover:opacity-80 cursor-pointer transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:${isDark ? '#1e293b' : '#f1f5f9'}; color:${s.pendingAccent}">
+                    <i class="fa-solid fa-palette text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold block ${textTitle}">Ranglar va UI Uslubi</span>
+                    <span class="text-[10px] ${textSub}">Palitra: ${getColorName(s.pendingAccent)} • ${getTextScaleName(s.pendingTextScale)}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3.5 h-3.5 rounded-full border border-white/50" style="background:${s.pendingAccent}"></span>
+                  <i class="fa-solid fa-chevron-right text-zinc-400 text-xs"></i>
+                </div>
+              </div>
+
+              <!-- Language Select -->
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i class="fa-solid fa-globe text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold block ${textTitle}">Ilova tili</span>
+                    <span class="text-[10px] ${textSub}">${getLanguageName(s.pendingLang)}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1">
+                  ${SETTINGS_LANGUAGES.map(lang => `
+                    <button onclick="setSettingsPendingLang('${platform}', '${lang.code}')" class="px-2 py-1 rounded-lg text-[10px] font-bold border transition ${s.pendingLang === lang.code ? 'text-white border-transparent' : (isDark ? 'bg-zinc-800 text-zinc-400 border-zinc-700' : 'bg-zinc-50 text-zinc-600 border-zinc-200')}" style="${s.pendingLang === lang.code ? 'background:' + s.pendingAccent : ''}">
+                      ${lang.flag}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: BILDIRISHNOMALAR VA MAXFIYLIK -->
+          <div class="space-y-1.5">
+            <span class="text-[10px] font-black uppercase tracking-wider ${textSub} px-1">Aloqa & Xavfsizlik</span>
+            <div class="${bgCard} rounded-3xl border shadow-sm divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'} text-xs overflow-hidden">
+              <!-- Notifications -->
+              <div onclick="setSettingsSubRoute('${platform}', 'notifications')" class="p-3.5 flex items-center justify-between hover:opacity-80 cursor-pointer transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-purple-50 text-[#6C47D8] flex items-center justify-center">
+                    <i class="fa-solid fa-bell text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold block ${textTitle}">Bildirishnomalar va Tovush</span>
+                    <span class="text-[10px] ${textSub}">Push: ${s.pendingPush ? 'Yoqiq' : 'O‘chiq'} • Ovoz: ${s.pendingSound ? 'Yoqiq' : 'O‘chiq'}</span>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-zinc-400 text-xs"></i>
+              </div>
+
+              <!-- Privacy -->
+              <div onclick="setSettingsSubRoute('${platform}', 'privacy')" class="p-3.5 flex items-center justify-between hover:opacity-80 cursor-pointer transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <i class="fa-solid fa-shield-halved text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold block ${textTitle}">Maxfiylik va Himoya</span>
+                    <span class="text-[10px] ${textSub}">2FA: ${s.pendingTwoFactorAuth ? 'Faol' : 'O‘chiq'} • Rezyume ochiqligi</span>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-zinc-400 text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Floating Staged Changes Bar -->
+          ${changesCount > 0 ? `
+            <div class="p-3.5 rounded-2xl border ${isDark ? 'bg-purple-950/40 border-purple-800/60' : 'bg-purple-50 border-purple-200'} flex items-center justify-between gap-2 shadow-sm animate-pulse">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-[#6C47D8] text-white flex items-center justify-center text-[10px] font-black">${changesCount}</span>
+                <span class="text-xs font-bold ${textTitle}">ta o‘zgarish kiritildi</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="setSettingsSubRoute('${platform}', 'review')" class="px-2.5 py-1.5 rounded-xl bg-white text-[#6C47D8] text-[10.5px] font-bold shadow-xs hover:bg-zinc-50 border border-purple-200">
+                  Ko‘rib chiqish
+                </button>
+                <button onclick="saveSettingsToBackend('${platform}')" class="px-3 py-1.5 rounded-xl text-white text-[10.5px] font-extrabold shadow-sm active:scale-95 transition" style="background:${s.pendingAccent}">
+                  Saqlash
+                </button>
+              </div>
+            </div>
+          ` : `
+            <button onclick="saveSettingsToBackend('${platform}')" class="w-full py-3.5 text-white font-extrabold text-xs rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center gap-2" style="background:${s.pendingAccent}">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>PostgreSQL Bazada Saqlash</span>
+            </button>
+          `}
+        </div>
+      `;
+    }
+
     const state = {
       currentTab: { ios: 'home', android: 'home' },
       subTab: { ios: 'apps', android: 'apps' }, // 'apps' | 'resumes' | 'chats'
@@ -1888,6 +3059,57 @@
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       try {
+        // Fetch real backend user profile (has unauthenticated fallback to Yusuf Usmonov)
+        const profRes = await fetch(`${API_BASE}/profile`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null);
+        if (profRes && profRes.success && profRes.data) {
+          const d = profRes.data;
+          const u = d.user || d;
+          state.userProfile.id = d.id || u.id || '36fd654e-fa67-4c75-9cf0-27050e6de8da';
+          state.userProfile.name = d.name || u.name || 'Yusuf Usmonov';
+          state.userProfile.email = d.email || u.email || 'usmonovyusuf693@gmail.com';
+          state.userProfile.phone = d.phone || u.phone || '+998 (90) 123-45-67';
+          state.userProfile.title = d.skills || u.profession || 'OneID Tasdiqlangan Mutaxassis';
+          state.userProfile.location = d.location || 'Toshkent shahri';
+          state.userProfile.bio = d.bio || (d.profile && d.profile.bio) || 'OneID orqali rasman tasdiqlangan fuqaro. JShShIR: 31201991234567.';
+          state.userProfile.avatar_url = d.avatar_url || u.avatar_url || '';
+          state.userProfile.status = d.oneid_verified ? 'OneID Tasdiqlangan ✓' : 'Faol profil';
+          state.isLoggedIn = true;
+          if (d.skills) {
+            state.userProfile.skills = d.skills.split(/[,|]/).map(s => s.trim()).filter(Boolean);
+          }
+          if (d.settings) {
+            ['ios', 'android'].forEach(p => {
+              const s = deviceSettings[p];
+              const hasLocal = typeof localStorage !== 'undefined' && localStorage.getItem('workhub_device_settings_' + p);
+              if (!hasLocal && d.settings.dark_mode !== undefined) {
+                s.dark = Boolean(d.settings.dark_mode);
+                s.pendingDark = s.dark;
+              }
+              if (d.settings.accent_color) {
+                s.accent = d.settings.accent_color;
+                s.pendingAccent = s.accent;
+              }
+              if (d.settings.text_scale) {
+                s.textScale = parseFloat(d.settings.text_scale);
+                s.pendingTextScale = s.textScale;
+              }
+              if (d.settings.corner_radius) {
+                s.radius = parseInt(d.settings.corner_radius, 10);
+                s.pendingRadius = s.radius;
+              }
+              if (d.settings.language) {
+                s.lang = d.settings.language;
+                s.pendingLang = s.lang;
+              }
+              if (d.settings.push_notifications !== undefined) {
+                s.push = Boolean(d.settings.push_notifications);
+                s.pendingPush = s.push;
+              }
+              applyThemeToDevice(p);
+            });
+          }
+        }
+
         if (token) {
           // 1. Fetch live user details
           const meRes = await fetch(`${API_BASE}/auth/me`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null);
@@ -2262,6 +3484,15 @@
       const content = document.getElementById(`${platform}-sheet-content`);
       if (!overlay || !panel || !content) return;
 
+      if (type === 'app_settings') {
+        const s = deviceSettings[platform];
+        s.pendingDark = s.dark;
+        s.pendingAccent = s.accent;
+        s.pendingTextScale = s.textScale;
+        s.pendingRadius = s.radius;
+      }
+
+      applyThemeToDevice(platform);
       content.innerHTML = getSheetContent(platform, type, data);
 
       overlay.classList.remove('pointer-events-none', 'opacity-0');
@@ -2293,6 +3524,11 @@
     // 📑 SHEET TEMPLATES GENERATOR (100% OF WEBSITE CONTENT)
     // ==============================================
     function getSheetContent(platform, type, data) {
+      // 0. FULL APP & SYSTEM SETTINGS SHEET (Integrated from yesterday)
+      if (type === 'app_settings') {
+        return getSettingsContent(platform);
+      }
+
       // 1. FULL VACANCY DETAIL SHEET
       if (type === 'vacancy_detail') {
         const v = vacanciesDB.find(item => item.id === data) || vacanciesDB[0];
@@ -3926,6 +5162,12 @@
                   </button>
                   ${unreadCount > 0 ? `<span class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>` : ''}
                 </div>
+                <button onclick="quickToggleTheme('${platform}')" class="w-9 h-9 rounded-2xl bg-white shadow-sm flex items-center justify-center text-zinc-600 border border-zinc-200/60 hover:bg-zinc-50 transition" title="Mavzuni almashtirish (Tungi/Yorug')">
+                  <i class="fa-solid ${deviceSettings[platform].dark ? 'fa-sun text-amber-400' : 'fa-moon text-purple-600'} text-xs"></i>
+                </button>
+                <button onclick="openSheet('${platform}', 'app_settings')" class="w-9 h-9 rounded-2xl bg-white shadow-sm flex items-center justify-center text-zinc-600 border border-zinc-200/60 hover:bg-zinc-50 transition" title="Sozlamalar">
+                  <i class="fa-solid fa-gear text-xs"></i>
+                </button>
               </div>
             </div>
 
@@ -4577,92 +5819,156 @@
             <!-- Shaxsiy Menyular (Faqat tizimga kirgan foydalanuvchilar uchun) -->
             <div class="bg-white rounded-3xl shadow-sm border border-zinc-100 divide-y divide-zinc-100 text-xs overflow-hidden">
               <!-- OneID Info -->
-              <div onclick="openSheet('${platform}', 'oneid_info')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
-                <div class="flex items-center gap-3 text-zinc-800">
-                  <i class="fa-solid fa-id-card text-[#6C47D8] w-4 text-center"></i>
-                  <span class="font-semibold">OneID Integratsiyasi & Hujjatlar</span>
+              <div onclick="openSheet('${platform}', 'oneid_info')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-xs">
+                    <i class="fa-solid fa-id-card text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold text-xs block text-zinc-900 group-hover:text-purple-600 transition">OneID Integratsiyasi & Hujjatlar</span>
+                    <span class="text-[10px] text-zinc-400">Pasport va davlat tasdig‘i</span>
+                  </div>
                 </div>
-                <span class="text-[10.5px] ${isOneIDVerified ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'} font-bold px-2 py-0.5 rounded-lg">
+                <span class="text-[10px] ${isOneIDVerified ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'} font-bold px-2 py-0.5 rounded-lg border border-emerald-200/50">
                   ${isOneIDVerified ? 'Tasdiqlangan ✓' : 'Ulanmagan'}
                 </span>
               </div>
 
               <!-- Official CV -->
-              <div onclick="openSheet('${platform}', 'cv_preview')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
-                <div class="flex items-center gap-3 text-zinc-800">
-                  <i class="fa-solid fa-file-pdf text-red-500 w-4 text-center"></i>
-                  <span class="font-semibold">Mening Rezyumeim (WZone CV)</span>
+              <div onclick="openSheet('${platform}', 'cv_preview')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0 shadow-xs">
+                    <i class="fa-solid fa-file-pdf text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold text-xs block text-zinc-900 group-hover:text-purple-600 transition">Mening Rezyumeim (WZone CV)</span>
+                    <span class="text-[10px] text-zinc-400">PDF ko‘rinishida ko‘rish</span>
+                  </div>
                 </div>
-                <i class="fa-solid fa-eye text-zinc-400"></i>
+                <i class="fa-solid fa-eye text-zinc-400 text-xs"></i>
               </div>
 
               <!-- AI Resume Audit -->
-              <div onclick="openSheet('${platform}', 'ai_resume_audit')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
-                <div class="flex items-center gap-3 text-zinc-800">
-                  <i class="fa-solid fa-wand-magic-sparkles text-amber-500 w-4 text-center"></i>
-                  <span class="font-semibold">AI Rezyume Auditi (${realAtsScore}/100)</span>
+              <div onclick="openSheet('${platform}', 'ai_resume_audit')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0 shadow-xs">
+                    <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold text-xs block text-zinc-900 group-hover:text-purple-600 transition">AI Rezyume Auditi (${realAtsScore}/100)</span>
+                    <span class="text-[10px] text-zinc-400">ATS tahlil va maslahatlar</span>
+                  </div>
                 </div>
-                <span class="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-lg">${realAtsScore >= 90 ? 'A+ Natija' : (realAtsScore >= 75 ? 'Yaxshi' : 'O‘rtacha')}</span>
+                <span class="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-lg border border-amber-200/50">${realAtsScore >= 90 ? 'A+ Natija' : (realAtsScore >= 75 ? 'Yaxshi' : 'O‘rtacha')}</span>
               </div>
 
               <!-- Career Interest Survey -->
-              <div onclick="openSheet('${platform}', 'interest_survey')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
-                <div class="flex items-center gap-3 text-zinc-800">
-                  <i class="fa-solid fa-sparkles text-[#6C47D8] w-4 text-center"></i>
-                  <span class="font-semibold">Kasbiy Qiziqish So‘rovnomasi</span>
+              <div onclick="openSheet('${platform}', 'interest_survey')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-purple-50 text-[#6C47D8] flex items-center justify-center shrink-0 shadow-xs">
+                    <i class="fa-solid fa-sparkles text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold text-xs block text-zinc-900 group-hover:text-purple-600 transition">Kasbiy Qiziqish So‘rovnomasi</span>
+                    <span class="text-[10px] text-zinc-400">Vakansiyalarni moslashtirish</span>
+                  </div>
                 </div>
                 <span class="text-[10.5px] text-[#6C47D8] font-bold">${state.surveyCompleted ? 'Tugallangan ✓' : 'To‘ldirish'}</span>
               </div>
 
               <!-- Video Ad Generator -->
-              <div onclick="openSheet('${platform}', 'video_ad_generator')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
-                <div class="flex items-center gap-3 text-zinc-800">
-                  <i class="fa-solid fa-video text-rose-500 w-4 text-center"></i>
-                  <span class="font-semibold">AI Video E'lon Generatori</span>
+              <div onclick="openSheet('${platform}', 'video_ad_generator')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0 shadow-xs">
+                    <i class="fa-solid fa-video text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold text-xs block text-zinc-900 group-hover:text-purple-600 transition">AI Video E'lon Generatori</span>
+                    <span class="text-[10px] text-zinc-400">15s qisqa video e’lon tayyorlash</span>
+                  </div>
                 </div>
-                <span class="text-[10px] bg-rose-50 text-rose-700 font-bold px-2 py-0.5 rounded-lg">15s Reels</span>
+                <span class="text-[10px] bg-rose-50 text-rose-700 font-bold px-2 py-0.5 rounded-lg border border-rose-200/50">15s Reels</span>
+              </div>
+
+              <!-- 🎨 Ilova va Mavzu Sozlamalari (Settings App) -->
+              <div onclick="openSheet('${platform}', 'app_settings')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-xs shrink-0" style="background: ${deviceSettings[platform].accent}">
+                    <i class="fa-solid fa-sliders"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold block text-xs text-zinc-900 group-hover:text-purple-600 transition">Mavzu va Ilova Sozlamalari</span>
+                    <span class="text-[10px] text-zinc-400">Mavzu, ranglar, shrift va bildirishnomalar</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="event.stopPropagation(); quickToggleTheme('${platform}')" class="text-[10px] font-bold px-2 py-0.5 rounded-lg text-white shadow-xs hover:opacity-90 active:scale-95 transition" style="background: ${deviceSettings[platform].accent}" title="Mavzuni almashtirish">
+                    ${deviceSettings[platform].dark ? '🌙 Tungi' : '☀️ Yorug\''}
+                  </button>
+                  <i class="fa-solid fa-chevron-right text-zinc-400 text-xs group-hover:translate-x-0.5 transition-transform"></i>
+                </div>
               </div>
 
               <!-- Saved Vacancies -->
-              <div onclick="showBookmarkedVacancies('${platform}')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
-                <div class="flex items-center gap-3 text-zinc-800">
-                  <i class="fa-solid fa-bookmark text-[#6C47D8] w-4 text-center"></i>
-                  <span class="font-semibold">Saqlangan Vakansiyalar</span>
+              <div onclick="showBookmarkedVacancies('${platform}')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-purple-50 text-[#6C47D8] flex items-center justify-center shrink-0 shadow-xs">
+                    <i class="fa-solid fa-bookmark text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold text-xs block text-zinc-900 group-hover:text-purple-600 transition">Saqlangan Vakansiyalar</span>
+                    <span class="text-[10px] text-zinc-400">Tanlangan bo‘sh ish o‘rinlari</span>
+                  </div>
                 </div>
-                <span class="text-[10.5px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-lg">${state.bookmarkedIds.size} ta</span>
+                <span class="text-[10.5px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200/50">${state.bookmarkedIds.size} ta</span>
               </div>
 
               <!-- Edit Profile -->
-              <div onclick="openSheet('${platform}', 'edit_profile')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
-                <div class="flex items-center gap-3 text-zinc-800">
-                  <i class="fa-solid fa-pen-to-square text-[#6C47D8] w-4 text-center"></i>
-                  <span class="font-semibold">Profilni tahrirlash</span>
+              <div onclick="openSheet('${platform}', 'edit_profile')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-purple-50 text-[#6C47D8] flex items-center justify-center shrink-0 shadow-xs">
+                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold text-xs block text-zinc-900 group-hover:text-purple-600 transition">Profilni tahrirlash</span>
+                    <span class="text-[10px] text-zinc-400">Ism, telefon, kasb va ko‘nikmalar</span>
+                  </div>
                 </div>
                 <i class="fa-solid fa-chevron-right text-zinc-400 text-xs"></i>
               </div>
 
               <!-- Language Select -->
-              <div onclick="openSheet('${platform}', 'language_select')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
-                <div class="flex items-center gap-3 text-zinc-800">
-                  <i class="fa-solid fa-globe text-blue-500 w-4 text-center"></i>
-                  <span class="font-semibold">Tizim tili</span>
+              <div onclick="openSheet('${platform}', 'language_select')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-xs">
+                    <i class="fa-solid fa-globe text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold text-xs block text-zinc-900 group-hover:text-purple-600 transition">Tizim tili</span>
+                    <span class="text-[10px] text-zinc-400">Ilova interfeysi tili</span>
+                  </div>
                 </div>
-                <span class="text-[10.5px] font-bold text-zinc-600 uppercase">${state.selectedLanguage}</span>
+                <span class="text-[10.5px] font-bold text-zinc-600 uppercase bg-zinc-100 px-2.5 py-0.5 rounded-lg">${state.selectedLanguage}</span>
               </div>
 
               <!-- Notifications -->
-              <div onclick="openSheet('${platform}', 'notifications')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition">
-                <div class="flex items-center gap-3 text-zinc-800">
-                  <i class="fa-solid fa-bell text-[#6C47D8] w-4 text-center"></i>
-                  <span class="font-semibold">Bildirishnomalar</span>
+              <div onclick="openSheet('${platform}', 'notifications')" class="p-3.5 flex items-center justify-between hover:bg-purple-50/50 cursor-pointer transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0 shadow-xs">
+                    <i class="fa-solid fa-bell text-xs"></i>
+                  </div>
+                  <div>
+                    <span class="font-bold text-xs block text-zinc-900 group-hover:text-purple-600 transition">Bildirishnomalar</span>
+                    <span class="text-[10px] text-zinc-400">Yangi xabar va takliflar</span>
+                  </div>
                 </div>
-                <span class="text-[10.5px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-lg">${state.notifications.filter(n=>!n.read).length || 0} ta yangi</span>
+                <span class="text-[10.5px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-lg border border-red-200/50">${state.notifications.filter(n=>!n.read).length || 0} ta yangi</span>
               </div>
             </div>
 
             <!-- Logout Action Button -->
             <div class="pt-2">
-              <button onclick="logoutUser('${platform}')" class="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-2xl transition flex items-center justify-center gap-2">
+              <button onclick="logoutUser('${platform}')" class="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-2xl border border-rose-200/60 transition flex items-center justify-center gap-2 shadow-xs">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 <span>Tizimdan chiqish (Logout)</span>
               </button>
@@ -4684,14 +5990,18 @@
         const label = document.getElementById(`${platform}-label-${tab}`);
         if (!icon || !label) return;
 
+        const isDark = deviceSettings[platform].dark;
+        const activeColor = isDark ? (deviceSettings[platform].accent || '#a78bfa') : '#2E1C59';
+        const inactiveColor = isDark ? '#94a3b8' : '#8E8E93';
+
         if (tab === tabKey) {
-          icon.style.color = '#2E1C59';
-          label.style.color = '#2E1C59';
+          icon.style.color = activeColor;
+          label.style.color = activeColor;
           label.classList.remove('font-medium');
           label.classList.add('font-bold');
         } else {
-          icon.style.color = '#8E8E93';
-          label.style.color = '#8E8E93';
+          icon.style.color = inactiveColor;
+          label.style.color = inactiveColor;
           label.classList.remove('font-bold');
           label.classList.add('font-medium');
         }
@@ -4708,6 +6018,10 @@
     // 🚀 INITIALIZATION ON WINDOW LOAD
     // ==============================================
     window.addEventListener('load', () => {
+      // 0. Initialize theme state for both devices
+      applyThemeToDevice('ios');
+      applyThemeToDevice('android');
+
       // 1. Initial render for both devices
       renderScreen('ios', 'home');
       renderScreen('android', 'home');

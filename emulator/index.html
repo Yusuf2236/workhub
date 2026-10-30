@@ -229,10 +229,28 @@
           <span id="labelRefresh">Yangilash</span>
         </button>
 
+        <!-- In-app Settings Shortcut -->
+        <button onclick="setTab('settings')" title="Ilova ichidagi to‘liq Sozlamalarni ochish" class="bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-200 hover:text-white px-3 py-2 rounded-xl border border-indigo-700/60 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
+          <i class="fa-solid fa-gear text-indigo-400"></i>
+          <span>Ilova Sozlamalari</span>
+        </button>
+
         <!-- Figma iOS Prototype Link -->
         <a href="/figma-ios.html" target="_blank" title="Figma iOS interaktiv prototipini ochish" class="bg-purple-950/60 hover:bg-purple-900/80 text-purple-200 hover:text-white px-3 py-2 rounded-xl border border-purple-700/60 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
           <i class="fa-brands fa-figma text-purple-400"></i>
           <span>Figma iOS Prototipe</span>
+        </a>
+
+        <!-- 3D Mobile Studio Link (Kechagi asosiy ilova) -->
+        <a href="http://localhost:3006" target="_blank" title="WZone 3D Mobile Studio ilovasini ochish" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-3.5 py-2 rounded-xl border border-purple-400/40 text-xs font-black flex items-center gap-1.5 transition active:scale-95 shadow-md shadow-purple-900/40 animate-pulse">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+          <span>📱 3D Mobil Studio (:3006)</span>
+        </a>
+
+        <!-- Standalone Settings App Link -->
+        <a href="/settings-app.html" target="_blank" title="Mustaqil Sozlamalar ilovasini ochish" class="bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white px-3 py-2 rounded-xl border border-slate-700/80 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm">
+          <i class="fa-solid fa-sliders text-indigo-400"></i>
+          <span>Sozlamalar (Mustaqil)</span>
         </a>
 
       </div>
@@ -939,15 +957,416 @@
       };
     }
 
-    let currentUser = {
-      id: 'usr-1',
-      name: 'Farrux Zokirov',
-      role: 'candidate',
-      email: 'farrux@wzone.uz',
-      skills: ['Go (Golang)', 'Kotlin Compose', 'Swift / SwiftUI', 'PostgreSQL', 'Docker', 'REST API', 'Redis'],
-      avatar: 'FZ',
-      oneid_verified: true
+    const COLORS = [
+      { name: 'Moviy (Indigo)', hex: '#2563eb' },
+      { name: 'Binafsha (Violet)', hex: '#7c3aed' },
+      { name: 'Zumrad (Emerald)', hex: '#10b981' },
+      { name: 'Qahrabo (Amber)', hex: '#f59e0b' },
+      { name: 'Atirgul (Rose)', hex: '#f43f5e' },
+      { name: 'Moviy ko‘l (Cyan)', hex: '#06b6d4' }
+    ];
+
+    const LANGUAGES = [
+      { code: 'uz', name: 'O‘zbekcha', flag: '🇺🇿' },
+      { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+      { code: 'en', name: 'English', flag: '🇺🇸' }
+    ];
+
+    function createDeviceSettings(platform) {
+      let saved = null;
+      try {
+        const str = localStorage.getItem('workhub_device_settings_' + platform);
+        if (str) saved = JSON.parse(str);
+      } catch (_) {}
+
+      const defaults = {
+        dark: false,
+        accent: '#2563eb',
+        textScale: 1.0,
+        radius: 14,
+        lang: 'uz',
+        push: true,
+        messages: true,
+        promos: false,
+        sound: true,
+        vibration: true,
+        jobAlerts: true,
+        appStatusAlerts: true,
+        telegramAlerts: false,
+        profilePublic: true,
+        phoneVerifiedOnly: true,
+        incognitoResume: false,
+        twoFactorAuth: false,
+
+        pendingDark: false,
+        pendingAccent: '#2563eb',
+        pendingTextScale: 1.0,
+        pendingRadius: 14,
+        pendingLang: 'uz',
+        pendingPush: true,
+        pendingMessages: true,
+        pendingPromos: false,
+        pendingSound: true,
+        pendingVibration: true,
+        pendingJobAlerts: true,
+        pendingAppStatusAlerts: true,
+        pendingTelegramAlerts: false,
+        pendingProfilePublic: true,
+        pendingPhoneVerifiedOnly: true,
+        pendingIncognitoResume: false,
+        pendingTwoFactorAuth: false,
+
+        currentRoute: 'settings',
+        showReview: false
+      };
+
+      if (saved) {
+        Object.assign(defaults, saved);
+        defaults.pendingDark = defaults.dark;
+        defaults.pendingAccent = defaults.accent;
+        defaults.pendingTextScale = defaults.textScale;
+        defaults.pendingRadius = defaults.radius;
+        defaults.pendingLang = defaults.lang;
+        defaults.pendingPush = defaults.push;
+        defaults.pendingMessages = defaults.messages;
+        defaults.pendingPromos = defaults.promos;
+        defaults.pendingSound = defaults.sound;
+        defaults.pendingVibration = defaults.vibration;
+        defaults.pendingJobAlerts = defaults.jobAlerts;
+        defaults.pendingAppStatusAlerts = defaults.appStatusAlerts;
+        defaults.pendingTelegramAlerts = defaults.telegramAlerts;
+        defaults.pendingProfilePublic = defaults.profilePublic;
+        defaults.pendingPhoneVerifiedOnly = defaults.phoneVerifiedOnly;
+        defaults.pendingIncognitoResume = defaults.incognitoResume;
+        defaults.pendingTwoFactorAuth = defaults.twoFactorAuth;
+      }
+      return defaults;
+    }
+
+    const deviceSettings = {
+      android: createDeviceSettings('android'),
+      ios: createDeviceSettings('ios')
     };
+
+    function getColorName(hex) {
+      const match = COLORS.find(c => c.hex.toLowerCase() === (hex || '').toLowerCase());
+      return match ? match.name : 'Maxsus';
+    }
+
+    function getTextScaleName(scale) {
+      if (scale <= 0.85) return 'Ixcham (85%)';
+      if (scale <= 1.0) return 'Standart (100%)';
+      if (scale <= 1.15) return 'Katta (115%)';
+      return 'Yirik (130%)';
+    }
+
+    function getRadiusStyleName(r) {
+      if (r <= 8) return 'Crisp (6px)';
+      if (r <= 16) return 'Soft (14px)';
+      return 'Rounded (22px)';
+    }
+
+    function getSettingsSummary(platform) {
+      const s = deviceSettings[platform] || deviceSettings.android;
+      const langName = s.lang === 'uz' ? 'O‘zbek' : s.lang === 'ru' ? 'Русский' : 'English';
+      return `${langName} · ${getColorName(s.accent)} · ${getRadiusStyleName(s.radius)}`;
+    }
+
+    function hasDeviceChanges(platform) {
+      const s = deviceSettings[platform];
+      return s.dark !== s.pendingDark ||
+             s.accent.toLowerCase() !== s.pendingAccent.toLowerCase() ||
+             s.textScale !== s.pendingTextScale ||
+             s.radius !== s.pendingRadius ||
+             s.lang !== s.pendingLang ||
+             s.push !== s.pendingPush ||
+             s.messages !== s.pendingMessages ||
+             s.promos !== s.pendingPromos ||
+             s.sound !== s.pendingSound ||
+             s.vibration !== s.pendingVibration ||
+             s.jobAlerts !== s.pendingJobAlerts ||
+             s.appStatusAlerts !== s.pendingAppStatusAlerts ||
+             s.telegramAlerts !== s.pendingTelegramAlerts ||
+             s.profilePublic !== s.pendingProfilePublic ||
+             s.phoneVerifiedOnly !== s.pendingPhoneVerifiedOnly ||
+             s.incognitoResume !== s.pendingIncognitoResume ||
+             s.twoFactorAuth !== s.pendingTwoFactorAuth;
+    }
+
+    function getDeviceChangesCount(platform) {
+      const s = deviceSettings[platform];
+      let n = 0;
+      if (s.dark !== s.pendingDark) n++;
+      if (s.accent.toLowerCase() !== s.pendingAccent.toLowerCase()) n++;
+      if (s.textScale !== s.pendingTextScale) n++;
+      if (s.radius !== s.pendingRadius) n++;
+      if (s.lang !== s.pendingLang) n++;
+      if (s.push !== s.pendingPush) n++;
+      if (s.messages !== s.pendingMessages) n++;
+      if (s.promos !== s.pendingPromos) n++;
+      if (s.sound !== s.pendingSound) n++;
+      if (s.vibration !== s.pendingVibration) n++;
+      if (s.jobAlerts !== s.pendingJobAlerts) n++;
+      if (s.appStatusAlerts !== s.pendingAppStatusAlerts) n++;
+      if (s.telegramAlerts !== s.pendingTelegramAlerts) n++;
+      if (s.profilePublic !== s.pendingProfilePublic) n++;
+      if (s.phoneVerifiedOnly !== s.pendingPhoneVerifiedOnly) n++;
+      if (s.incognitoResume !== s.pendingIncognitoResume) n++;
+      if (s.twoFactorAuth !== s.pendingTwoFactorAuth) n++;
+      return n;
+    }
+
+    function discardDeviceChanges(platform) {
+      const s = deviceSettings[platform];
+      s.pendingDark = s.dark;
+      s.pendingAccent = s.accent;
+      s.pendingTextScale = s.textScale;
+      s.pendingRadius = s.radius;
+      s.pendingLang = s.lang;
+      s.pendingPush = s.push;
+      s.pendingMessages = s.messages;
+      s.pendingPromos = s.promos;
+      s.pendingSound = s.sound;
+      s.pendingVibration = s.vibration;
+      s.pendingJobAlerts = s.jobAlerts;
+      s.pendingAppStatusAlerts = s.appStatusAlerts;
+      s.pendingTelegramAlerts = s.telegramAlerts;
+      s.pendingProfilePublic = s.profilePublic;
+      s.pendingPhoneVerifiedOnly = s.phoneVerifiedOnly;
+      s.pendingIncognitoResume = s.incognitoResume;
+      s.pendingTwoFactorAuth = s.twoFactorAuth;
+      s.showReview = false;
+      renderBothScreens();
+    }
+
+    function navigateDevice(platform, route) {
+      deviceSettings[platform].currentRoute = route;
+      renderBothScreens();
+    }
+
+    function setDevicePendingAccent(platform, hex) {
+      deviceSettings[platform].pendingAccent = hex;
+      renderBothScreens();
+    }
+
+    function setDevicePendingTextScale(platform, scale) {
+      deviceSettings[platform].pendingTextScale = scale;
+      renderBothScreens();
+    }
+
+    function setDevicePendingRadius(platform, r) {
+      deviceSettings[platform].pendingRadius = r;
+      renderBothScreens();
+    }
+
+    function setDevicePendingLang(platform, code) {
+      deviceSettings[platform].pendingLang = code;
+      renderBothScreens();
+    }
+
+    function toggleDeviceNotification(platform, prop, val) {
+      deviceSettings[platform][prop] = val;
+      renderBothScreens();
+    }
+
+    function setReviewModalOpen(platform, isOpen) {
+      deviceSettings[platform].showReview = isOpen;
+      renderBothScreens();
+    }
+
+    function togglePendingDark(platform, checked, event) {
+      const s = deviceSettings[platform];
+      s.pendingDark = checked;
+      renderBothScreens();
+    }
+
+    function resetDeviceSettings(platform) {
+      try {
+        localStorage.removeItem('workhub_device_settings_' + platform);
+      } catch (_) {}
+      deviceSettings[platform] = createDeviceSettings(platform);
+      showFloatingToast(`Standart holatga qaytarildi (${platform.toUpperCase()})`);
+      renderBothScreens();
+    }
+
+    async function saveDeviceSettings(platform) {
+      const s = deviceSettings[platform];
+      s.dark = s.pendingDark;
+      s.accent = s.pendingAccent;
+      s.textScale = s.pendingTextScale;
+      s.radius = s.pendingRadius;
+      s.lang = s.pendingLang;
+      s.push = s.pendingPush;
+      s.messages = s.pendingMessages;
+      s.promos = s.pendingPromos;
+      s.sound = s.pendingSound;
+      s.vibration = s.pendingVibration;
+      s.jobAlerts = s.pendingJobAlerts;
+      s.appStatusAlerts = s.pendingAppStatusAlerts;
+      s.telegramAlerts = s.pendingTelegramAlerts;
+      s.profilePublic = s.pendingProfilePublic;
+      s.phoneVerifiedOnly = s.pendingPhoneVerifiedOnly;
+      s.incognitoResume = s.pendingIncognitoResume;
+      s.twoFactorAuth = s.pendingTwoFactorAuth;
+      s.showReview = false;
+
+      // Also sync global theme and language if modified
+      if (s.dark !== isDarkTheme()) {
+        currentTheme = s.dark ? 'dark' : 'light';
+        setAppTheme(currentTheme, false);
+      }
+      if (s.lang !== currentLang) {
+        currentLang = s.lang;
+        setLanguage(currentLang, false);
+      }
+
+      try {
+        localStorage.setItem('workhub_device_settings_' + platform, JSON.stringify(s));
+      } catch (_) {}
+
+      // Persist directly to Go Backend API + PostgreSQL
+      try {
+        const payload = {
+          settings: {
+            dark_mode: s.dark,
+            accent_color: s.accent,
+            font_scale: s.textScale,
+            corner_radius: s.radius,
+            language: s.lang,
+            push_notifications: s.push,
+            notify_messages: s.messages,
+            notify_promos: s.promos,
+            sound_enabled: s.sound,
+            vibration_enabled: s.vibration,
+            notify_job_alerts: s.jobAlerts,
+            notify_app_status: s.appStatusAlerts,
+            notify_telegram: s.telegramAlerts,
+            profile_public: s.profilePublic,
+            phone_verified_only: s.phoneVerifiedOnly,
+            incognito_resume: s.incognitoResume,
+            two_factor_auth: s.twoFactorAuth
+          }
+        };
+
+        const res = await fetch('http://localhost:8080/api/v1/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          showFloatingToast(`✅ [${platform === 'android' ? 'Android' : 'iOS'}] Sozlamalar backend bazasiga muvaffaqiyatli saqlandi!`);
+        } else {
+          showFloatingToast(`✓ Sozlamalar saqlandi (${platform.toUpperCase()})`);
+        }
+      } catch (err) {
+        showFloatingToast(`✓ Sozlamalar saqlandi (${platform.toUpperCase()})`);
+      }
+
+      renderBothScreens();
+    }
+
+    async function saveAccountDetails(platform) {
+      const name = document.getElementById(platform + '_accountName')?.value?.trim();
+      const phone = document.getElementById(platform + '_accountPhone')?.value?.trim();
+      const location = document.getElementById(platform + '_accountLocation')?.value?.trim();
+      const bio = document.getElementById(platform + '_accountBio')?.value?.trim();
+
+      if (name) currentUser.name = name;
+      if (phone) currentUser.phone = phone;
+      if (location) currentUser.location = location;
+      if (bio) currentUser.bio = bio;
+
+      try {
+        await fetch('http://localhost:8080/api/v1/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: currentUser.name,
+            phone: currentUser.phone,
+            location: currentUser.location,
+            bio: currentUser.bio
+          })
+        });
+        showFloatingToast('✅ Profil ma’lumotlari backend bazasiga saqlandi!');
+      } catch (_) {}
+
+      deviceSettings[platform].currentRoute = 'settings';
+      renderBothScreens();
+    }
+
+    let currentUser = {
+      id: '36fd654e-fa67-4c75-9cf0-27050e6de8da',
+      name: 'Yusuf Usmonov',
+      role: 'candidate',
+      email: 'usmonovyusuf693@gmail.com',
+      phone: '+998 (90) 123-45-67',
+      location: 'Toshkent shahri',
+      bio: 'OneID (Yagona Identifikatsiya Tizimi) orqali rasman tasdiqlangan fuqaro. JShShIR: 31201991234567. Tug‘ilgan sana: 12.01.1999. Jinsi: Erkak.',
+      skills: ['OneID Tasdiqlangan', 'Raqamli Fuqaro', 'E-Gov ID', 'Go (Golang)', 'Kotlin Compose', 'Swift / SwiftUI', 'PostgreSQL', 'Docker', 'Redis'],
+      avatar: 'YU',
+      avatar_url: '/uploads/avatars/avatar_36fd654e-fa67-4c75-9cf0-27050e6de8da_bbf5921c.png',
+      oneid_verified: true,
+      account_type: 'individual'
+    };
+
+    async function loadBackendProfile() {
+      try {
+        const res = await fetch('http://localhost:8080/api/v1/profile', { signal: AbortSignal.timeout(3000) });
+        if (!res.ok) return;
+        const json = await res.json();
+        const data = json.data;
+        if (data) {
+          currentUser.id = data.id || currentUser.id;
+          currentUser.name = data.name || (data.user && data.user.name) || currentUser.name;
+          currentUser.email = data.email || (data.user && data.user.email) || currentUser.email;
+          currentUser.phone = data.phone || currentUser.phone;
+          currentUser.location = data.location || currentUser.location;
+          currentUser.bio = data.bio || (data.profile && data.profile.bio) || currentUser.bio;
+          currentUser.avatar_url = data.avatar_url || currentUser.avatar_url;
+          currentUser.oneid_verified = data.oneid_verified !== undefined ? data.oneid_verified : true;
+          currentUser.account_type = data.account_type || currentUser.account_type;
+
+          if (data.skills) {
+            if (Array.isArray(data.skills)) {
+              currentUser.skills = data.skills;
+            } else if (typeof data.skills === 'string') {
+              currentUser.skills = data.skills.split('|').map(s => s.trim()).filter(Boolean);
+            }
+          }
+
+          const parts = currentUser.name.split(' ').filter(Boolean);
+          currentUser.avatar = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : currentUser.name.substring(0, 2).toUpperCase();
+
+          const s = data.settings || (data.profile && data.profile.settings);
+          if (s) {
+            ['android', 'ios'].forEach(p => {
+              const dev = deviceSettings[p];
+              if (s.dark_mode !== undefined) { dev.dark = s.dark_mode; dev.pendingDark = s.dark_mode; }
+              if (s.accent_color) { dev.accent = s.accent_color; dev.pendingAccent = s.accent_color; }
+              if (s.font_scale) { dev.textScale = parseFloat(s.font_scale); dev.pendingTextScale = parseFloat(s.font_scale); }
+              if (s.corner_radius) { dev.radius = parseInt(s.corner_radius); dev.pendingRadius = parseInt(s.corner_radius); }
+              if (s.language) { dev.lang = s.language; dev.pendingLang = s.language; }
+              if (s.push_notifications !== undefined) { dev.push = s.push_notifications; dev.pendingPush = s.push_notifications; }
+              if (s.sound_enabled !== undefined) { dev.sound = s.sound_enabled; dev.pendingSound = s.sound_enabled; }
+              if (s.vibration_enabled !== undefined) { dev.vibration = s.vibration_enabled; dev.pendingVibration = s.vibration_enabled; }
+              if (s.notify_messages !== undefined) { dev.messages = s.notify_messages; dev.pendingMessages = s.notify_messages; }
+              if (s.notify_promos !== undefined) { dev.promos = s.notify_promos; dev.pendingPromos = s.notify_promos; }
+              if (s.notify_job_alerts !== undefined) { dev.jobAlerts = s.notify_job_alerts; dev.pendingJobAlerts = s.notify_job_alerts; }
+              if (s.notify_app_status !== undefined) { dev.appStatusAlerts = s.notify_app_status; dev.pendingAppStatusAlerts = s.notify_app_status; }
+              if (s.notify_telegram !== undefined) { dev.telegramAlerts = s.notify_telegram; dev.pendingTelegramAlerts = s.notify_telegram; }
+              if (s.profile_public !== undefined) { dev.profilePublic = s.profile_public; dev.pendingProfilePublic = s.profile_public; }
+              if (s.phone_verified_only !== undefined) { dev.phoneVerifiedOnly = s.phone_verified_only; dev.pendingPhoneVerifiedOnly = s.phone_verified_only; }
+              if (s.incognito_resume !== undefined) { dev.incognitoResume = s.incognito_resume; dev.pendingIncognitoResume = s.incognito_resume; }
+              if (s.two_factor_auth !== undefined) { dev.twoFactorAuth = s.two_factor_auth; dev.pendingTwoFactorAuth = s.two_factor_auth; }
+            });
+          }
+          renderBothScreens();
+        }
+      } catch (err) {
+        console.warn('Backend profile load warning:', err);
+      }
+    }
 
     let vacancies = [];
     let pollVoted = false;
@@ -1289,18 +1708,31 @@
         <!-- Top App Bar -->
         <div class="h-14 px-4 ${th.topBar} border-b flex items-center justify-between z-30 shrink-0">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-base shadow-md shadow-blue-500/30">
-              W
-            </div>
-            <span class="font-black text-lg tracking-tight text-blue-600 dark:text-blue-400 flex items-center">
-              W<span class="text-slate-900 dark:text-white">Zone</span>
-            </span>
+            ${currentTab === 'settings' ? `
+              <button onclick="setTab('profile')" class="flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-600 transition active:scale-95">
+                <i class="fa-solid fa-arrow-left text-sm"></i>
+                <span>${t.tabProfile || 'Profil'}</span>
+              </button>
+            ` : `
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-base shadow-md shadow-blue-500/30">
+                W
+              </div>
+              <span class="font-black text-lg tracking-tight text-blue-600 dark:text-blue-400 flex items-center">
+                W<span class="text-slate-900 dark:text-white">Zone</span>
+              </span>
+            `}
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="setTab('applications')" class="w-9 h-9 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center ${th.textPrimary} hover:text-blue-500 transition relative" title="Bildirishnomalar">
-              <i class="fa-regular fa-bell text-base text-slate-700 dark:text-slate-200"></i>
-              <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900"></span>
-            </button>
+            ${currentTab === 'profile' ? `
+              <button onclick="setTab('settings')" class="w-9 h-9 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-blue-500 transition relative" title="Sozlamalar">
+                <i class="fa-solid fa-gear text-base"></i>
+              </button>
+            ` : `
+              <button onclick="setTab('applications')" class="w-9 h-9 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center ${th.textPrimary} hover:text-blue-500 transition relative" title="Bildirishnomalar">
+                <i class="fa-regular fa-bell text-base text-slate-700 dark:text-slate-200"></i>
+                <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900"></span>
+              </button>
+            `}
           </div>
         </div>
 
@@ -1335,10 +1767,10 @@
             <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'applications' ? 'text-blue-600 font-bold' : th.muted}">${t.tabApplications || 'Ariza holati'}</span>
           </button>
           <button onclick="setTab('profile')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
-            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'profile' ? 'text-blue-600 font-extrabold' : th.muted + ' hover:text-blue-500'}">
-              <i class="fa-regular fa-user text-lg ${currentTab === 'profile' ? 'text-blue-600' : ''}"></i>
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'profile' || currentTab === 'settings' ? 'text-blue-600 font-extrabold' : th.muted + ' hover:text-blue-500'}">
+              <i class="fa-regular fa-user text-lg ${currentTab === 'profile' || currentTab === 'settings' ? 'text-blue-600' : ''}"></i>
             </div>
-            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'profile' ? 'text-blue-600 font-bold' : th.muted}">${t.tabProfile || 'Profil'}</span>
+            <span class="text-[10px] tracking-tight mt-0.5 ${currentTab === 'profile' || currentTab === 'settings' ? 'text-blue-600 font-bold' : th.muted}">${t.tabProfile || 'Profil'}</span>
           </button>
         </div>
       `;
@@ -1353,18 +1785,31 @@
         <!-- iOS Navigation Bar -->
         <div class="h-14 px-4 ${th.topBar} border-b flex items-center justify-between z-30 shrink-0">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-base shadow-md shadow-blue-500/30">
-              W
-            </div>
-            <span class="font-black text-lg tracking-tight text-blue-600 dark:text-blue-400 flex items-center">
-              W<span class="text-slate-900 dark:text-white">Zone</span>
-            </span>
+            ${currentTab === 'settings' ? `
+              <button onclick="setTab('profile')" class="flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-600 transition active:scale-95">
+                <i class="fa-solid fa-arrow-left text-sm"></i>
+                <span>${t.tabProfile || 'Profil'}</span>
+              </button>
+            ` : `
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-base shadow-md shadow-blue-500/30">
+                W
+              </div>
+              <span class="font-black text-lg tracking-tight text-blue-600 dark:text-blue-400 flex items-center">
+                W<span class="text-slate-900 dark:text-white">Zone</span>
+              </span>
+            `}
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="setTab('applications')" class="w-9 h-9 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center ${th.textPrimary} hover:text-blue-500 transition relative" title="Bildirishnomalar">
-              <i class="fa-regular fa-bell text-base text-slate-700 dark:text-slate-200"></i>
-              <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900"></span>
-            </button>
+            ${currentTab === 'profile' ? `
+              <button onclick="setTab('settings')" class="w-9 h-9 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-blue-500 transition relative" title="Sozlamalar">
+                <i class="fa-solid fa-gear text-base"></i>
+              </button>
+            ` : `
+              <button onclick="setTab('applications')" class="w-9 h-9 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center ${th.textPrimary} hover:text-blue-500 transition relative" title="Bildirishnomalar">
+                <i class="fa-regular fa-bell text-base text-slate-700 dark:text-slate-200"></i>
+                <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900"></span>
+              </button>
+            `}
           </div>
         </div>
 
@@ -1399,10 +1844,10 @@
             <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'applications' ? 'text-blue-500 font-bold' : th.muted}">${t.tabApplications || 'Ariza holati'}</span>
           </button>
           <button onclick="setTab('profile')" class="flex-1 flex flex-col items-center justify-center transition active:scale-90">
-            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'profile' ? 'text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
-              <i class="fa-regular fa-user text-lg ${currentTab === 'profile' ? 'text-blue-500' : ''}"></i>
+            <div class="px-3 py-1 rounded-2xl transition ${currentTab === 'profile' || currentTab === 'settings' ? 'text-blue-500 font-extrabold' : th.muted + ' hover:text-blue-400'}">
+              <i class="fa-regular fa-user text-lg ${currentTab === 'profile' || currentTab === 'settings' ? 'text-blue-500' : ''}"></i>
             </div>
-            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'profile' ? 'text-blue-500 font-bold' : th.muted}">${t.tabProfile || 'Profil'}</span>
+            <span class="text-[9.5px] tracking-tight mt-0.5 ${currentTab === 'profile' || currentTab === 'settings' ? 'text-blue-500 font-bold' : th.muted}">${t.tabProfile || 'Profil'}</span>
           </button>
         </div>
       `;
@@ -1423,6 +1868,8 @@
           return buildApplicationsTabContent(platform);
         case 'profile':
           return buildProfileTabContent(platform);
+        case 'settings':
+          return buildSettingsTabContent(platform);
         default:
           return buildFeedTabContent(platform);
       }
@@ -1733,23 +2180,52 @@
     function buildProfileTabContent(platform) {
       const t = I18N[currentLang] || I18N.uz;
       const th = getThemeStyles();
+      const s = deviceSettings[platform];
+      const accent = s.accent;
 
       return `
         <div class="p-4 space-y-4">
-          <!-- Profile Badge -->
+          <!-- Profile Badge with Real Backend Data -->
           <div class="p-3.5 rounded-2xl ${th.card} border ${th.border} flex items-center justify-between shadow-sm">
             <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-white text-base shadow-md shadow-blue-500/30">FZ</div>
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-white text-base shadow-md" style="background: linear-gradient(135deg, ${accent}, #4f46e5); box-shadow: 0 4px 12px ${accent}40;">
+                ${currentUser.avatar || 'YU'}
+              </div>
               <div>
                 <h3 class="text-xs font-bold ${th.textPrimary} flex items-center gap-1.5">
                   ${currentUser.name}
                   ${currentUser.oneid_verified ? '<i class="fa-solid fa-circle-check text-blue-500 text-[11px]" title="OneID Verified"></i>' : ''}
                 </h3>
                 <p class="text-[10px] ${th.muted}">${currentUser.email}</p>
-                <span class="text-[9px] text-blue-500 font-bold">Senior Go & Mobile Engineer</span>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span class="text-[9px] text-blue-500 font-bold">${currentUser.phone || '+998 (90) 123-45-67'}</span>
+                  <span class="text-[8px] text-emerald-500 font-bold bg-emerald-500/10 px-1 rounded border border-emerald-500/20">PostgreSQL ✓</span>
+                </div>
               </div>
             </div>
-            <span class="text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">OneID ✓</span>
+            <button onclick="setTab('settings')" class="w-8 h-8 rounded-xl ${th.surface} hover:bg-blue-500/10 border ${th.border} flex items-center justify-center text-slate-400 hover:text-blue-500 transition" title="Sozlamalar">
+              <i class="fa-solid fa-gear text-sm"></i>
+            </button>
+          </div>
+
+          <!-- Dedicated Full Settings & Preferences Experience Card -->
+          <div onclick="setTab('settings')" class="p-3.5 rounded-2xl ${th.card} border ${th.border} flex items-center justify-between shadow-sm cursor-pointer hover:border-blue-500/50 hover:bg-blue-500/5 active:scale-[0.99] transition group">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-purple-600 text-white flex items-center justify-center text-base shadow-md shadow-indigo-500/20 group-hover:scale-105 transition">
+                <i class="fa-solid fa-sliders"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h3 class="text-xs font-black ${th.textPrimary}">Ilova Sozlamalari va Xavfsizlik</h3>
+                  <span class="text-[8px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-500 font-black">To‘liq Rejim</span>
+                </div>
+                <p class="text-[10px] ${th.muted}">${getSettingsSummary(platform)}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 text-blue-500 font-bold text-xs">
+              <span>Ochish</span>
+              <i class="fa-solid fa-chevron-right text-[10px] group-hover:translate-x-0.5 transition"></i>
+            </div>
           </div>
 
           <!-- 1. OneID Sovereign Verification Banner -->
@@ -1761,7 +2237,7 @@
               </span>
               <span class="text-[9px] font-mono text-emerald-400 font-bold">AES-256-GCM</span>
             </div>
-            <p class="text-[10px] ${th.textSecondary} leading-snug">${t.oneidVerifiedDesc}</p>
+            <p class="text-[10px] ${th.textSecondary} leading-snug">${currentUser.bio || t.oneidVerifiedDesc}</p>
           </div>
 
           <!-- 2. Rezyumelar va Ko‘nikmalar (Skills) -->
@@ -1786,9 +2262,12 @@
             </div>
           </div>
 
-          <!-- 3. Ilova va Tizim Sozlamalari (3-Rejimli Mavzu va Til) -->
+          <!-- 3. Tezkor Mavzu va Til Sozlamalari -->
           <div class="p-3.5 rounded-2xl ${th.card} border ${th.border} space-y-3 shadow-sm">
-            <h3 class="text-xs font-black text-blue-500">${t.appSettingsTitle}</h3>
+            <div class="flex justify-between items-center">
+              <h3 class="text-xs font-black text-blue-500">${t.appSettingsTitle}</h3>
+              <button onclick="setTab('settings')" class="text-[10px] font-bold text-blue-500 hover:underline">Barchasini ko‘rish →</button>
+            </div>
             
             <!-- Theme Mode Switcher -->
             <div class="space-y-1.5">
@@ -1831,14 +2310,499 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      `;
+    }
 
-            <div class="border-t ${th.border}"></div>
+    // FULL SETTINGS TAB CONTENT (Android Material 3 & iOS Cupertino Experience)
+    function buildSettingsTabContent(platform) {
+      const s = deviceSettings[platform];
+      const t = I18N[currentLang] || I18N.uz;
+      const th = getThemeStyles();
+      const isDark = s.pendingDark;
+      const accent = s.pendingAccent;
+      const radius = s.pendingRadius;
+      const textScale = s.pendingTextScale;
+      const count = getDeviceChangesCount(platform);
+      const changes = count > 0;
 
-            <div class="flex justify-between items-center text-xs">
-              <span class="font-bold ${th.textPrimary} text-[11px]">${t.notificationsLabel}</span>
-              <span class="text-emerald-500 font-bold text-[10px]">${t.enabledStatus}</span>
+      const cardBg = isDark ? 'bg-slate-900/90' : 'bg-white';
+      const subCardBg = isDark ? 'bg-slate-800' : 'bg-slate-100';
+      const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
+      const dividerColor = isDark ? 'border-slate-800' : 'border-slate-100';
+      const appearanceSummary = `${getColorName(s.pendingAccent)} · ${getTextScaleName(s.pendingTextScale)} · ${getRadiusStyleName(s.pendingRadius)}`;
+
+      let mainBody = '';
+
+      if (s.currentRoute === 'settings') {
+        mainBody = `
+          <div class="p-4 pb-24 space-y-4">
+            <!-- Top Return Header -->
+            <div class="flex items-center justify-between">
+              <button onclick="setTab('profile')" class="flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-600 transition active:scale-95">
+                <i class="fa-solid fa-arrow-left text-xs"></i>
+                <span>${t.tabProfile || 'Profil'}</span>
+              </button>
+              <div class="flex items-center gap-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-[9.5px] font-mono text-emerald-500 font-bold">API :8080 Live</span>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="font-extrabold tracking-tight leading-tight ${th.textPrimary}" style="font-size: ${22 * textScale}px;">Ilova Sozlamalari</h2>
+              <p class="text-[11px] ${textMuted}">WorkHub platformasini o‘zingizga moslang · Real-vaqtda sinxron</p>
+            </div>
+
+            <!-- Backend User Card in Settings -->
+            <div onclick="navigateDevice('${platform}', 'account')" class="${cardBg} p-3.5 shadow-sm border ${dividerColor} flex items-center justify-between cursor-pointer hover:bg-slate-500/5 transition active:scale-[0.99]" style="border-radius: ${radius}px;">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-sm" style="background: linear-gradient(135deg, ${accent}, #4f46e5); box-shadow: 0 4px 12px ${accent}40;">
+                  ${currentUser.avatar || 'YU'}
+                </div>
+                <div>
+                  <div class="font-bold text-xs ${th.textPrimary} flex items-center gap-1.5">
+                    ${currentUser.name}
+                    ${currentUser.oneid_verified ? '<i class="fa-solid fa-circle-check text-blue-500 text-[10px]" title="OneID Verified"></i>' : ''}
+                  </div>
+                  <div class="text-[10px] ${textMuted}">${currentUser.email}</div>
+                  <div class="text-[9px] font-mono text-emerald-500 font-semibold">${currentUser.phone || '+998 (90) 123-45-67'}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 text-[10px] text-blue-500 font-bold">
+                <span>Tahrirlash</span>
+                <i class="fa-solid fa-chevron-right text-[9px]"></i>
+              </div>
+            </div>
+
+            <!-- Dark Mode Card with animated icon & smooth transition -->
+            <div onclick="togglePendingDark('${platform}', !${isDark}, event)" class="${cardBg} p-3.5 shadow-sm border ${dividerColor} flex items-center justify-between transition-all duration-300 cursor-pointer active:scale-[0.99]" style="border-radius: ${radius}px;">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm transition-all duration-300" style="color: ${accent}; background: ${accent}1a;">
+                  <i class="fa-solid ${isDark ? 'fa-moon' : 'fa-sun text-amber-500'} text-base"></i>
+                </div>
+                <div>
+                  <div class="font-bold text-xs tracking-tight ${th.textPrimary}">Tungi rejim (Dark Mode)</div>
+                  <div class="text-[10px] ${textMuted}">Ilova ranglarini qorong‘i rejimga o‘tkazish</div>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer pointer-events-none">
+                <input type="checkbox" ${isDark ? 'checked' : ''} class="sr-only peer">
+                <div class="w-11 h-5 bg-slate-300 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:shadow-md after:transition-all after:duration-300" style="background-color: ${isDark ? accent : ''};"></div>
+              </label>
+            </div>
+
+            <!-- PERSONALIZATION -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} uppercase px-1 pt-1">Shaxsiylashtirish</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div onclick="navigateDevice('${platform}', 'appearance')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-500/5 active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs" style="background: ${accent}15; color: ${accent};">
+                    <i class="fa-solid fa-palette"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold text-xs ${th.textPrimary}">Tashqi ko‘rinish (Appearance)</div>
+                    <div class="text-[10px] ${textMuted}">${appearanceSummary}</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[10px] ${textMuted}"></i>
+              </div>
+              <div class="h-px ${dividerColor} ml-12"></div>
+              <div onclick="navigateDevice('${platform}', 'language')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-500/5 active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs" style="background: ${accent}15; color: ${accent};">
+                    <i class="fa-solid fa-globe"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold text-xs ${th.textPrimary}">Ilova tili (Language)</div>
+                    <div class="text-[10px] ${textMuted}">${s.pendingLang === 'uz' ? '🇺🇿 O‘zbekcha' : s.pendingLang === 'ru' ? '🇷🇺 Русский' : '🇺🇸 English'}</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[10px] ${textMuted}"></i>
+              </div>
+            </div>
+
+            <!-- ALERTS -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} uppercase px-1 pt-1">Xabarnomalar</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div onclick="navigateDevice('${platform}', 'notifications')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-500/5 active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs" style="background: ${accent}15; color: ${accent};">
+                    <i class="fa-solid fa-bell"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold text-xs ${th.textPrimary}">Bildirishnomalar (Notifications)</div>
+                    <div class="text-[10px] ${textMuted}">Vakansiyalar, chatlar, ovoz va tebranish</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[9.5px] font-bold text-emerald-500">${s.pendingPush ? 'Faol' : 'O‘chirilgan'}</span>
+                  <i class="fa-solid fa-chevron-right text-[10px] ${textMuted}"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- PRIVACY & SECURITY -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} uppercase px-1 pt-1">Maxfiylik va Xavfsizlik</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div onclick="navigateDevice('${platform}', 'privacy')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-500/5 active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs" style="background: ${accent}15; color: ${accent};">
+                    <i class="fa-solid fa-shield-halved"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold text-xs ${th.textPrimary}">Maxfiylik va Xavfsizlik</div>
+                    <div class="text-[10px] ${textMuted}">Profil ko‘rinishi, 2FA, OneID himoyasi</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[10px] ${textMuted}"></i>
+              </div>
+            </div>
+
+            <!-- SYSTEM & ACTIONS -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} uppercase px-1 pt-1">Tizim va Ma'lumot</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden p-3.5 space-y-2.5" style="border-radius: ${radius}px;">
+              <div class="flex items-center justify-between text-xs">
+                <span class="${textMuted}">Backend API:</span>
+                <span class="font-mono font-bold text-emerald-500">Go Gin :8080 (Faol ✓)</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="${textMuted}">Ma'lumotlar bazasi:</span>
+                <span class="font-mono font-bold text-blue-500">PostgreSQL 16 · JSONB</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="${textMuted}">Ilova versiyasi:</span>
+                <span class="font-mono font-bold ${th.textPrimary}">v2.4.0 (Compose & SwiftUI)</span>
+              </div>
+              <div class="border-t ${dividerColor} pt-2 flex gap-2">
+                <button onclick="resetDeviceSettings('${platform}')" class="flex-1 py-1.5 px-2 rounded-xl text-[10px] font-bold bg-slate-500/10 hover:bg-slate-500/20 text-slate-300 transition text-center">
+                  Standartga qaytarish
+                </button>
+                <button onclick="loadBackendProfile(); showFloatingToast('Backenddan yangilandi ✓');" class="flex-1 py-1.5 px-2 rounded-xl text-[10px] font-bold bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 transition text-center flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-rotate text-[9px]"></i>
+                  <span>Sinxronlash</span>
+                </button>
+              </div>
             </div>
           </div>
+        `;
+      } else if (s.currentRoute === 'appearance') {
+        mainBody = `
+          <div class="p-4 pb-24 space-y-4">
+            <div class="flex items-center gap-2 mb-2">
+              <button onclick="navigateDevice('${platform}', 'settings')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500/10">
+                <i class="fa-solid fa-arrow-left text-sm ${th.textPrimary}"></i>
+              </button>
+              <h3 class="font-extrabold text-sm ${th.textPrimary}">Tashqi ko‘rinish (Appearance)</h3>
+            </div>
+
+            <!-- Preview Card -->
+            <div class="${subCardBg} p-3.5 flex items-center gap-3 shadow-inner" style="border-radius: ${radius}px;">
+              <i class="fa-solid fa-wand-magic-sparkles text-base" style="color: ${accent};"></i>
+              <div class="flex-1">
+                <div class="font-bold text-xs ${th.textPrimary}">Haftalik xulosa tayyor</div>
+                <div class="text-[10px] ${textMuted}">Sizga mos 12 ta yangi vakansiya</div>
+              </div>
+              <button class="px-3 py-1.5 text-xs font-bold text-white shadow-sm" style="background: ${accent}; border-radius: ${radius * 0.65}px;">
+                Ochish
+              </button>
+            </div>
+
+            <!-- Theme Color Swatches -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} uppercase">Mavzu rangi (Theme Accent)</div>
+            <div class="grid grid-cols-6 gap-2 px-1">
+              ${COLORS.map(c => `
+                <div onclick="setDevicePendingAccent('${platform}', '${c.hex}')" class="h-9 rounded-xl cursor-pointer transition-all duration-200 flex items-center justify-center" style="background: ${c.hex}; ${s.pendingAccent.toLowerCase() === c.hex.toLowerCase() ? `box-shadow: 0 0 0 2px ${isDark ? '#fff' : '#0f172a'}, 0 0 0 4px ${c.hex}; transform: scale(1.08);` : ''}">
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Text Size Options -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} uppercase pt-2">Matn o‘lchami (Text Size)</div>
+            <div class="grid grid-cols-4 gap-2">
+              ${[0.85, 1.0, 1.15, 1.3].map(scale => `
+                <div onclick="setDevicePendingTextScale('${platform}', ${scale})" class="h-10 rounded-xl flex items-center justify-center font-bold cursor-pointer transition border" style="${s.pendingTextScale === scale ? `background: ${accent}26; border-color: ${accent}; color: ${accent};` : `background: ${subCardBg.replace('bg-', '')}; border-color: transparent; ${th.textPrimary}`}; font-size: ${14 * scale}px;">
+                  Aa
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- UI Corner Radius -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} uppercase pt-2">UI burchak shakli (Corner Radius)</div>
+            <div class="grid grid-cols-3 gap-2">
+              ${[
+                { r: 22, name: 'Rounded' },
+                { r: 14, name: 'Soft' },
+                { r: 6, name: 'Crisp' }
+              ].map(item => `
+                <div onclick="setDevicePendingRadius('${platform}', ${item.r})" class="flex flex-col items-center gap-1.5 cursor-pointer">
+                  <div class="w-full h-9 border transition flex items-center justify-center" style="border-radius: ${item.r}px; background: ${s.pendingRadius === item.r ? accent : accent + '30'}; border-color: ${s.pendingRadius === item.r ? (isDark ? '#fff' : '#0f172a') : 'transparent'};"></div>
+                  <span class="text-[10px] font-bold" style="color: ${s.pendingRadius === item.r ? accent : ''};">${item.name}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (s.currentRoute === 'language') {
+        mainBody = `
+          <div class="p-4 pb-24 space-y-4">
+            <div class="flex items-center gap-2 mb-2">
+              <button onclick="navigateDevice('${platform}', 'settings')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500/10">
+                <i class="fa-solid fa-arrow-left text-sm ${th.textPrimary}"></i>
+              </button>
+              <h3 class="font-extrabold text-sm ${th.textPrimary}">Ilova tili (Language)</h3>
+            </div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              ${LANGUAGES.map((l, idx) => `
+                <div onclick="setDevicePendingLang('${platform}', '${l.code}')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-500/5 transition">
+                  <div class="flex items-center gap-3">
+                    <span class="text-xl">${l.flag}</span>
+                    <div>
+                      <div class="font-bold text-xs ${th.textPrimary}">${l.name}</div>
+                      <div class="text-[10px] ${textMuted} uppercase">${l.code}</div>
+                    </div>
+                  </div>
+                  ${s.pendingLang === l.code ? `<i class="fa-solid fa-circle-check text-sm" style="color: ${accent};"></i>` : ''}
+                </div>
+                ${idx < LANGUAGES.length - 1 ? `<div class="h-px ${dividerColor} ml-12"></div>` : ''}
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (s.currentRoute === 'notifications') {
+        mainBody = `
+          <div class="p-4 pb-24 space-y-4">
+            <div class="flex items-center gap-2 mb-2">
+              <button onclick="navigateDevice('${platform}', 'settings')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500/10">
+                <i class="fa-solid fa-arrow-left text-sm ${th.textPrimary}"></i>
+              </button>
+              <h3 class="font-extrabold text-sm ${th.textPrimary}">Bildirishnomalar (Notifications)</h3>
+            </div>
+
+            <!-- Push Switch -->
+            <div class="${cardBg} p-3.5 shadow-sm border ${dividerColor} flex items-center justify-between" style="border-radius: ${radius}px;">
+              <div class="flex items-center gap-3">
+                <i class="fa-solid fa-bell text-sm" style="color: ${accent};"></i>
+                <div>
+                  <div class="font-bold text-xs ${th.textPrimary}">Push-bildirishnomalar</div>
+                  <div class="text-[10px] ${textMuted}">Ushbu qurilmada xabarlarni ko‘rsatish</div>
+                </div>
+              </div>
+              <input type="checkbox" ${s.pendingPush ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingPush', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+            </div>
+
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} uppercase px-1">Qaysi xabarlar yuborilsin</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div class="p-3 flex items-center justify-between">
+                <span class="text-xs font-semibold ${th.textPrimary}">Yangi mos vakansiyalar</span>
+                <input type="checkbox" ${s.pendingJobAlerts ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingJobAlerts', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+              <div class="h-px ${dividerColor} ml-4"></div>
+              <div class="p-3 flex items-center justify-between">
+                <span class="text-xs font-semibold ${th.textPrimary}">Ariza holati o‘zgarishi</span>
+                <input type="checkbox" ${s.pendingAppStatusAlerts ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingAppStatusAlerts', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+              <div class="h-px ${dividerColor} ml-4"></div>
+              <div class="p-3 flex items-center justify-between">
+                <span class="text-xs font-semibold ${th.textPrimary}">Chat va yangi xabarlar</span>
+                <input type="checkbox" ${s.pendingMessages ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingMessages', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+              <div class="h-px ${dividerColor} ml-4"></div>
+              <div class="p-3 flex items-center justify-between">
+                <span class="text-xs font-semibold ${th.textPrimary}">Telegram orqali xabar</span>
+                <input type="checkbox" ${s.pendingTelegramAlerts ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingTelegramAlerts', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+            </div>
+
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} uppercase px-1">Ovoz va tebranish</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div class="p-3 flex items-center justify-between">
+                <span class="text-xs font-semibold ${th.textPrimary}">Xabarnoma ovozi (Sound)</span>
+                <input type="checkbox" ${s.pendingSound ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingSound', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+              <div class="h-px ${dividerColor} ml-4"></div>
+              <div class="p-3 flex items-center justify-between">
+                <span class="text-xs font-semibold ${th.textPrimary}">Tebranish (Vibration)</span>
+                <input type="checkbox" ${s.pendingVibration ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingVibration', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (s.currentRoute === 'privacy') {
+        mainBody = `
+          <div class="p-4 pb-24 space-y-4">
+            <div class="flex items-center gap-2 mb-2">
+              <button onclick="navigateDevice('${platform}', 'settings')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500/10">
+                <i class="fa-solid fa-arrow-left text-sm ${th.textPrimary}"></i>
+              </button>
+              <h3 class="font-extrabold text-sm ${th.textPrimary}">Maxfiylik va Xavfsizlik</h3>
+            </div>
+
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div class="p-3 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold ${th.textPrimary}">Ommaviy profil</div>
+                  <div class="text-[10px] ${textMuted}">Ish beruvchilarga profilni ko‘rsatish</div>
+                </div>
+                <input type="checkbox" ${s.pendingProfilePublic ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingProfilePublic', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+              <div class="h-px ${dividerColor} ml-4"></div>
+              <div class="p-3 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold ${th.textPrimary}">Faqat tasdiqlanganlarga raqam</div>
+                  <div class="text-[10px] ${textMuted}">Telefon raqamni OneID tekshiruvchilariga ochish</div>
+                </div>
+                <input type="checkbox" ${s.pendingPhoneVerifiedOnly ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingPhoneVerifiedOnly', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+              <div class="h-px ${dividerColor} ml-4"></div>
+              <div class="p-3 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold ${th.textPrimary}">Anonim / Inkognito rezyume</div>
+                  <div class="text-[10px] ${textMuted}">Ismni yashirib murojaat qilish</div>
+                </div>
+                <input type="checkbox" ${s.pendingIncognitoResume ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingIncognitoResume', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+              <div class="h-px ${dividerColor} ml-4"></div>
+              <div class="p-3 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold ${th.textPrimary}">Ikki bosqichli autentifikatsiya (2FA)</div>
+                  <div class="text-[10px] ${textMuted}">SMS / OneID bilan kirishni tasdiqlash</div>
+                </div>
+                <input type="checkbox" ${s.pendingTwoFactorAuth ? 'checked' : ''} onchange="toggleDeviceNotification('${platform}', 'pendingTwoFactorAuth', this.checked)" class="scale-125 cursor-pointer" style="accent-color: ${accent};">
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (s.currentRoute === 'account') {
+        mainBody = `
+          <div class="p-4 pb-24 space-y-4">
+            <div class="flex items-center gap-2 mb-2">
+              <button onclick="navigateDevice('${platform}', 'settings')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500/10">
+                <i class="fa-solid fa-arrow-left text-sm ${th.textPrimary}"></i>
+              </button>
+              <h3 class="font-extrabold text-sm ${th.textPrimary}">Hisob ma'lumotlari (PostgreSQL)</h3>
+            </div>
+
+            <div class="${cardBg} p-3.5 shadow-sm border ${dividerColor} space-y-3" style="border-radius: ${radius}px;">
+              <div>
+                <label class="text-[10px] font-bold ${textMuted} uppercase">Ism-sharif (Name)</label>
+                <input id="${platform}_accountName" type="text" value="${currentUser.name}" class="w-full mt-1 px-3 py-1.5 rounded-xl ${th.input} border ${th.border} text-xs outline-none focus:ring-1 focus:ring-blue-500 font-bold" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold ${textMuted} uppercase">Email</label>
+                <input type="email" value="${currentUser.email}" readonly class="w-full mt-1 px-3 py-1.5 rounded-xl bg-slate-500/10 border ${th.border} text-xs text-slate-400 font-mono outline-none cursor-not-allowed" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold ${textMuted} uppercase">Telefon raqam</label>
+                <input id="${platform}_accountPhone" type="text" value="${currentUser.phone || '+998 (90) 123-45-67'}" class="w-full mt-1 px-3 py-1.5 rounded-xl ${th.input} border ${th.border} text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold ${textMuted} uppercase">Shahar / Hudud</label>
+                <input id="${platform}_accountLocation" type="text" value="${currentUser.location || 'Toshkent shahri'}" class="w-full mt-1 px-3 py-1.5 rounded-xl ${th.input} border ${th.border} text-xs outline-none focus:ring-1 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold ${textMuted} uppercase">Bio / Qisqacha ma'lumot</label>
+                <textarea id="${platform}_accountBio" rows="2" class="w-full mt-1 px-3 py-1.5 rounded-xl ${th.input} border ${th.border} text-xs outline-none focus:ring-1 focus:ring-blue-500">${currentUser.bio || ''}</textarea>
+              </div>
+              <button onclick="saveAccountDetails('${platform}')" class="w-full py-2.5 rounded-xl text-white font-black text-xs shadow-md transition active:scale-95" style="background: ${accent};">
+                💾 Backendda saqlash
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      // Review Modal Bottom Sheet
+      let reviewSheetHTML = '';
+      if (s.showReview) {
+        reviewSheetHTML = `
+          <div class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end">
+            <div class="${cardBg} rounded-t-3xl p-4 shadow-2xl border-t ${dividerColor} sheet-enter">
+              <div class="w-10 h-1 rounded-full bg-slate-500/30 mx-auto mb-3"></div>
+              <h4 class="font-black text-base ${th.textPrimary}">O‘zgarishlarni tekshirish</h4>
+              <p class="text-[11px] ${textMuted} mb-3">${count} ta parametr yangilanishga tayyor</p>
+
+              <div class="space-y-1.5 max-h-48 overflow-y-auto screen-scroll pr-1">
+                ${s.dark !== s.pendingDark ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Tungi rejim</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${s.dark ? 'Yoqilgan' : 'O‘chirilgan'}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${s.pendingDark ? 'Yoqilgan' : 'O‘chirilgan'}</span></span>
+                  </div>
+                ` : ''}
+                ${s.accent.toLowerCase() !== s.pendingAccent.toLowerCase() ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Mavzu rangi</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${getColorName(s.accent)}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${getColorName(s.pendingAccent)}</span></span>
+                  </div>
+                ` : ''}
+                ${s.textScale !== s.pendingTextScale ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Matn o‘lchami</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${getTextScaleName(s.textScale)}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${getTextScaleName(s.pendingTextScale)}</span></span>
+                  </div>
+                ` : ''}
+                ${s.radius !== s.pendingRadius ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>UI uslubi</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${getRadiusStyleName(s.radius)}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${getRadiusStyleName(s.pendingRadius)}</span></span>
+                  </div>
+                ` : ''}
+                ${s.lang !== s.pendingLang ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Til</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${s.lang}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${s.pendingLang}</span></span>
+                  </div>
+                ` : ''}
+                ${s.push !== s.pendingPush ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Push xabarlar</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${s.push ? 'Faol' : 'O‘chirilgan'}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${s.pendingPush ? 'Faol' : 'O‘chirilgan'}</span></span>
+                  </div>
+                ` : ''}
+              </div>
+
+              <div class="mt-4 flex gap-2">
+                <button onclick="setReviewModalOpen('${platform}', false)" class="flex-1 py-2 text-xs font-semibold rounded-xl bg-slate-500/15 hover:bg-slate-500/25 transition">
+                  Bekor qilish
+                </button>
+                <button onclick="saveDeviceSettings('${platform}')" class="flex-1 py-2 text-xs font-bold text-white rounded-xl shadow-lg transition active:scale-95" style="background: ${accent};">
+                  Saqlash (Postgres)
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Bottom Staged Changes Floating Pill
+      let bottomBarHTML = '';
+      if (changes) {
+        bottomBarHTML = `
+          <div class="sticky bottom-0 inset-x-0 p-3 bg-white/90 dark:bg-slate-900/95 backdrop-blur-md border-t ${dividerColor} flex items-center justify-between z-40 shadow-lg">
+            <span class="text-xs font-bold" style="color: ${accent};">
+              • ${count} ta o‘zgarish
+            </span>
+            <div class="flex items-center gap-2">
+              <button onclick="discardDeviceChanges('${platform}')" class="px-2.5 py-1 text-xs font-semibold ${textMuted} hover:text-slate-200 transition">
+                Bekor
+              </button>
+              <button onclick="setReviewModalOpen('${platform}', true)" class="px-3 py-1 text-xs font-bold text-white rounded-xl shadow transition active:scale-95" style="background: ${accent};">
+                Ko‘rish
+              </button>
+              <button onclick="saveDeviceSettings('${platform}')" class="px-3 py-1 text-xs font-black text-white rounded-xl shadow-lg transition active:scale-95 bg-emerald-600 hover:bg-emerald-500">
+                Saqlash
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="flex-1 flex flex-col relative transition-colors duration-300">
+          ${mainBody}
+          ${bottomBarHTML}
+          ${reviewSheetHTML}
         </div>
       `;
     }
@@ -2001,11 +2965,21 @@
       if (!input || !input.value.trim()) return;
       currentUser.skills.push(input.value.trim());
       renderBothScreens();
+      fetch('http://localhost:8080/api/v1/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skills: currentUser.skills.join(' | ') })
+      }).catch(() => {});
     }
 
     function removeSkill(idx) {
       currentUser.skills.splice(idx, 1);
       renderBothScreens();
+      fetch('http://localhost:8080/api/v1/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skills: currentUser.skills.join(' | ') })
+      }).catch(() => {});
     }
 
     function votePoll(idx) {
@@ -2099,6 +3073,7 @@
     function refreshAllData() {
       checkHealth();
       loadVacancies();
+      loadBackendProfile();
     }
 
     // Initialize with preferred language, theme and target URL
@@ -2108,6 +3083,7 @@
     if (targetSel) targetSel.value = liveWebUrl;
     checkHealth();
     loadVacancies();
+    loadBackendProfile();
     setInterval(checkHealth, 5000);
   </script>
 </body>

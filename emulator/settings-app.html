@@ -365,7 +365,65 @@
       renderDevice(platform);
     }
 
-    function saveChanges(platform) {
+    let backendUser = {
+      name: 'Yusuf Usmonov',
+      email: 'usmonovyusuf693@gmail.com',
+      phone: '+998 (90) 123-45-67',
+      location: 'Toshkent shahri',
+      avatar: 'YU',
+      oneid_verified: true,
+      skills: 'OneID Tasdiqlangan | Raqamli Fuqaro | E-Gov ID'
+    };
+
+    async function fetchBackendProfile() {
+      try {
+        const res = await fetch('http://localhost:8080/api/v1/profile', { signal: AbortSignal.timeout(3000) });
+        if (!res.ok) return;
+        const json = await res.json();
+        const data = json.data;
+        if (data) {
+          backendUser.name = data.name || (data.user && data.user.name) || backendUser.name;
+          backendUser.email = data.email || (data.user && data.user.email) || backendUser.email;
+          backendUser.phone = data.phone || backendUser.phone;
+          backendUser.location = data.location || backendUser.location;
+          backendUser.oneid_verified = data.oneid_verified !== undefined ? data.oneid_verified : true;
+          backendUser.skills = data.skills || backendUser.skills;
+          
+          const parts = backendUser.name.split(' ').filter(Boolean);
+          backendUser.avatar = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : backendUser.name.substring(0, 2).toUpperCase();
+
+          const s = data.settings || (data.profile && data.profile.settings);
+          if (s) {
+            ['android', 'ios'].forEach(p => {
+              if (s.dark_mode !== undefined) { apps[p].dark = s.dark_mode; apps[p].pendingDark = s.dark_mode; }
+              if (s.accent_color) { apps[p].accent = s.accent_color; apps[p].pendingAccent = s.accent_color; }
+              if (s.font_scale) { apps[p].textScale = parseFloat(s.font_scale); apps[p].pendingTextScale = parseFloat(s.font_scale); }
+              if (s.corner_radius) { apps[p].radius = parseInt(s.corner_radius); apps[p].pendingRadius = parseInt(s.corner_radius); }
+              if (s.language) { apps[p].lang = s.language; apps[p].pendingLang = s.language; }
+              if (s.push_notifications !== undefined) { apps[p].push = s.push_notifications; apps[p].pendingPush = s.push_notifications; }
+              if (s.sound_enabled !== undefined) { apps[p].sound = s.sound_enabled; apps[p].pendingSound = s.sound_enabled; }
+              if (s.vibration_enabled !== undefined) { apps[p].vibration = s.vibration_enabled; apps[p].pendingVibration = s.vibration_enabled; }
+            });
+          }
+          renderAll();
+        }
+      } catch (err) {
+        console.warn('Backend sync warning:', err);
+      }
+    }
+
+    function showToast(msg) {
+      const existing = document.getElementById('settingsGlobalToast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.id = 'settingsGlobalToast';
+      toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-2xl flex items-center gap-2 animate-bounce';
+      toast.innerHTML = `<i class="fa-solid fa-circle-check text-sm"></i><span>${msg}</span>`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast && toast.remove(), 3500);
+    }
+
+    async function saveChanges(platform) {
       const s = apps[platform];
       s.dark = s.pendingDark;
       s.accent = s.pendingAccent;
@@ -393,6 +451,35 @@
           vibration: s.vibration
         }));
       } catch (_) {}
+
+      // Real backend sync: Persist to Go backend API + PostgreSQL
+      try {
+        const res = await fetch('http://localhost:8080/api/v1/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            settings: {
+              dark_mode: s.dark,
+              accent_color: s.accent,
+              font_scale: s.textScale,
+              corner_radius: s.radius,
+              language: s.lang,
+              push_notifications: s.push,
+              notify_messages: s.messages,
+              notify_promos: s.promos,
+              sound_enabled: s.sound,
+              vibration_enabled: s.vibration
+            }
+          })
+        });
+        if (res.ok) {
+          showToast(`✅ [${platform.toUpperCase()}] Sozlamalar backend bazasiga muvaffaqiyatli saqlandi!`);
+        } else {
+          showToast(`⚠️ Mahalliy saqlandi (${platform.toUpperCase()})`);
+        }
+      } catch (_) {
+        showToast(`⚠️ Mahalliy saqlandi (${platform.toUpperCase()})`);
+      }
 
       renderDevice(platform);
     }
@@ -577,8 +664,32 @@
       if (s.currentRoute === 'settings') {
         mainBody = `
           <div class="p-5 pb-24">
-            <h2 class="font-extrabold tracking-tight leading-tight" style="font-size: ${32 * textScale}px;">Settings</h2>
-            <p class="text-xs ${textMuted} mb-6">Make the app feel like yours.</p>
+            <div class="flex items-center justify-between mb-1">
+              <h2 class="font-extrabold tracking-tight leading-tight" style="font-size: ${32 * textScale}px;">Settings</h2>
+              <span class="text-[9.5px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                API :8080
+              </span>
+            </div>
+            <p class="text-xs ${textMuted} mb-4">Make the app feel like yours.</p>
+
+            <!-- Backend User Card -->
+            <div class="${cardBg} p-3.5 mb-4 shadow-sm border ${dividerColor} flex items-center justify-between" style="border-radius: ${radius}px;">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-sm" style="background: linear-gradient(135deg, ${accent}, #4f46e5);">
+                  ${backendUser.avatar || 'YU'}
+                </div>
+                <div>
+                  <div class="font-bold text-xs flex items-center gap-1.5">
+                    ${backendUser.name}
+                    ${backendUser.oneid_verified ? '<i class="fa-solid fa-circle-check text-blue-500 text-[11px]" title="OneID Tasdiqlangan"></i>' : ''}
+                  </div>
+                  <div class="text-[10px] ${textMuted}">${backendUser.email}</div>
+                  <div class="text-[9px] font-mono text-emerald-500 font-semibold">${backendUser.phone}</div>
+                </div>
+              </div>
+              <span class="text-[9px] font-black px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">OneID ✓</span>
+            </div>
 
             <!-- Dark Mode Card with animated icon & smooth transition -->
             <div onclick="togglePendingDark('${platform}', !${isDark}, event, this.querySelector('.w-12'))" class="${cardBg} p-4 shadow-sm border ${dividerColor} flex items-center justify-between transition-all duration-300 cursor-pointer active:scale-[0.99]" style="border-radius: ${radius}px;">
@@ -962,6 +1073,7 @@
 
     // Initial render
     renderAll();
+    fetchBackendProfile();
   </script>
 </body>
 </html>

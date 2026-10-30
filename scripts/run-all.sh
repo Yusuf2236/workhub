@@ -43,10 +43,18 @@ fi
 
 # 6. Start Mobile Emulator on port 3005
 if ! curl -s http://localhost:3005 >/dev/null 2>&1; then
-  echo "[5/5] Starting Mobile Emulator on port 3005..."
+  echo "[5/6] Starting Mobile Emulator on port 3005..."
   (cd "$ROOT_DIR/emulator" && python3 -m http.server 3005) &
 else
-  echo "[5/5] Emulator is already running on port 3005."
+  echo "[5/6] Emulator is already running on port 3005."
+fi
+
+# 7. Start 3D Mobile Preview Studio on port 3006
+if ! curl -s http://localhost:3006 >/dev/null 2>&1; then
+  echo "[6/6] Starting 3D Mobile Preview Studio on port 3006..."
+  (cd "$ROOT_DIR/preview-3d" && python3 -m http.server 3006) &
+else
+  echo "[6/6] 3D Mobile Preview is already running on port 3006."
 fi
 
 echo "=================================================="

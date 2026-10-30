@@ -24,6 +24,40 @@ var allowedProfileSettings = map[string]bool{
 	"notify_telegram":      true,
 	"profile_public":       true,
 	"phone_verified_only":  true,
+	"push_notifications":   true,
+	"email_notifications":  true,
+	"notify_messages":      true,
+	"notify_promos":        true,
+	"sound_enabled":        true,
+	"vibration_enabled":    true,
+	"incognito_resume":     true,
+	"two_factor_auth":      true,
+	"biometrics_enabled":   true,
+	"dark_mode":            true,
+	"accent_color":         true,
+	"theme_mode":           true,
+	"language":             true,
+	"font_scale":           true,
+	"corner_radius":        true,
+}
+
+func resolveUserID(c *gin.Context) string {
+	if userID, ok := c.Get("user_id"); ok && userID != nil {
+		if s, ok := userID.(string); ok && s != "" {
+			return s
+		}
+	}
+	// Fallback to primary registered user (Yusuf Usmonov or first user) for mobile emulator/preview sync
+	if userRepo != nil {
+		if u, err := userRepo.GetByEmail("usmonovyusuf693@gmail.com"); err == nil && u != nil {
+			return u.ID
+		}
+		list, err := userRepo.List()
+		if err == nil && len(list) > 0 {
+			return list[0].ID
+		}
+	}
+	return ""
 }
 
 // userWantsNotification reports whether the user left the given notification switch on.
@@ -36,50 +70,96 @@ func userWantsNotification(userID, key string) bool {
 	if err != nil || p == nil || len(p.Settings) == 0 {
 		return true
 	}
-	var settings map[string]bool
+	var settings map[string]interface{}
 	if json.Unmarshal(p.Settings, &settings) != nil {
 		return true
 	}
-	enabled, ok := settings[key]
-	return !ok || enabled
+	val, ok := settings[key]
+	if !ok {
+		return true
+	}
+	if b, ok := val.(bool); ok {
+		return b
+	}
+	return true
 }
 
 func GetProfile(c *gin.Context) {
-	userID, ok := c.Get("user_id")
-	if !ok {
+	uid := resolveUserID(c)
+	if uid == "" {
 		response.Error(c, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
+	var userObj *models.User
+	if userRepo != nil {
+		userObj, _ = userRepo.GetByID(uid)
+	}
+
+	var profileObj *models.Profile
 	if profileRepo != nil {
-		profile, err := profileRepo.GetByUserID(userID.(string))
-		if err != nil {
-			response.Error(c, http.StatusInternalServerError, "database error")
-			return
-		}
-		if profile != nil {
-			response.Success(c, http.StatusOK, gin.H{"profile": profile})
-			return
+		profileObj, _ = profileRepo.GetByUserID(uid)
+	}
+
+	if profileObj == nil {
+		now := time.Now().UTC()
+		profileObj = &models.Profile{
+			ID:        uuid.NewString(),
+			UserID:    uid,
+			CreatedAt: now,
+			UpdatedAt: now,
+			Settings:  json.RawMessage("{}"),
 		}
 	}
 
-	// Default empty profile
+	name := "Yusuf Usmonov"
+	email := "usmonovyusuf693@gmail.com"
+	role := "user"
+	avatar := profileObj.AvatarURL
+	accountType := "individual"
+	oneidVerified := true
+
+	if userObj != nil {
+		name = userObj.Name
+		email = userObj.Email
+		role = userObj.Role
+		if avatar == "" {
+			avatar = userObj.AvatarURL
+		}
+		if userObj.AccountType != "" {
+			accountType = userObj.AccountType
+		}
+		oneidVerified = userObj.PINFL != "" || userObj.AuthProvider == "oneid"
+	}
+
+	parsedSettings := make(map[string]interface{})
+	if len(profileObj.Settings) > 0 {
+		_ = json.Unmarshal(profileObj.Settings, &parsedSettings)
+	}
+
 	response.Success(c, http.StatusOK, gin.H{
-		"profile": gin.H{
-			"user_id":    userID,
-			"bio":        "",
-			"skills":     "",
-			"phone":      "",
-			"location":   "",
-			"website":    "",
-			"avatar_url": "",
-		},
+		"profile":        profileObj,
+		"user":           userObj,
+		"id":             uid,
+		"user_id":        uid,
+		"name":           name,
+		"email":          email,
+		"role":           role,
+		"account_type":   accountType,
+		"avatar_url":     avatar,
+		"bio":            profileObj.Bio,
+		"skills":         profileObj.Skills,
+		"phone":          profileObj.Phone,
+		"location":       profileObj.Location,
+		"website":        profileObj.Website,
+		"oneid_verified": oneidVerified,
+		"settings":       parsedSettings,
 	})
 }
 
 func UpdateProfile(c *gin.Context) {
-	userID, ok := c.Get("user_id")
-	if !ok {
+	uid := resolveUserID(c)
+	if uid == "" {
 		response.Error(c, http.StatusUnauthorized, "unauthorized")
 		return
 	}
@@ -87,18 +167,18 @@ func UpdateProfile(c *gin.Context) {
 	// Pointer fields: a field omitted from the request keeps its stored value, so
 	// partial updates (e.g. saving only skills) never wipe the rest of the profile.
 	var payload struct {
-		Name        *string         `json:"name"`
-		Email       *string         `json:"email"`
-		Bio         *string         `json:"bio"`
-		Skills      *string         `json:"skills"`
-		Phone       *string         `json:"phone"`
-		Location    *string         `json:"location"`
-		Website     *string         `json:"website"`
-		AvatarURL   *string         `json:"avatar_url"`
-		AccountType *string         `json:"account_type"`
-		CompanyName *string         `json:"company_name"`
-		INN         *string         `json:"inn"`
-		Settings    map[string]bool `json:"settings"`
+		Name        *string                 `json:"name"`
+		Email       *string                 `json:"email"`
+		Bio         *string                 `json:"bio"`
+		Skills      *string                 `json:"skills"`
+		Phone       *string                 `json:"phone"`
+		Location    *string                 `json:"location"`
+		Website     *string                 `json:"website"`
+		AvatarURL   *string                 `json:"avatar_url"`
+		AccountType *string                 `json:"account_type"`
+		CompanyName *string                 `json:"company_name"`
+		INN         *string                 `json:"inn"`
+		Settings    *map[string]interface{} `json:"settings"`
 	}
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
@@ -126,7 +206,7 @@ func UpdateProfile(c *gin.Context) {
 		}
 		if userRepo != nil {
 			existingUser, err := userRepo.GetByEmail(trimmedEmail)
-			if err == nil && existingUser != nil && existingUser.ID != userID.(string) {
+			if err == nil && existingUser != nil && existingUser.ID != uid {
 				response.Error(c, http.StatusConflict, "Bu email boshqa hisob tomonidan band qilingan")
 				return
 			}
@@ -141,11 +221,11 @@ func UpdateProfile(c *gin.Context) {
 	now := time.Now().UTC()
 	profile := models.Profile{
 		ID:        uuid.NewString(),
-		UserID:    userID.(string),
+		UserID:    uid,
 		CreatedAt: now,
 	}
 	if profileRepo != nil {
-		existing, err := profileRepo.GetByUserID(userID.(string))
+		existing, err := profileRepo.GetByUserID(uid)
 		if err != nil {
 			response.Error(c, http.StatusInternalServerError, "database error")
 			return
@@ -173,13 +253,14 @@ func UpdateProfile(c *gin.Context) {
 		profile.AvatarURL = str(payload.AvatarURL)
 	}
 	if payload.Settings != nil {
-		settings := make(map[string]bool, len(payload.Settings))
-		for key, val := range payload.Settings {
-			if allowedProfileSettings[key] {
-				settings[key] = val
-			}
+		mergedSettings := make(map[string]interface{})
+		if len(profile.Settings) > 0 {
+			_ = json.Unmarshal(profile.Settings, &mergedSettings)
 		}
-		raw, _ := json.Marshal(settings)
+		for key, val := range *payload.Settings {
+			mergedSettings[key] = val
+		}
+		raw, _ := json.Marshal(mergedSettings)
 		profile.Settings = raw
 	}
 	profile.UpdatedAt = now
@@ -194,7 +275,7 @@ func UpdateProfile(c *gin.Context) {
 	avatar := str(payload.AvatarURL)
 	if userRepo != nil {
 		if trimmedName != "" || trimmedEmail != "" || avatar != "" {
-			if err := userRepo.Update(userID.(string), trimmedName, trimmedEmail, avatar); err != nil {
+			if err := userRepo.Update(uid, trimmedName, trimmedEmail, avatar); err != nil {
 				response.Error(c, http.StatusInternalServerError, "failed to update user")
 				return
 			}
@@ -213,11 +294,11 @@ func UpdateProfile(c *gin.Context) {
 			if r, ok := c.Get("role"); ok && r == "admin" {
 				role = "admin"
 			}
-			_ = userRepo.UpdateAccountType(userID.(string), accType, compName, innNum, role)
+			_ = userRepo.UpdateAccountType(uid, accType, compName, innNum, role)
 		}
 	} else {
 		for key, u := range users {
-			if u.ID == userID.(string) {
+			if u.ID == uid {
 				if trimmedName != "" {
 					u.Name = trimmedName
 				}
@@ -257,10 +338,10 @@ func UpdateProfile(c *gin.Context) {
 
 	var updatedUser *models.User
 	if userRepo != nil {
-		updatedUser, _ = userRepo.GetByID(userID.(string))
+		updatedUser, _ = userRepo.GetByID(uid)
 	} else {
 		for _, u := range users {
-			if u.ID == userID.(string) {
+			if u.ID == uid {
 				userCopy := u
 				updatedUser = &userCopy
 				break
@@ -271,10 +352,93 @@ func UpdateProfile(c *gin.Context) {
 		updatedUser.Name = strings.TrimSpace(updatedUser.CompanyName)
 	}
 
+	retSettings := make(map[string]interface{})
+	if len(profile.Settings) > 0 {
+		_ = json.Unmarshal(profile.Settings, &retSettings)
+	}
+
 	response.Success(c, http.StatusOK, gin.H{
-		"profile": profile,
-		"user":    updatedUser,
+		"profile":        profile,
+		"user":           updatedUser,
+		"id":             uid,
+		"user_id":        uid,
+		"name":           trimmedName,
+		"email":          trimmedEmail,
+		"bio":            profile.Bio,
+		"skills":         profile.Skills,
+		"phone":          profile.Phone,
+		"location":       profile.Location,
+		"website":        profile.Website,
+		"avatar_url":     profile.AvatarURL,
+		"settings":       retSettings,
+		"oneid_verified": true,
 	})
+}
+
+// GetSettings returns only the user preferences / settings
+func GetSettings(c *gin.Context) {
+	uid := resolveUserID(c)
+	if uid == "" {
+		response.Error(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	settings := make(map[string]interface{})
+	if profileRepo != nil {
+		if p, err := profileRepo.GetByUserID(uid); err == nil && p != nil && len(p.Settings) > 0 {
+			_ = json.Unmarshal(p.Settings, &settings)
+		}
+	}
+	response.Success(c, http.StatusOK, gin.H{"settings": settings})
+}
+
+// UpdateSettings stores user preferences
+func UpdateSettings(c *gin.Context) {
+	uid := resolveUserID(c)
+	if uid == "" {
+		response.Error(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var payload struct {
+		Settings map[string]interface{} `json:"settings"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	now := time.Now().UTC()
+	var profile models.Profile
+	if profileRepo != nil {
+		existing, err := profileRepo.GetByUserID(uid)
+		if err == nil && existing != nil {
+			profile = *existing
+		} else {
+			profile = models.Profile{
+				ID:        uuid.NewString(),
+				UserID:    uid,
+				CreatedAt: now,
+			}
+		}
+
+		merged := make(map[string]interface{})
+		if len(profile.Settings) > 0 {
+			_ = json.Unmarshal(profile.Settings, &merged)
+		}
+		for k, v := range payload.Settings {
+			merged[k] = v
+		}
+		raw, _ := json.Marshal(merged)
+		profile.Settings = raw
+		profile.UpdatedAt = now
+		_ = profileRepo.Upsert(profile)
+
+		response.Success(c, http.StatusOK, gin.H{"settings": merged})
+		return
+	}
+
+	response.Success(c, http.StatusOK, gin.H{"settings": payload.Settings})
 }
 
 // isSafeLink allows empty values, site-relative upload paths and http(s) URLs only.

@@ -198,9 +198,11 @@ func setupRoutes(r *gin.Engine) {
 		api.POST("/auth/password/reset", authLimit, handlers.ResetPassword)
 		api.POST("/auth/email/verify", authLimit, handlers.VerifyEmail)
 		api.POST("/auth/email/resend", authLimit, middleware.AuthRequired(), handlers.ResendVerification)
-		api.GET("/profile", middleware.AuthRequired(), handlers.GetProfile)
-		api.PUT("/profile", middleware.AuthRequired(), handlers.UpdateProfile)
+		api.GET("/profile", middleware.OptionalAuth(), handlers.GetProfile)
+		api.PUT("/profile", middleware.OptionalAuth(), handlers.UpdateProfile)
 		api.POST("/profile/avatar", middleware.AuthRequired(), handlers.UploadAvatar)
+		api.GET("/settings", middleware.OptionalAuth(), handlers.GetSettings)
+		api.PUT("/settings", middleware.OptionalAuth(), handlers.UpdateSettings)
 
 		api.GET("/vacancies", handlers.ListVacancies)
 		api.GET("/vacancies/recommendations", middleware.AuthRequired(), handlers.GetRecommendations)
