@@ -35,8 +35,11 @@ import kotlinx.coroutines.delay
 fun AppNavGraph(
     navController: NavHostController,
     context: android.content.Context = androidx.compose.ui.platform.LocalContext.current,
-    repository: JobRepository = remember { JobRepository(context) }
+    repository: JobRepository = remember { JobRepository(context) },
+    appState: com.workhub.app.data.settings.AppState? = null
 ) {
+    val state = appState ?: remember { com.workhub.app.data.settings.AppState.load(context) }
+
     NavHost(
         navController = navController,
         startDestination = "main_tabs"
@@ -65,6 +68,9 @@ fun AppNavGraph(
                 },
                 onRequireLogin = {
                     navController.navigate("login")
+                },
+                onNavigateToSettings = {
+                    navController.navigate("settings")
                 }
             )
         }
@@ -83,6 +89,13 @@ fun AppNavGraph(
                 }
             )
         }
+
+        composable("settings") {
+            SettingsAppHost(
+                state = state,
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 }
 
@@ -90,7 +103,8 @@ fun AppNavGraph(
 fun MainTabsContainer(
     repository: JobRepository,
     onVacancyClick: (vacancyId: String) -> Unit,
-    onRequireLogin: () -> Unit
+    onRequireLogin: () -> Unit,
+    onNavigateToSettings: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf("feed") }
     var isWebMirrorMode by remember { mutableStateOf(false) }
@@ -257,7 +271,8 @@ fun MainTabsContainer(
                     )
                     "profile" -> ProfileScreen(
                         repository = repository,
-                        onLogout = onRequireLogin
+                        onLogout = onRequireLogin,
+                        onNavigateToSettings = onNavigateToSettings
                     )
                 }
 

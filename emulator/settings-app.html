@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkHub — Settings App Independent Runner (Android & iOS)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 50% 10%, #151828 0%, #080910 70%, #040508 100%);
+      color: #f1f5f9;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Device Frames */
+    .device-shadow-ios {
+      box-shadow: 0 30px 80px -15px rgba(0,0,0,0.9), 0 0 0 12px #22242a, 0 0 0 14px #3a3d46;
+    }
+
+    .device-shadow-android {
+      box-shadow: 0 30px 80px -15px rgba(0,0,0,0.9), 0 0 0 11px #1d212a, 0 0 0 13px #353b47;
+    }
+
+    /* Custom Scrollbar for Phone Screens */
+    .screen-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .screen-scroll::-webkit-scrollbar-thumb {
+      background: rgba(140, 140, 160, 0.25);
+      border-radius: 9999px;
+    }
+
+    /* Modal Sheet Slide Up */
+    .sheet-enter {
+      transform: translateY(0%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sheet-exit {
+      transform: translateY(105%);
+      transition: transform 0.24s cubic-bezier(0.4, 0, 1, 1);
+    }
+
+    /* Fluid Theme Mode Animated Transition */
+    .theme-transition-active,
+    .theme-transition-active * {
+      transition: background-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                  color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                  box-shadow 0.45s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Expanding Circular Ripple Bloom from Switch */
+    .theme-ripple-bloom {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 55;
+      animation: rippleExpand 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    @keyframes rippleExpand {
+      0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0.95;
+      }
+      65% {
+        opacity: 0.85;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+      }
+    }
+
+    /* Spring Icon 360 Spin & Scale Morph */
+    .icon-spin-spring {
+      animation: iconSpin 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      display: inline-block;
+    }
+
+    @keyframes iconSpin {
+      0% {
+        transform: rotate(0deg) scale(0.4);
+        opacity: 0;
+      }
+      65% {
+        transform: rotate(380deg) scale(1.3);
+        opacity: 1;
+      }
+      100% {
+        transform: rotate(360deg) scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body class="p-4 sm:p-8">
+
+  <!-- Top Navigation & Control Bar -->
+  <header class="max-w-7xl mx-auto mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/30">
+        <i class="fa-solid fa-sliders"></i>
+      </div>
+      <div>
+        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+          WorkHub Settings App
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold uppercase tracking-wider">Mustaqil Rejim (Independent)</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400">
+          Android va iOS <span class="text-emerald-400 font-semibold">100% alohida</span> holatda ishlaydi (bir-biriga ta'sir qilmaydi)
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="flex items-center gap-3">
+      <button onclick="resetDevice('android')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/50 transition active:scale-95 flex items-center gap-1.5">
+        <i class="fa-brands fa-android"></i> Reset Pixel
+      </button>
+      <button onclick="resetDevice('ios')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition active:scale-95 flex items-center gap-1.5">
+        <i class="fa-brands fa-apple"></i> Reset iPhone
+      </button>
+      <div class="h-6 w-px bg-slate-800"></div>
+      <span class="text-xs text-slate-400 font-mono">Port: 3005</span>
+    </div>
+  </header>
+
+  <!-- Device Dual Runner Container -->
+  <main class="max-w-7xl mx-auto flex flex-col xl:flex-row items-center justify-center gap-10 xl:gap-14 pb-16">
+
+    <!-- ==================== ANDROID DEVICE (Pixel 8 Pro) ==================== -->
+    <div class="flex flex-col items-center">
+      <div class="flex items-center justify-between w-[390px] mb-3 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-xs font-bold text-slate-300">
+        <div class="flex items-center gap-2">
+          <i class="fa-brands fa-android text-emerald-400 text-sm"></i>
+          <span>Google Pixel 8 Pro · Compose</span>
+        </div>
+        <button onclick="resetDevice('android')" class="text-[10px] text-slate-400 hover:text-emerald-400">Reset</button>
+      </div>
+
+      <div class="w-[390px] h-[810px] rounded-[44px] device-shadow-android bg-[#0d0f17] relative overflow-hidden flex flex-col select-none border border-slate-700/50">
+        <!-- Punch Hole Camera -->
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-black z-50 ring-2 ring-white/10"></div>
+
+        <!-- Android Status Bar -->
+        <div class="h-10 pt-2 px-7 flex items-center justify-between text-xs font-semibold text-slate-400 z-40 shrink-0">
+          <span id="androidClock">16:30</span>
+          <div class="flex items-center gap-2 text-[11px]">
+            <i class="fa-solid fa-wifi"></i>
+            <i class="fa-solid fa-signal"></i>
+            <i class="fa-solid fa-battery-full text-emerald-400"></i>
+          </div>
+        </div>
+
+        <!-- Android App Content Screen -->
+        <div id="androidScreen" class="flex-1 overflow-y-auto screen-scroll relative flex flex-col transition-colors duration-200">
+          <!-- Injected by JS for Android only -->
+        </div>
+
+        <!-- Android Nav Bar Pill -->
+        <div class="h-5 flex items-center justify-center pb-1 shrink-0 z-40">
+          <div class="w-24 h-1 rounded-full bg-slate-500/40"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== iOS DEVICE (iPhone 16 Pro) ==================== -->
+    <div class="flex flex-col items-center">
+      <div class="flex items-center justify-between w-[390px] mb-3 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-xs font-bold text-slate-300">
+        <div class="flex items-center gap-2">
+          <i class="fa-brands fa-apple text-slate-200 text-sm"></i>
+          <span>Apple iPhone 16 Pro · SwiftUI</span>
+        </div>
+        <button onclick="resetDevice('ios')" class="text-[10px] text-slate-400 hover:text-indigo-400">Reset</button>
+      </div>
+
+      <div class="w-[390px] h-[810px] rounded-[52px] device-shadow-ios bg-[#000000] relative overflow-hidden flex flex-col select-none border border-slate-700/50">
+        <!-- Dynamic Island -->
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 w-28 h-7 rounded-full bg-black z-50 flex items-center justify-between px-2.5 border border-white/5 cursor-pointer hover:w-36 transition-all duration-300">
+          <div class="w-2.5 h-2.5 rounded-full bg-indigo-500/80"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+        </div>
+
+        <!-- iOS Status Bar -->
+        <div class="h-11 pt-2 px-8 flex items-center justify-between text-xs font-semibold text-slate-300 z-40 shrink-0">
+          <span id="iosClock">16:30</span>
+          <div class="flex items-center gap-2 text-[11px]">
+            <i class="fa-solid fa-signal"></i>
+            <span class="text-[10px] font-bold">5G</span>
+            <i class="fa-solid fa-battery-three-quarters text-slate-200"></i>
+          </div>
+        </div>
+
+        <!-- iOS App Content Screen -->
+        <div id="iosScreen" class="flex-1 overflow-y-auto screen-scroll relative flex flex-col transition-colors duration-200">
+          <!-- Injected by JS for iOS only -->
+        </div>
+
+        <!-- iOS Home Indicator -->
+        <div class="h-6 flex items-center justify-center pb-2 shrink-0 z-40">
+          <div class="w-32 h-1 rounded-full bg-white/40"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const COLORS = [
+      { hex: '#7C5CFF', name: 'Violet' },
+      { hex: '#FF4D8D', name: 'Rose' },
+      { hex: '#3B82F6', name: 'Blue' },
+      { hex: '#22C55E', name: 'Green' },
+      { hex: '#F59E0B', name: 'Amber' }
+    ];
+
+    const LANGUAGES = [
+      { code: 'en', name: 'English' },
+      { code: 'uz', name: 'O‘zbekcha' },
+      { code: 'ru', name: 'Русский' },
+      { code: 'fr', name: 'Français' },
+      { code: 'es', name: 'Español' },
+      { code: 'de', name: 'Deutsch' },
+      { code: 'pt', name: 'Português' },
+      { code: 'it', name: 'Italiano' }
+    ];
+
+    function getColorName(hex) {
+      const found = COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
+      return found ? found.name : 'Custom';
+    }
+
+    function getTextScaleName(scale) {
+      if (scale <= 0.9) return 'Small';
+      if (scale <= 1.0) return 'Default';
+      if (scale <= 1.15) return 'Large';
+      return 'X-Large';
+    }
+
+    function getRadiusStyleName(r) {
+      if (r >= 20) return 'Rounded';
+      if (r >= 12) return 'Soft';
+      return 'Crisp';
+    }
+
+    function getLanguageName(code) {
+      const found = LANGUAGES.find(l => l.code === code);
+      return found ? found.name : code.toUpperCase();
+    }
+
+    // Factory for completely standalone device state
+    function createDeviceState(platform) {
+      const isAndroid = platform === 'android';
+      const defaults = {
+        dark: isAndroid, // Android starts dark, iOS starts light
+        accent: isAndroid ? '#7C5CFF' : '#FF4D8D', // Android Violet, iOS Rose
+        textScale: 1.0,
+        radius: isAndroid ? 22 : 14,
+        lang: isAndroid ? 'uz' : 'en',
+        push: true,
+        messages: true,
+        promos: false,
+        sound: true,
+        vibration: true,
+
+        // Pending (staged)
+        pendingDark: isAndroid,
+        pendingAccent: isAndroid ? '#7C5CFF' : '#FF4D8D',
+        pendingTextScale: 1.0,
+        pendingRadius: isAndroid ? 22 : 14,
+        pendingLang: isAndroid ? 'uz' : 'en',
+        pendingPush: true,
+        pendingMessages: true,
+        pendingPromos: false,
+        pendingSound: true,
+        pendingVibration: true,
+
+        currentRoute: 'settings',
+        showReview: false,
+        isAnimating: false
+      };
+
+      try {
+        const saved = localStorage.getItem('workhub_app_state_' + platform);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          Object.assign(defaults, parsed);
+          // Sync pending with saved values
+          defaults.pendingDark = defaults.dark;
+          defaults.pendingAccent = defaults.accent;
+          defaults.pendingTextScale = defaults.textScale;
+          defaults.pendingRadius = defaults.radius;
+          defaults.pendingLang = defaults.lang;
+          defaults.pendingPush = defaults.push;
+          defaults.pendingMessages = defaults.messages;
+          defaults.pendingPromos = defaults.promos;
+          defaults.pendingSound = defaults.sound;
+          defaults.pendingVibration = defaults.vibration;
+        }
+      } catch (_) {}
+
+      return defaults;
+    }
+
+    // Two 100% separate, independent device apps
+    const apps = {
+      android: createDeviceState('android'),
+      ios: createDeviceState('ios')
+    };
+
+    function hasChanges(platform) {
+      const s = apps[platform];
+      return s.dark !== s.pendingDark ||
+             s.accent.toLowerCase() !== s.pendingAccent.toLowerCase() ||
+             s.textScale !== s.pendingTextScale ||
+             s.radius !== s.pendingRadius ||
+             s.lang !== s.pendingLang ||
+             s.push !== s.pendingPush ||
+             s.messages !== s.pendingMessages ||
+             s.promos !== s.pendingPromos ||
+             s.sound !== s.pendingSound ||
+             s.vibration !== s.pendingVibration;
+    }
+
+    function getChangesCount(platform) {
+      const s = apps[platform];
+      let n = 0;
+      if (s.dark !== s.pendingDark) n++;
+      if (s.accent.toLowerCase() !== s.pendingAccent.toLowerCase()) n++;
+      if (s.textScale !== s.pendingTextScale) n++;
+      if (s.radius !== s.pendingRadius) n++;
+      if (s.lang !== s.pendingLang) n++;
+      if (s.push !== s.pendingPush) n++;
+      if (s.messages !== s.pendingMessages) n++;
+      if (s.promos !== s.pendingPromos) n++;
+      if (s.sound !== s.pendingSound) n++;
+      if (s.vibration !== s.pendingVibration) n++;
+      return n;
+    }
+
+    function discardChanges(platform) {
+      const s = apps[platform];
+      s.pendingDark = s.dark;
+      s.pendingAccent = s.accent;
+      s.pendingTextScale = s.textScale;
+      s.pendingRadius = s.radius;
+      s.pendingLang = s.lang;
+      s.pendingPush = s.push;
+      s.pendingMessages = s.messages;
+      s.pendingPromos = s.promos;
+      s.pendingSound = s.sound;
+      s.pendingVibration = s.vibration;
+      s.showReview = false;
+      renderDevice(platform);
+    }
+
+    function saveChanges(platform) {
+      const s = apps[platform];
+      s.dark = s.pendingDark;
+      s.accent = s.pendingAccent;
+      s.textScale = s.pendingTextScale;
+      s.radius = s.pendingRadius;
+      s.lang = s.pendingLang;
+      s.push = s.pendingPush;
+      s.messages = s.pendingMessages;
+      s.promos = s.pendingPromos;
+      s.sound = s.pendingSound;
+      s.vibration = s.pendingVibration;
+      s.showReview = false;
+
+      try {
+        localStorage.setItem('workhub_app_state_' + platform, JSON.stringify({
+          dark: s.dark,
+          accent: s.accent,
+          textScale: s.textScale,
+          radius: s.radius,
+          lang: s.lang,
+          push: s.push,
+          messages: s.messages,
+          promos: s.promos,
+          sound: s.sound,
+          vibration: s.vibration
+        }));
+      } catch (_) {}
+
+      renderDevice(platform);
+    }
+
+    function resetDevice(platform) {
+      try {
+        localStorage.removeItem('workhub_app_state_' + platform);
+      } catch (_) {}
+      apps[platform] = createDeviceState(platform);
+      renderDevice(platform);
+    }
+
+    function resetToDefaults() {
+      resetDevice('android');
+      resetDevice('ios');
+    }
+
+    function navigate(platform, route) {
+      apps[platform].currentRoute = route;
+      renderDevice(platform);
+    }
+
+    function setPendingAccent(platform, hex) {
+      apps[platform].pendingAccent = hex;
+      renderDevice(platform);
+    }
+
+    function setPendingTextScale(platform, scale) {
+      apps[platform].pendingTextScale = scale;
+      renderDevice(platform);
+    }
+
+    function setPendingRadius(platform, r) {
+      apps[platform].pendingRadius = r;
+      renderDevice(platform);
+    }
+
+    function setPendingLang(platform, code) {
+      apps[platform].pendingLang = code;
+      renderDevice(platform);
+    }
+
+    function toggleNotification(platform, prop, val) {
+      apps[platform][prop] = val;
+      renderDevice(platform);
+    }
+
+    function setReviewOpen(platform, isOpen) {
+      apps[platform].showReview = isOpen;
+      renderDevice(platform);
+    }
+
+    // Circular Reveal Animation running ONLY on that specific device
+    function togglePendingDark(platform, checked, event, elInput) {
+      const s = apps[platform];
+      if (s.isAnimating) return;
+      s.isAnimating = true;
+
+      const targetDark = checked;
+      const screenId = platform === 'android' ? 'androidScreen' : 'iosScreen';
+      const screen = document.getElementById(screenId);
+
+      // Generate incoming HTML for ONLY this platform
+      s.pendingDark = targetDark;
+      const incomingHTML = renderScreen(platform);
+      s.pendingDark = !targetDark; // keep old theme active while circle expands
+
+      if (screen) {
+        const screenRect = screen.getBoundingClientRect();
+        
+        // Find visible switch element
+        let targetEl = elInput;
+        if (targetEl && targetEl.closest) {
+          targetEl = targetEl.closest('label')?.querySelector('.w-12') || targetEl.closest('label') || targetEl;
+        }
+
+        let originX = screenRect.width - 50;
+        let originY = 125;
+
+        if (targetEl && typeof targetEl.getBoundingClientRect === 'function') {
+          const swRect = targetEl.getBoundingClientRect();
+          originX = (swRect.left + swRect.width / 2) - screenRect.left;
+          originY = (swRect.top + swRect.height / 2) - screenRect.top;
+        } else if (event && event.clientX) {
+          originX = event.clientX - screenRect.left;
+          originY = event.clientY - screenRect.top;
+        }
+
+        const maxRadius = Math.hypot(
+          Math.max(originX, screenRect.width - originX),
+          Math.max(originY, screenRect.height - originY)
+        ) + 60;
+
+        // Create overlay matched to current scroll viewport
+        const overlay = document.createElement('div');
+        overlay.className = 'absolute z-50 overflow-hidden pointer-events-none flex flex-col';
+        overlay.style.top = screen.scrollTop + 'px';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = screen.clientHeight + 'px';
+        overlay.style.clipPath = `circle(0px at ${originX}px ${originY}px)`;
+        overlay.style.willChange = 'clip-path';
+        overlay.innerHTML = incomingHTML;
+        overlay.scrollTop = screen.scrollTop;
+
+        screen.appendChild(overlay);
+
+        // Hardware-accelerated Web Animations API (guaranteed smooth animation)
+        const anim = overlay.animate([
+          { clipPath: `circle(0px at ${originX}px ${originY}px)` },
+          { clipPath: `circle(${maxRadius}px at ${originX}px ${originY}px)` }
+        ], {
+          duration: 620,
+          easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+          fill: 'forwards'
+        });
+
+        // Glowing wave border expanding with the circle
+        const ring = document.createElement('div');
+        ring.style.position = 'absolute';
+        ring.style.top = screen.scrollTop + 'px';
+        ring.style.left = '0';
+        ring.style.width = '100%';
+        ring.style.height = screen.clientHeight + 'px';
+        ring.style.pointerEvents = 'none';
+        ring.style.zIndex = '55';
+        screen.appendChild(ring);
+
+        const ringAnim = ring.animate([
+          {
+            boxShadow: `inset 0 0 0 2px ${s.pendingAccent}`,
+            clipPath: `circle(0px at ${originX}px ${originY}px)`,
+            opacity: 1
+          },
+          {
+            boxShadow: `inset 0 0 25px 8px ${s.pendingAccent}`,
+            clipPath: `circle(${maxRadius}px at ${originX}px ${originY}px)`,
+            opacity: 0
+          }
+        ], {
+          duration: 620,
+          easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+        });
+
+        ringAnim.onfinish = () => ring.remove();
+
+        anim.onfinish = () => {
+          s.pendingDark = targetDark;
+          const currentScroll = screen.scrollTop;
+          renderDevice(platform);
+          screen.scrollTop = currentScroll;
+          overlay.remove();
+          s.isAnimating = false;
+        };
+      } else {
+        s.pendingDark = targetDark;
+        renderDevice(platform);
+        s.isAnimating = false;
+      }
+    }
+
+    function renderScreen(platform) {
+      const s = apps[platform];
+      const isDark = s.pendingDark;
+      const accent = s.pendingAccent;
+      const radius = s.pendingRadius;
+      const textScale = s.pendingTextScale;
+      const changes = hasChanges(platform);
+      const count = getChangesCount(platform);
+
+      // Theme Colors
+      const bgClass = isDark ? 'bg-[#10121a] text-slate-100' : 'bg-[#f8f9fd] text-slate-900';
+      const cardBg = isDark ? 'bg-[#181b26]' : 'bg-white';
+      const subCardBg = isDark ? 'bg-[#1f2333]' : 'bg-slate-100';
+      const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
+      const dividerColor = isDark ? 'border-slate-800' : 'border-slate-100';
+
+      const appearanceSummary = `${getColorName(s.pendingAccent)} · ${getTextScaleName(s.pendingTextScale)} · ${getRadiusStyleName(s.pendingRadius)}`;
+
+      let mainBody = '';
+
+      if (s.currentRoute === 'settings') {
+        mainBody = `
+          <div class="p-5 pb-24">
+            <h2 class="font-extrabold tracking-tight leading-tight" style="font-size: ${32 * textScale}px;">Settings</h2>
+            <p class="text-xs ${textMuted} mb-6">Make the app feel like yours.</p>
+
+            <!-- Dark Mode Card with animated icon & smooth transition -->
+            <div onclick="togglePendingDark('${platform}', !${isDark}, event, this.querySelector('.w-12'))" class="${cardBg} p-4 shadow-sm border ${dividerColor} flex items-center justify-between transition-all duration-300 cursor-pointer active:scale-[0.99]" style="border-radius: ${radius}px;">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm transition-all duration-300" style="color: ${accent}; background: ${accent}1a;">
+                  <i class="fa-solid ${isDark ? 'fa-moon' : 'fa-sun text-amber-500'} icon-spin-spring text-base"></i>
+                </div>
+                <div>
+                  <div class="font-bold text-sm tracking-tight">Dark mode</div>
+                  <div class="text-[11px] ${textMuted}">Tap to switch the mood</div>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer pointer-events-none">
+                <input type="checkbox" ${isDark ? 'checked' : ''} class="sr-only peer">
+                <div class="w-12 h-6 bg-slate-300 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:shadow-md after:transition-all after:duration-300" style="background-color: ${isDark ? accent : ''};"></div>
+              </label>
+            </div>
+
+            <!-- PERSONALIZATION -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} mt-6 mb-2 uppercase px-1">Personalization</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div onclick="navigate('${platform}', 'appearance')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-500/5 active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-palette text-sm" style="color: ${accent};"></i>
+                  <div>
+                    <div class="font-semibold text-xs">Appearance</div>
+                    <div class="text-[11px] ${textMuted}">${appearanceSummary}</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[11px] ${textMuted}"></i>
+              </div>
+              <div class="h-px ${dividerColor} ml-10"></div>
+              <div onclick="navigate('${platform}', 'language')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-500/5 active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-globe text-sm" style="color: ${accent};"></i>
+                  <div>
+                    <div class="font-semibold text-xs">Language</div>
+                    <div class="text-[11px] ${textMuted}">${getLanguageName(s.pendingLang)}</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[11px] ${textMuted}"></i>
+              </div>
+            </div>
+
+            <!-- ALERTS -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} mt-6 mb-2 uppercase px-1">Alerts</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div onclick="navigate('${platform}', 'notifications')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-500/5 active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-bell text-sm" style="color: ${accent};"></i>
+                  <div>
+                    <div class="font-semibold text-xs">Notifications</div>
+                    <div class="text-[11px] ${textMuted}">Messages and promos</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[11px] ${textMuted}"></i>
+              </div>
+            </div>
+
+            <!-- PRIVACY & SECURITY -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} mt-6 mb-2 uppercase px-1">Privacy & Security</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-lock text-sm" style="color: ${accent};"></i>
+                  <div>
+                    <div class="font-semibold text-xs">Privacy</div>
+                    <div class="text-[11px] ${textMuted}">Visible to everyone</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[11px] ${textMuted}"></i>
+              </div>
+              <div class="h-px ${dividerColor} ml-10"></div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-shield-halved text-sm" style="color: ${accent};"></i>
+                  <div>
+                    <div class="font-semibold text-xs">Security</div>
+                    <div class="text-[11px] ${textMuted}">Basic protection</div>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[11px] ${textMuted}"></i>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (s.currentRoute === 'appearance') {
+        mainBody = `
+          <div class="p-5 pb-24">
+            <div class="flex items-center gap-2 mb-5">
+              <button onclick="navigate('${platform}', 'settings')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500/10">
+                <i class="fa-solid fa-arrow-left text-sm"></i>
+              </button>
+              <h3 class="font-bold text-base">Appearance</h3>
+            </div>
+
+            <!-- Preview Card -->
+            <div class="${subCardBg} p-4 flex items-center gap-3 shadow-inner" style="border-radius: ${radius}px;">
+              <i class="fa-solid fa-wand-magic-sparkles text-base" style="color: ${accent};"></i>
+              <div class="flex-1">
+                <div class="font-bold text-xs">Weekly summary</div>
+                <div class="text-[11px] ${textMuted}">Your plan for the week is ready.</div>
+              </div>
+              <button class="px-3 py-1.5 text-xs font-bold text-white shadow-sm" style="background: ${accent}; border-radius: ${radius * 0.65}px;">
+                Open
+              </button>
+            </div>
+
+            <!-- Theme Color Swatches -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} mt-7 mb-3 uppercase">Theme Color</div>
+            <div class="flex items-center justify-between px-1">
+              ${COLORS.map(c => `
+                <div onclick="setPendingAccent('${platform}', '${c.hex}')" class="w-10 h-10 rounded-full cursor-pointer transition-all duration-200 flex items-center justify-center" style="background: ${c.hex}; ${s.pendingAccent.toLowerCase() === c.hex.toLowerCase() ? `box-shadow: 0 0 0 3px ${isDark ? '#fff' : '#0f172a'}, 0 0 0 5px ${c.hex}; transform: scale(1.1);` : ''}">
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Text Size Options -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} mt-7 mb-3 uppercase">Text Size</div>
+            <div class="grid grid-cols-4 gap-2">
+              ${[0.85, 1.0, 1.15, 1.3].map(scale => `
+                <div onclick="setPendingTextScale('${platform}', ${scale})" class="h-11 rounded-xl flex items-center justify-center font-bold cursor-pointer transition border" style="${s.pendingTextScale === scale ? `background: ${accent}26; border-color: ${accent}; color: ${accent};` : `background: ${subCardBg.replace('bg-', '')}; border-color: transparent;`}; font-size: ${16 * scale}px;">
+                  Aa
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- UI Style -->
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} mt-7 mb-3 uppercase">UI Style</div>
+            <div class="grid grid-cols-3 gap-2">
+              ${[
+                { r: 22, name: 'Rounded' },
+                { r: 14, name: 'Soft' },
+                { r: 6, name: 'Crisp' }
+              ].map(item => `
+                <div onclick="setPendingRadius('${platform}', ${item.r})" class="flex flex-col items-center gap-1.5 cursor-pointer">
+                  <div class="w-full h-10 border transition flex items-center justify-center" style="border-radius: ${item.r}px; background: ${s.pendingRadius === item.r ? accent : accent + '40'}; border-color: ${s.pendingRadius === item.r ? (isDark ? '#fff' : '#0f172a') : 'transparent'};"></div>
+                  <span class="text-[11px] font-medium" style="color: ${s.pendingRadius === item.r ? accent : ''};">${item.name}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (s.currentRoute === 'language') {
+        mainBody = `
+          <div class="p-5 pb-24">
+            <div class="flex items-center gap-2 mb-4">
+              <button onclick="navigate('${platform}', 'settings')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500/10">
+                <i class="fa-solid fa-arrow-left text-sm"></i>
+              </button>
+              <h3 class="font-bold text-base">Language</h3>
+            </div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              ${LANGUAGES.map((l, idx) => `
+                <div onclick="setPendingLang('${platform}', '${l.code}')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-500/5 transition">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase" style="${s.pendingLang === l.code ? `background: ${accent}; color: #fff;` : `background: ${subCardBg.replace('bg-', '')}; color: inherit;`}">
+                      ${l.code}
+                    </div>
+                    <div>
+                      <div class="font-bold text-xs">${l.name}</div>
+                      <div class="text-[10px] ${textMuted} uppercase">${l.code}</div>
+                    </div>
+                  </div>
+                  ${s.pendingLang === l.code ? `<i class="fa-solid fa-circle-check text-sm" style="color: ${accent};"></i>` : ''}
+                </div>
+                ${idx < LANGUAGES.length - 1 ? `<div class="h-px ${dividerColor} ml-12"></div>` : ''}
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (s.currentRoute === 'notifications') {
+        mainBody = `
+          <div class="p-5 pb-24">
+            <div class="flex items-center gap-2 mb-4">
+              <button onclick="navigate('${platform}', 'settings')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500/10">
+                <i class="fa-solid fa-arrow-left text-sm"></i>
+              </button>
+              <h3 class="font-bold text-base">Notifications</h3>
+            </div>
+
+            <!-- Push Row -->
+            <div class="${cardBg} p-3.5 shadow-sm border ${dividerColor} flex items-center justify-between" style="border-radius: ${radius}px;">
+              <div class="flex items-center gap-3">
+                <i class="fa-solid fa-bell text-sm" style="color: ${accent};"></i>
+                <div>
+                  <div class="font-semibold text-xs">Push notifications</div>
+                  <div class="text-[11px] ${textMuted}">On this device</div>
+                </div>
+              </div>
+              <input type="checkbox" ${s.pendingPush ? 'checked' : ''} onchange="toggleNotification('${platform}', 'pendingPush', this.checked)" class="accent-indigo-600 scale-125 cursor-pointer">
+            </div>
+
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} mt-6 mb-2 uppercase px-1">Notify me about</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i class="fa-regular fa-comment-dots text-sm" style="color: ${accent};"></i>
+                  <div>
+                    <div class="font-semibold text-xs">Messages</div>
+                    <div class="text-[11px] ${textMuted}">Replies and new chats</div>
+                  </div>
+                </div>
+                <input type="checkbox" ${s.pendingMessages ? 'checked' : ''} onchange="toggleNotification('${platform}', 'pendingMessages', this.checked)" class="accent-indigo-600 scale-125 cursor-pointer">
+              </div>
+              <div class="h-px ${dividerColor} ml-10"></div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-tag text-sm" style="color: ${accent};"></i>
+                  <div>
+                    <div class="font-semibold text-xs">Promotions</div>
+                    <div class="text-[11px] ${textMuted}">Offers and news</div>
+                  </div>
+                </div>
+                <input type="checkbox" ${s.pendingPromos ? 'checked' : ''} onchange="toggleNotification('${platform}', 'pendingPromos', this.checked)" class="accent-indigo-600 scale-125 cursor-pointer">
+              </div>
+            </div>
+
+            <div class="text-[10px] font-bold tracking-widest ${textMuted} mt-6 mb-2 uppercase px-1">Sound & Vibration</div>
+            <div class="${cardBg} shadow-sm border ${dividerColor} overflow-hidden" style="border-radius: ${radius}px;">
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-volume-high text-sm" style="color: ${accent};"></i>
+                  <div>
+                    <div class="font-semibold text-xs">Sound</div>
+                    <div class="text-[11px] ${textMuted}">A soft tone for alerts</div>
+                  </div>
+                </div>
+                <input type="checkbox" ${s.pendingSound ? 'checked' : ''} onchange="toggleNotification('${platform}', 'pendingSound', this.checked)" class="accent-indigo-600 scale-125 cursor-pointer">
+              </div>
+              <div class="h-px ${dividerColor} ml-10"></div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-mobile-screen-button text-sm" style="color: ${accent};"></i>
+                  <div>
+                    <div class="font-semibold text-xs">Vibration</div>
+                    <div class="text-[11px] ${textMuted}">A gentle buzz</div>
+                  </div>
+                </div>
+                <input type="checkbox" ${s.pendingVibration ? 'checked' : ''} onchange="toggleNotification('${platform}', 'pendingVibration', this.checked)" class="accent-indigo-600 scale-125 cursor-pointer">
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Review Modal Bottom Sheet
+      let reviewSheetHTML = '';
+      if (s.showReview) {
+        reviewSheetHTML = `
+          <div class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end">
+            <div class="${cardBg} rounded-t-3xl p-5 shadow-2xl border-t ${dividerColor} sheet-enter">
+              <div class="w-10 h-1 rounded-full bg-slate-500/30 mx-auto mb-3"></div>
+              <h4 class="font-black text-lg">Review changes</h4>
+              <p class="text-xs ${textMuted} mb-4">${count} changes ready to apply</p>
+
+              <div class="space-y-2 max-h-48 overflow-y-auto screen-scroll pr-1">
+                ${s.dark !== s.pendingDark ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Dark mode</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${s.dark ? 'On' : 'Off'}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${s.pendingDark ? 'On' : 'Off'}</span></span>
+                  </div>
+                ` : ''}
+                ${s.accent.toLowerCase() !== s.pendingAccent.toLowerCase() ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Theme color</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${getColorName(s.accent)}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${getColorName(s.pendingAccent)}</span></span>
+                  </div>
+                ` : ''}
+                ${s.textScale !== s.pendingTextScale ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Text size</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${getTextScaleName(s.textScale)}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${getTextScaleName(s.pendingTextScale)}</span></span>
+                  </div>
+                ` : ''}
+                ${s.radius !== s.pendingRadius ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>UI style</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${getRadiusStyleName(s.radius)}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${getRadiusStyleName(s.pendingRadius)}</span></span>
+                  </div>
+                ` : ''}
+                ${s.lang !== s.pendingLang ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Language</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${getLanguageName(s.lang)}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${getLanguageName(s.pendingLang)}</span></span>
+                  </div>
+                ` : ''}
+                ${s.push !== s.pendingPush ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Push</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${s.push ? 'On' : 'Off'}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${s.pendingPush ? 'On' : 'Off'}</span></span>
+                  </div>
+                ` : ''}
+                ${s.messages !== s.pendingMessages ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Messages</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${s.messages ? 'On' : 'Off'}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${s.pendingMessages ? 'On' : 'Off'}</span></span>
+                  </div>
+                ` : ''}
+                ${s.promos !== s.pendingPromos ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Promotions</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${s.promos ? 'On' : 'Off'}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${s.pendingPromos ? 'On' : 'Off'}</span></span>
+                  </div>
+                ` : ''}
+                ${s.sound !== s.pendingSound ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Sound</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${s.sound ? 'On' : 'Off'}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${s.pendingSound ? 'On' : 'Off'}</span></span>
+                  </div>
+                ` : ''}
+                ${s.vibration !== s.pendingVibration ? `
+                  <div class="flex items-center justify-between text-xs py-1 border-b ${dividerColor}">
+                    <span>Vibration</span>
+                    <span class="font-bold flex items-center gap-1.5"><span class="${textMuted}">${s.vibration ? 'On' : 'Off'}</span> <i class="fa-solid fa-arrow-right text-[10px]" style="color: ${accent};"></i> <span style="color: ${accent};">${s.pendingVibration ? 'On' : 'Off'}</span></span>
+                  </div>
+                ` : ''}
+              </div>
+
+              <div class="mt-5 flex gap-2">
+                <button onclick="setReviewOpen('${platform}', false)" class="flex-1 py-3 text-xs font-semibold rounded-xl bg-slate-500/15 hover:bg-slate-500/25 transition">
+                  Cancel
+                </button>
+                <button onclick="saveChanges('${platform}')" class="flex-1 py-3 text-xs font-bold text-white rounded-xl shadow-lg transition active:scale-95" style="background: ${accent};">
+                  Save changes
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Bottom Staged Changes Floating Bar
+      let bottomBarHTML = '';
+      if (changes) {
+        bottomBarHTML = `
+          <div class="absolute bottom-0 inset-x-0 p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t ${dividerColor} flex items-center justify-between z-40">
+            <span class="text-xs font-bold" style="color: ${accent};">
+              • ${count} ${count === 1 ? 'change' : 'changes'}
+            </span>
+            <div class="flex items-center gap-2">
+              <button onclick="discardChanges('${platform}')" class="px-3 py-1.5 text-xs font-semibold ${textMuted} hover:text-slate-200 transition">
+                Discard
+              </button>
+              <button onclick="setReviewOpen('${platform}', true)" class="px-3.5 py-1.5 text-xs font-bold text-white rounded-xl shadow transition active:scale-95" style="background: ${accent};">
+                Review
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="flex-1 flex flex-col ${bgClass} relative transition-colors duration-500 ease-out">
+          ${mainBody}
+          ${bottomBarHTML}
+          ${reviewSheetHTML}
+        </div>
+      `;
+    }
+
+    function renderDevice(platform) {
+      const screenId = platform === 'android' ? 'androidScreen' : 'iosScreen';
+      const screen = document.getElementById(screenId);
+      if (screen) {
+        screen.innerHTML = renderScreen(platform);
+      }
+    }
+
+    function renderAll() {
+      renderDevice('android');
+      renderDevice('ios');
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const aClock = document.getElementById('androidClock');
+      const iClock = document.getElementById('iosClock');
+      if (aClock) aClock.innerText = timeStr;
+      if (iClock) iClock.innerText = timeStr;
+    }
+
+    // Initial render
+    renderAll();
+  </script>
+</body>
+</html>

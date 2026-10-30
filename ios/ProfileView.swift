@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var session = SessionManager.shared
+    @EnvironmentObject var appState: AppState
+    @State private var showSettingsSheet = false
     @State private var resumes: [Resume] = []
     @State private var skills: [String] = ["Go", "Swift", "SwiftUI", "PostgreSQL", "Docker", "REST API"]
     @State private var newSkill = ""
@@ -160,6 +162,36 @@ struct ProfileView: View {
 
                 // SOZLAMALAR VA XAVFSIZLIK
                 Section {
+                    Button {
+                        showSettingsSheet = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(appState.accent.opacity(0.15))
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: "paintpalette.fill")
+                                    .font(.caption)
+                                    .foregroundColor(appState.accent)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Mavzu & Ilova Sozlamalari")
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(.primary)
+                                Text(appState.appearanceSummary)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .sheet(isPresented: $showSettingsSheet) {
+                        SettingsView()
+                    }
+
                     Picker("Ilova tili", selection: $selectedLanguage) {
                         Text("O‘zbekcha (UZ)").tag("O‘zbekcha (UZ)")
                         Text("Русский (RU)").tag("Русский (RU)")
