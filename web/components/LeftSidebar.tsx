@@ -35,23 +35,20 @@ export default function LeftSidebar({
 
   const navItems = isCompany
     ? [
-        { id: 'feed', label: t.navFeed, icon: Home },
-        { id: 'vacancies', label: t.navVacancies, icon: Briefcase },
+        { id: 'vacancies', label: 'Barcha vakansiyalar', icon: Briefcase },
         { id: 'my-vacancies', label: t.navMyVacancies, icon: Layers },
-        { id: 'resumes', label: 'Nomzodlar rezyumesi', icon: Users },
-        { id: 'applications', label: 'Nomzodlar arizalari', icon: FileCheck, count: applicationsCount },
+        { id: 'resumes', label: 'Nomzodlar bazasi', icon: Users },
+        { id: 'applications', label: 'Kelgan arizalar', icon: FileCheck, count: applicationsCount },
         { id: 'chat', label: t.navChat, icon: MessageSquare },
         { id: 'saved', label: t.navSaved, icon: Bookmark, count: savedCount },
         { id: 'profile', label: 'Tashkilot profili', icon: Settings },
       ]
     : [
-        { id: 'feed', label: t.navFeed, icon: Home },
-        { id: 'vacancies', label: t.navVacancies, icon: Briefcase },
+        { id: 'vacancies', label: 'Vakansiyalar', icon: Briefcase },
         { id: 'resumes', label: t.navResumes, icon: Users },
         { id: 'applications', label: t.navApplications, icon: FileCheck, count: applicationsCount },
         { id: 'chat', label: t.navChat, icon: MessageSquare },
         { id: 'saved', label: t.navSaved, icon: Bookmark, count: savedCount },
-        { id: 'my-vacancies', label: t.navMyVacancies, icon: Layers },
         { id: 'profile', label: t.navProfile, icon: Settings },
       ];
 

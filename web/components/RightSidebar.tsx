@@ -1,71 +1,97 @@
 'use client';
 
 import React from 'react';
-import { Send, ExternalLink, CheckCircle2, Video, Sparkles } from 'lucide-react';
+import { Send, ExternalLink, CheckCircle2, Sparkles, Plus, Briefcase, FileText } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
 import RecommendationsWidget from './RecommendationsWidget';
-import LiveCommentsWidget from './LiveCommentsWidget';
+import ResumeProgressCard from './ResumeProgressCard';
 
 interface RightSidebarProps {
   vacanciesCount: number;
   user?: any;
+  resume?: any | null;
   onSelectVacancy?: (vacancy: any) => void;
   onOpenProfile?: () => void;
-  onNavigateToComments?: () => void;
-  onOpenVideoAdModal?: () => void;
+  onOpenCreateResume?: () => void;
+  onEditResume?: (resume: any) => void;
+  onOpenCreateVacancy?: () => void;
   lang?: Language;
 }
 
 export default function RightSidebar({
   vacanciesCount,
   user,
+  resume,
   onSelectVacancy,
   onOpenProfile,
-  onNavigateToComments,
-  onOpenVideoAdModal,
+  onOpenCreateResume,
+  onEditResume,
+  onOpenCreateVacancy,
   lang = 'uz',
 }: RightSidebarProps) {
   const t = translations[lang] || translations.uz;
+  const isCompany = Boolean(user && (user.account_type === 'company' || user.role === 'employer'));
 
   return (
     <aside className="w-80 shrink-0 hidden xl:block sticky top-20 self-start space-y-4">
-      {/* Real-time Live Comments Widget */}
-      <LiveCommentsWidget
-        onSelectVacancy={onSelectVacancy}
-        onNavigateToComments={onNavigateToComments}
-        lang={lang}
-      />
+      {/* 1. Candidate Resume Progress Card (Jobish style) */}
+      {!isCompany && user && onOpenCreateResume && (
+        <ResumeProgressCard
+          user={user}
+          resume={resume}
+          onOpenCreateResume={onOpenCreateResume}
+          onEditResume={onEditResume}
+          lang={lang}
+        />
+      )}
 
+      {/* 2. Employer Quick Actions Card */}
+      {isCompany && (
+        <div className="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 text-white rounded-2xl border border-blue-500/30 p-4 shadow-sm space-y-3">
+          <div className="flex items-center gap-2">
+            <Briefcase size={18} className="text-blue-300" />
+            <h5 className="font-extrabold text-sm">Ish beruvchi kabineti</h5>
+          </div>
+          <p className="text-xs text-blue-100/90 leading-relaxed">
+            Bo‘sh ish o‘rinlarini e’lon qiling va mos keluvchi nomzodlar arizalarini to‘g‘ridan-to‘g‘ri qabul qiling.
+          </p>
+          {onOpenCreateVacancy && (
+            <button
+              onClick={onOpenCreateVacancy}
+              className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
+            >
+              <Plus size={16} />
+              <span>Vakansiya e'lon qilish</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 3. Guest Prompt Card */}
+      {!user && (
+        <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white rounded-2xl p-4 shadow-sm space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-amber-300" />
+            <h5 className="font-extrabold text-sm">WZone Karyera Portali</h5>
+          </div>
+          <p className="text-xs text-blue-50 leading-relaxed">
+            O‘zbekistondagi bo‘sh ish o‘rinlariga topshiring yoki professional rezyume yaratib kompaniyalarga yuboring.
+          </p>
+          {onOpenProfile && (
+            <button
+              onClick={onOpenProfile}
+              className="w-full py-2.5 px-3 rounded-xl bg-white text-blue-700 hover:bg-blue-50 active:scale-95 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
+            >
+              <span>Kirish / Ro‘yxatdan o‘tish</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Recommended vacancies for logged in user */}
       {user && onSelectVacancy && onOpenProfile && (
         <RecommendationsWidget user={user} onSelectVacancy={onSelectVacancy} onOpenProfile={onOpenProfile} lang={lang} />
       )}
-
-      {/* AI Video Ad Promotion Card */}
-      <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white rounded-2xl border border-indigo-500/30 p-4 shadow-lg shadow-indigo-500/10 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30 text-[10px] font-extrabold uppercase">
-            <Video size={12} className="animate-pulse text-amber-400" />
-            <span>AI Video Reklama</span>
-          </div>
-          <span className="text-[10px] font-bold text-amber-400 font-mono">9:16 HD Reel</span>
-        </div>
-        <div>
-          <h5 className="font-extrabold text-sm text-white">Vakansiya uchun Video Reklama</h5>
-          <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-            Kompaniyangiz vakansiyalarini Instagram Story va Telegram kanallar uchun 14 soniyali video formatga aylantiring.
-          </p>
-        </div>
-        {onOpenVideoAdModal && (
-          <button
-            type="button"
-            onClick={onOpenVideoAdModal}
-            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:brightness-110 active:scale-95 text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
-          >
-            <Sparkles size={14} className="text-amber-300" />
-            <span>Video Reklama Yaratish</span>
-          </button>
-        )}
-      </div>
 
       {/* Telegram Bot Card */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-4 shadow-xs">

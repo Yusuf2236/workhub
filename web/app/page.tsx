@@ -1383,21 +1383,18 @@ export default function WZonePortal() {
                   </p>
                 </div>
               ) : (
-                <div className="xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
                 <div className="space-y-3.5">
                   {displayedVacancies().map((v) => (
                     <div
                       key={v.id}
-                      className={`rounded-2xl transition ${
-                        paneVacancy?.id === v.id ? 'xl:ring-2 xl:ring-blue-500' : ''
-                      }`}
+                      className="rounded-2xl transition hover:shadow-md"
                     >
                       <VacancyCard
                         vacancy={v}
                         isSaved={savedIds.includes(v.id)}
                         onToggleSave={handleToggleSave}
                         onApply={handleApplyClick}
-                        onSelect={openVacancy}
+                        onSelect={() => setSelectedVacancyForDetail(v)}
                         lang={lang}
                       />
                     </div>
@@ -1420,37 +1417,28 @@ export default function WZonePortal() {
                     </div>
                   )}
                 </div>
-
-                {/* Detail pane (desktop only) */}
-                <div className="hidden xl:block">
-                  <VacancyDetailModal
-                    variant="pane"
-                    vacancy={paneVacancy}
-                    onClose={() => {}}
-                    onApply={handleApplyClick}
-                    onEdit={handleEditVacancy}
-                    onDelete={handleDeleteVacancy}
-                    currentUser={user}
-                    lang={lang}
-                  />
-                </div>
-                </div>
               )}
             </>
           )}
         </main>
 
         {/* Right Info & Widgets Sidebar */}
-        {currentTab !== 'chat' && currentTab !== 'profile' && !isListTab && (
+        {currentTab !== 'chat' && currentTab !== 'profile' && (
           <RightSidebar
             vacanciesCount={totalVacancies || vacancies.length}
             user={user}
+            resume={myResume}
             onSelectVacancy={(v) => setSelectedVacancyForDetail(v)}
-            onOpenProfile={() => setCurrentTab('profile')}
-            onNavigateToComments={() => {
-              setCurrentTab('feed');
+            onOpenProfile={() => {
+              if (!user) setAuthModalOpen(true);
+              else setCurrentTab('profile');
             }}
-            onOpenVideoAdModal={() => setGlobalVideoAdModalOpen(true)}
+            onOpenCreateResume={handleOpenCreateResume}
+            onEditResume={(r) => {
+              setEditingResume(r);
+              setCreateResumeModalOpen(true);
+            }}
+            onOpenCreateVacancy={handleOpenCreateVacancy}
             lang={lang}
           />
         )}
@@ -1479,76 +1467,47 @@ export default function WZonePortal() {
 
       {/* Mobile Responsive Bottom Navigation Bar (Role-Aware Ergonomic Bar with Safe Area Clearance) */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#0c1220]/95 backdrop-blur-2xl border-t border-slate-200/90 dark:border-slate-800/90 z-40 px-1.5 pt-2 pb-[max(1.75rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-8px_25px_rgba(0,0,0,0.15)] select-none transition-colors">
-        {/* Tab 1: Lenta / Asosiy */}
+        {/* Tab 1: Vakansiyalar (Asosiy) */}
         <button
           onClick={() => {
             if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
-            setCurrentTab('feed');
+            setCurrentTab('vacancies');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
           <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
-            currentTab === 'feed'
+            currentTab === 'vacancies'
               ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
               : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }`}>
-            <Home size={20} className={currentTab === 'feed' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+            <Briefcase size={20} className={currentTab === 'vacancies' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
           </div>
           <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
-            currentTab === 'feed'
+            currentTab === 'vacancies'
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
           }`}>
-            {t.navFeed}
+            {t.navVacancies}
           </span>
         </button>
 
-        {/* Tab 2: Vakansiyalar (Candidate) or E'lonlarim (Company) */}
+        {/* Tab 2: Saqlanganlar (Candidate) or E'lonlarim (Company) */}
         <button
           onClick={() => {
             if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
-            setCurrentTab(isCompany ? 'my-vacancies' : 'vacancies');
+            setCurrentTab(isCompany ? 'my-vacancies' : 'saved');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
         >
           <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
-            (isCompany ? currentTab === 'my-vacancies' : currentTab === 'vacancies')
+            (isCompany ? currentTab === 'my-vacancies' : currentTab === 'saved')
               ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
               : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }`}>
             {isCompany ? (
               <Layers size={20} className={currentTab === 'my-vacancies' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
-            ) : (
-              <Briefcase size={20} className={currentTab === 'vacancies' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
-            )}
-          </div>
-          <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
-            (isCompany ? currentTab === 'my-vacancies' : currentTab === 'vacancies')
-              ? 'font-black text-blue-600 dark:text-blue-400'
-              : 'font-semibold text-slate-400 dark:text-slate-400'
-          }`}>
-            {isCompany ? t.navMyVacancies : t.navVacancies}
-          </span>
-        </button>
-
-        {/* Tab 3: Saqlanganlar (Candidate) or Nomzodlar (Company) */}
-        <button
-          onClick={() => {
-            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
-            setCurrentTab(isCompany ? 'resumes' : 'saved');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
-        >
-          <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
-            (isCompany ? currentTab === 'resumes' : currentTab === 'saved')
-              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
-              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-          }`}>
-            {isCompany ? (
-              <Users size={20} className={currentTab === 'resumes' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
             ) : (
               <Bookmark size={20} className={currentTab === 'saved' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
             )}
@@ -1559,15 +1518,15 @@ export default function WZonePortal() {
             )}
           </div>
           <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
-            (isCompany ? currentTab === 'resumes' : currentTab === 'saved')
+            (isCompany ? currentTab === 'my-vacancies' : currentTab === 'saved')
               ? 'font-black text-blue-600 dark:text-blue-400'
               : 'font-semibold text-slate-400 dark:text-slate-400'
           }`}>
-            {isCompany ? 'Nomzodlar' : t.navSaved}
+            {isCompany ? t.navMyVacancies : t.navSaved}
           </span>
         </button>
 
-        {/* Tab 4: Arizalar */}
+        {/* Tab 3: Arizalar */}
         <button
           onClick={() => {
             if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
@@ -1594,6 +1553,34 @@ export default function WZonePortal() {
               : 'font-semibold text-slate-400 dark:text-slate-400'
           }`}>
             {t.navApplications}
+          </span>
+        </button>
+
+        {/* Tab 4: Chat */}
+        <button
+          onClick={() => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
+            if (!user) {
+              setAuthModalOpen(true);
+            } else {
+              goToChat();
+            }
+          }}
+          className="flex-1 py-1 flex flex-col items-center justify-center transition-all duration-200 active:scale-90 group"
+        >
+          <div className={`relative px-3 py-1 rounded-2xl transition-all duration-200 flex items-center justify-center ${
+            currentTab === 'chat'
+              ? 'bg-blue-100/80 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}>
+            <MessageSquare size={20} className={currentTab === 'chat' ? 'stroke-[2.5]' : 'stroke-[1.8]'} />
+          </div>
+          <span className={`text-[11px] tracking-tight mt-0.5 leading-none transition-colors ${
+            currentTab === 'chat'
+              ? 'font-black text-blue-600 dark:text-blue-400'
+              : 'font-semibold text-slate-400 dark:text-slate-400'
+          }`}>
+            {t.navChat}
           </span>
         </button>
 
