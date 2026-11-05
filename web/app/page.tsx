@@ -21,7 +21,6 @@ import AiResumeAuditView from '../components/AiResumeAuditView';
 import ChatIntroModal from '../components/ChatIntroModal';
 import ResetPasswordModal from '../components/ResetPasswordModal';
 import OneIDPortalModal, { OneIDOrganization } from '../components/OneIDPortalModal';
-import VideoAdGeneratorModal from '../components/VideoAdGeneratorModal';
 import ResumeProgressCard from '../components/ResumeProgressCard';
 import { SurveyAnswers, EMPTY_SURVEY, loadSurvey, saveSurvey } from '../lib/survey';
 import { api, getAuthToken, setAuthToken, getCurrentUser, removeAuthToken, setCurrentUser } from '../lib/api';
@@ -129,7 +128,6 @@ export default function WZonePortal() {
   const [selectedVacancyForApply, setSelectedVacancyForApply] = useState<any | null>(null);
   const [oneidNotice, setOneidNotice] = useState<string | null>(null);
   const [chatIntroOpen, setChatIntroOpen] = useState(false);
-  const [globalVideoAdModalOpen, setGlobalVideoAdModalOpen] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [survey, setSurvey] = useState<SurveyAnswers>(EMPTY_SURVEY);
   const [surveyLoaded, setSurveyLoaded] = useState(false);
@@ -834,7 +832,6 @@ export default function WZonePortal() {
       applyModalOpen ||
       chatModalOpen ||
       notificationsModalOpen ||
-      globalVideoAdModalOpen ||
       chatIntroOpen
     );
 
@@ -849,7 +846,6 @@ export default function WZonePortal() {
         setApplyModalOpen(false);
         setChatModalOpen(false);
         setNotificationsModalOpen(false);
-        setGlobalVideoAdModalOpen(false);
         setChatIntroOpen(false);
       };
       window.addEventListener('popstate', handlePopState);
@@ -866,7 +862,6 @@ export default function WZonePortal() {
     applyModalOpen,
     chatModalOpen,
     notificationsModalOpen,
-    globalVideoAdModalOpen,
     chatIntroOpen,
   ]);
 
@@ -1064,7 +1059,7 @@ export default function WZonePortal() {
       )}
 
       {/* Main 3-Column Layout */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6 pb-32 lg:pb-6">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6 pb-32 lg:pb-6 items-start">
         {/* Left Navigation Sidebar */}
         <LeftSidebar
           currentTab={currentTab}
@@ -1778,14 +1773,6 @@ export default function WZonePortal() {
         initialUser={oneIDPortalUser}
         initialCitizen={oneIDPortalCitizen}
         initialOrganizations={oneIDPortalOrganizations}
-      />
-
-      <VideoAdGeneratorModal
-        isOpen={globalVideoAdModalOpen}
-        onClose={() => setGlobalVideoAdModalOpen(false)}
-        vacancies={vacancies}
-        currentUser={user}
-        lang={lang}
       />
     </div>
   );

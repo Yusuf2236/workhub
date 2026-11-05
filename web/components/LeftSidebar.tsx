@@ -53,7 +53,7 @@ export default function LeftSidebar({
       ];
 
   return (
-    <aside className="w-64 shrink-0 hidden lg:block sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pb-2">
+    <aside className="w-64 shrink-0 hidden lg:block sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 pb-2 scrollbar-none">
 
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-3 shadow-xs space-y-1.5">
         {navItems.map((item) => {
@@ -117,11 +117,6 @@ export default function LeftSidebar({
           </button>
         )}
       </div>
-
-      {/* Interests survey (below navigation): personalizes the feed */}
-      {survey && onSurveyChange && (
-        <InterestSurvey answers={survey} onChange={onSurveyChange} lang={lang} />
-      )}
     </aside>
   );
 }

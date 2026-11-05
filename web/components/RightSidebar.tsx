@@ -33,7 +33,7 @@ export default function RightSidebar({
   const isCompany = Boolean(user && (user.account_type === 'company' || user.role === 'employer'));
 
   return (
-    <aside className="w-80 shrink-0 hidden xl:block sticky top-20 self-start space-y-4">
+    <aside className="w-80 shrink-0 hidden xl:block sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto space-y-4 pb-4 scrollbar-none">
       {/* 1. Candidate Resume Progress Card (Jobish style) */}
       {!isCompany && user && onOpenCreateResume && (
         <ResumeProgressCard
