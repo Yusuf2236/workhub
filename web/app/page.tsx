@@ -79,7 +79,7 @@ export default function WZonePortal() {
   const [resumes, setResumes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [resumesLoading, setResumesLoading] = useState(false);
-  const [currentTab, setCurrentTab] = useState<NavTab>('feed');
+  const [currentTab, setCurrentTab] = useState<NavTab>('vacancies');
 
   const isCompany = Boolean(user && (user.account_type === 'company' || user.role === 'employer'));
   const myResume = user ? resumes.find((r) => r.user_id === user.id) : null;
