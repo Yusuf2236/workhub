@@ -1030,3 +1030,86 @@ func GetOneIDOrganizations(c *gin.Context) {
 	})
 }
 
+// OneIDCallbackHTML serves the HTML popup response for OneID OAuth fallback
+func OneIDCallbackHTML(c *gin.Context) {
+	code := c.Query("code")
+	state := c.Query("state")
+	html := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>OneID Autentifikatsiyasi - WZone</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #0b0f19; color: #f8fafc; }
+    .card { text-align: center; padding: 36px 30px; border-radius: 20px; background: #131b2e; border: 1px solid #1e293b; max-width: 440px; width: 90%%; }
+    .badge { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 14px; background: #0047ba; color: #fff; font-weight: 900; font-size: 20px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">ID</div>
+    <h3>Muvaffaqiyatli!</h3>
+    <p>OneID hisobingiz tasdiqlandi. Yo‘naltirilmoqda...</p>
+  </div>
+  <script>
+    (function() {
+      var code = %q;
+      var state = %q;
+      var authData = { type: 'WORKHUB_ONEID_AUTH_CALLBACK', code: code, state: state, timestamp: Date.now() };
+      if (window.opener && !window.opener.closed) {
+        try { window.opener.postMessage(authData, window.location.origin); } catch (e) {}
+        setTimeout(function() { window.close(); }, 500);
+      } else {
+        window.location.href = '/?oneid_code=' + encodeURIComponent(code) + '&oneid_state=' + encodeURIComponent(state);
+      }
+    })();
+  </script>
+</body>
+</html>`, code, state)
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.String(http.StatusOK, html)
+}
+
+// GoogleCallbackHTML serves the HTML popup response for Google OAuth fallback
+func GoogleCallbackHTML(c *gin.Context) {
+	code := c.Query("code")
+	state := c.Query("state")
+	html := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Google Autentifikatsiyasi - WZone</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #0b0f19; color: #f8fafc; }
+    .card { text-align: center; padding: 36px 30px; border-radius: 20px; background: #131b2e; border: 1px solid #1e293b; max-width: 440px; width: 90%%; }
+    .badge { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 14px; background: #2563eb; color: #fff; font-weight: 900; font-size: 20px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">G</div>
+    <h3>Muvaffaqiyatli!</h3>
+    <p>Google hisobingiz tasdiqlandi. Yo‘naltirilmoqda...</p>
+  </div>
+  <script>
+    (function() {
+      var code = %q;
+      var state = %q;
+      var authData = { type: 'WORKHUB_GOOGLE_AUTH_CALLBACK', code: code, state: state, timestamp: Date.now() };
+      if (window.opener && !window.opener.closed) {
+        try { window.opener.postMessage(authData, window.location.origin); } catch (e) {}
+        setTimeout(function() { window.close(); }, 500);
+      } else {
+        window.location.href = '/?google_code=' + encodeURIComponent(code);
+      }
+    })();
+  </script>
+</body>
+</html>`, code, state)
+
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.String(http.StatusOK, html)
+}
+
+

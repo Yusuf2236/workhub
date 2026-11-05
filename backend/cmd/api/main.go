@@ -162,6 +162,9 @@ func setupMiddlewares(r *gin.Engine) {
 
 func setupRoutes(r *gin.Engine) {
 	r.GET("/health", handlers.Health)
+	r.GET("/api/auth/callback/oneid", handlers.OneIDCallbackHTML)
+	r.GET("/api/auth/callback/google", handlers.GoogleCallbackHTML)
+	r.GET("/auth/oneid/callback", handlers.OneIDCallbackHTML)
 
 	uploads := r.Group("/uploads")
 	uploads.Use(func(c *gin.Context) {
@@ -183,6 +186,7 @@ func setupRoutes(r *gin.Engine) {
 
 	api := r.Group("/api/v1")
 	{
+		api.GET("/health", handlers.Health)
 		api.POST("/auth/register", authLimit, handlers.Register)
 		api.POST("/auth/login", authLimit, handlers.Login)
 		api.POST("/auth/google", authLimit, handlers.GoogleAuth)

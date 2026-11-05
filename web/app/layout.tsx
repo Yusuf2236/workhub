@@ -14,13 +14,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://wzone.uz'),
   title: "WZone — O'zbekistondagi zamonaviy ish va vakansiyalar platformasi",
   description: "WZone — ish qidiruvchilar va ish beruvchilar uchun zamonaviy, real-vaqt platformasi. OneID va Google orqali tezkor kirish.",
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'WorkHub',
+    title: 'WZone',
   },
   icons: {
     icon: '/icon.svg',

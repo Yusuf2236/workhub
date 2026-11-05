@@ -587,6 +587,7 @@ export default function WZonePortal() {
   // Every 60 seconds: add newly posted vacancies to the top of the list and update total counts
   useEffect(() => {
     const timer = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       try {
         const res = await api.getVacancies({
           q: debouncedSearch,

@@ -435,6 +435,7 @@ export default function HomeFeedView({
   // Every 60 seconds: refresh feed with new vacancies and comments without jumping scroll
   useEffect(() => {
     const timer = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       const gen = streamGenRef.current;
       const batch = await fetchBatch(1, 1);
       if (gen !== streamGenRef.current) return;
@@ -456,6 +457,7 @@ export default function HomeFeedView({
     const isFetchingRef = { current: false };
 
     const interval = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       if (isFetchingRef.current) return;
       isFetchingRef.current = true;
       try {
@@ -508,6 +510,7 @@ export default function HomeFeedView({
     const isFetchingRecentRef = { current: false };
 
     const interval = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       if (isFetchingRecentRef.current) return;
       isFetchingRecentRef.current = true;
       try {

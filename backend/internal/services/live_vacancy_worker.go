@@ -252,6 +252,26 @@ func insertRandomVacancy(db *sql.DB, rdb *redis.Client, createdAt time.Time) {
 	rand.Seed(time.Now().UnixNano())
 	template := liveUzbekistanJobs[rand.Intn(len(liveUzbekistanJobs))]
 
+	// Avoid duplicate spam: check if this template was already posted recently
+	var exists bool
+	checkErr := db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 FROM vacancies 
+			WHERE lower(trim(title)) = lower(trim($1)) 
+			  AND lower(trim(company)) = lower(trim($2))
+		)
+	`, template.Title, template.Company).Scan(&exists)
+	if checkErr == nil && exists {
+		// Just bump the updated_at and increment views rather than multiplying clones
+		_, _ = db.Exec(`
+			UPDATE vacancies 
+			SET updated_at = $1, views_count = views_count + 1 
+			WHERE lower(trim(title)) = lower(trim($2)) 
+			  AND lower(trim(company)) = lower(trim($3))
+		`, createdAt, template.Title, template.Company)
+		return
+	}
+
 	newID := uuid.NewString()
 	query := `
 		INSERT INTO vacancies (
