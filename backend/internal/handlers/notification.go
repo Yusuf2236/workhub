@@ -3,8 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/Yusuf2236/workhub/backend/pkg/response"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func ListNotifications(c *gin.Context) {
@@ -39,6 +40,10 @@ func MarkNotificationRead(c *gin.Context) {
 	userID, ok := c.Get("user_id")
 	if !ok {
 		response.Error(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if _, err := uuid.Parse(id); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid notification id")
 		return
 	}
 

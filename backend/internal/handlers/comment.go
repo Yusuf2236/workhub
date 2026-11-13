@@ -18,6 +18,10 @@ func ListVacancyComments(c *gin.Context) {
 		response.Error(c, http.StatusBadRequest, "vacancy id required")
 		return
 	}
+	if _, err := uuid.Parse(vacancyID); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid vacancy id")
+		return
+	}
 
 	if commentRepo != nil {
 		comments, err := commentRepo.ListByVacancy(vacancyID)
@@ -77,6 +81,10 @@ func CreateVacancyComment(c *gin.Context) {
 	vacancyID := c.Param("id")
 	if vacancyID == "" {
 		response.Error(c, http.StatusBadRequest, "vacancy id required")
+		return
+	}
+	if _, err := uuid.Parse(vacancyID); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid vacancy id")
 		return
 	}
 
