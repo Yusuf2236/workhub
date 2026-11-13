@@ -213,10 +213,17 @@ const (
 	wsRateWindow        = 10 * time.Second
 )
 
+var publicChatRooms = []gin.H{
+	{"id": "general", "name": "Umumiy", "role": "public", "icon": "globe"},
+	{"id": "jobs", "name": "Vakansiyalar", "role": "public", "icon": "briefcase"},
+	{"id": "developers", "name": "Dasturchilar", "role": "public", "icon": "code"},
+	{"id": "networking", "name": "Tarmoq", "role": "public", "icon": "users"},
+}
+
 // canAccessRoom enforces hh.uz style permissions:
-// - "app_<appID>": ONLY accessible by the candidate who sent the CV (app.UserID)
-//   or the employer who posted the vacancy (vacancy.CreatedBy).
-// - "dm_<userA>_<userB>": only accessible by userA and userB.
+//   - "app_<appID>": ONLY accessible by the candidate who sent the CV (app.UserID)
+//     or the employer who posted the vacancy (vacancy.CreatedBy).
+//   - "dm_<userA>_<userB>": only accessible by userA and userB.
 func canAccessRoom(roomID, userID string) bool {
 	if roomID == "" || len(roomID) > 120 {
 		return false
@@ -407,12 +414,8 @@ func SendChatMessage(c *gin.Context) {
 
 func ListChatRooms(c *gin.Context) {
 	userID := currentUserID(c)
-	if userID == "" || userID == "guest" {
-		response.Success(c, http.StatusOK, gin.H{"rooms": []gin.H{}})
-		return
-	}
 
-	var rooms []gin.H
+	rooms := append([]gin.H(nil), publicChatRooms...)
 
 	if applicationRepo != nil {
 		// 1. Applications submitted by this candidate

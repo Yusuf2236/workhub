@@ -224,23 +224,23 @@ func ApplyToVacancy(c *gin.Context) {
 		// Initialize hh.uz style direct chat thread for this application
 		if chatRepo != nil {
 			initMsg := models.ChatMessage{
-				ID:           uuid.NewString(),
-				RoomID:       fmt.Sprintf("app_%s", app.ID),
-				UserID:       userID.(string),
-				SenderName:   candidateName,
-				Content:      fmt.Sprintf("Assalomu alaykum! Men «%s» vakansiyasiga o‘z rezyume (CV)imni yubordim.", vacancy.Title),
-				CreatedAt:    time.Now().UTC(),
+				ID:         uuid.NewString(),
+				RoomID:     fmt.Sprintf("app_%s", app.ID),
+				UserID:     userID.(string),
+				SenderName: candidateName,
+				Content:    fmt.Sprintf("Assalomu alaykum! Men «%s» vakansiyasiga o‘z rezyume (CV)imni yubordim.", vacancy.Title),
+				CreatedAt:  time.Now().UTC(),
 			}
 			_ = chatRepo.SaveMessage(initMsg)
 
 			if payload.CoverLetter != "" {
 				letterMsg := models.ChatMessage{
-					ID:           uuid.NewString(),
-					RoomID:       fmt.Sprintf("app_%s", app.ID),
-					UserID:       userID.(string),
-					SenderName:   candidateName,
-					Content:      fmt.Sprintf("Kuzatuv xati: %s", payload.CoverLetter),
-					CreatedAt:    time.Now().UTC().Add(time.Millisecond * 500),
+					ID:         uuid.NewString(),
+					RoomID:     fmt.Sprintf("app_%s", app.ID),
+					UserID:     userID.(string),
+					SenderName: candidateName,
+					Content:    fmt.Sprintf("Kuzatuv xati: %s", payload.CoverLetter),
+					CreatedAt:  time.Now().UTC().Add(time.Millisecond * 500),
 				}
 				_ = chatRepo.SaveMessage(letterMsg)
 			}
@@ -257,6 +257,10 @@ func ApplyToVacancy(c *gin.Context) {
 
 func UpdateApplicationStatus(c *gin.Context) {
 	id := c.Param("id")
+	if _, err := uuid.Parse(id); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid application id")
+		return
+	}
 
 	var payload struct {
 		Status string `json:"status"`
