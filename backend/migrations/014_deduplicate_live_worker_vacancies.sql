@@ -2,8 +2,6 @@
 -- Removes cloned duplicate vacancies posted by the worker (same title and company, created_by IS NULL),
 -- keeping the earliest record and deleting identical copies to keep the feed fresh and diverse.
 
-BEGIN;
-
 CREATE TEMP TABLE IF NOT EXISTS worker_dupes ON COMMIT DROP AS
 SELECT id, keeper_id
 FROM (
@@ -28,5 +26,3 @@ UPDATE vacancy_comments c SET vacancy_id = d.keeper_id FROM worker_dupes d WHERE
 
 -- Delete duplicate clone vacancies
 DELETE FROM vacancies v USING worker_dupes d WHERE v.id = d.id;
-
-COMMIT;
